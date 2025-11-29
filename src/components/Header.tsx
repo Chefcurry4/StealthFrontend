@@ -12,6 +12,7 @@ export const Header = () => {
     { name: "Universities", href: "/universities" },
     { name: "Programs", href: "/programs" },
     { name: "Courses", href: "/courses" },
+    { name: "Teachers", href: "/teachers" },
     { name: "Labs", href: "/labs" },
     { name: "AI Advisor", href: "/ai-advisor" },
   ];

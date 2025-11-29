@@ -1,14 +1,16 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCourse } from "@/hooks/useCourses";
+import { useTeacherIdByCourse } from "@/hooks/useTeachers";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: course, isLoading, error } = useCourse(id!);
+  const { data: teacherId } = useTeacherIdByCourse(id!);
 
   if (isLoading) {
     return (
@@ -91,6 +93,16 @@ const CourseDetail = () => {
                     <p className="text-muted-foreground">{course.type_exam}</p>
                   </div>
                 )}
+
+                {course.software_equipment && (
+                  <div>
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <Wrench className="h-4 w-4" />
+                      Software & Equipment
+                    </h3>
+                    <p className="text-muted-foreground">{course.software_equipment}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -100,13 +112,33 @@ const CourseDetail = () => {
                   <CardTitle>Teaching Staff</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{course.professor_name}</span>
-                  </div>
+                  {teacherId ? (
+                    <Link to={`/teachers/${teacherId}`}>
+                      <div className="flex items-center gap-2 hover:text-primary transition-colors">
+                        <User className="h-4 w-4" />
+                        <span className="hover:underline">{course.professor_name}</span>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{course.professor_name}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Reviews</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Course reviews coming soon. Sign up to be the first to review this course!
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-6">
@@ -155,6 +187,12 @@ const CourseDetail = () => {
                 {course.mandatory_optional && (
                   <div className="text-sm">
                     <strong>Type:</strong> {course.mandatory_optional}
+                  </div>
+                )}
+
+                {course.which_year && (
+                  <div className="text-sm">
+                    <strong>Year of Study:</strong> {course.which_year}
                   </div>
                 )}
               </CardContent>

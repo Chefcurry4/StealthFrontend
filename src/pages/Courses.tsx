@@ -7,16 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
 import { useCourses, CourseFilters } from "@/hooks/useCourses";
+import { useUniversities } from "@/hooks/useUniversities";
+import { usePrograms } from "@/hooks/usePrograms";
 
 const Courses = () => {
   const [filters, setFilters] = useState<CourseFilters>({});
+  const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const { data: courses, isLoading, error } = useCourses(filters);
+  const { data: universities } = useUniversities();
+  const { data: programs } = usePrograms();
 
-  const updateFilter = (key: keyof CourseFilters, value: string | undefined) => {
+  const updateFilter = (key: keyof CourseFilters, value: string | number | undefined) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value === "all" ? undefined : value,
+    }));
+  };
+
+  const handleEctsChange = (value: number[]) => {
+    setEctsRange([value[0], value[1]]);
+    setFilters((prev) => ({
+      ...prev,
+      ectsMin: value[0],
+      ectsMax: value[1],
     }));
   };
 
@@ -57,6 +72,34 @@ const Courses = () => {
               <span className="text-sm font-medium">Filters:</span>
             </div>
             <div className="flex flex-wrap gap-3">
+              <Select onValueChange={(value) => updateFilter("universityId", value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="University" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Universities</SelectItem>
+                  {universities?.map((uni) => (
+                    <SelectItem key={uni.uuid} value={uni.uuid}>
+                      {uni.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={(value) => updateFilter("programId", value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Program" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Programs</SelectItem>
+                  {programs?.map((prog) => (
+                    <SelectItem key={prog.id} value={prog.id}>
+                      {prog.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select onValueChange={(value) => updateFilter("language", value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Language" />
@@ -66,6 +109,7 @@ const Courses = () => {
                   <SelectItem value="English">English</SelectItem>
                   <SelectItem value="French">French</SelectItem>
                   <SelectItem value="German">German</SelectItem>
+                  <SelectItem value="French/English">French/English</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -75,8 +119,8 @@ const Courses = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="Bachelor">Bachelor</SelectItem>
-                  <SelectItem value="Master">Master</SelectItem>
+                  <SelectItem value="Ba">Bachelor</SelectItem>
+                  <SelectItem value="Ma">Master</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -88,8 +132,61 @@ const Courses = () => {
                   <SelectItem value="all">All Terms</SelectItem>
                   <SelectItem value="Winter">Winter</SelectItem>
                   <SelectItem value="Summer">Summer</SelectItem>
+                  <SelectItem value="Win">Win</SelectItem>
+                  <SelectItem value="Sum">Sum</SelectItem>
+                  <SelectItem value="Winter/Summer">Winter/Summer</SelectItem>
+                  <SelectItem value="Summer/Winter">Summer/Winter</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Select onValueChange={(value) => updateFilter("examType", value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Exam Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="Written">Written</SelectItem>
+                  <SelectItem value="Oral">Oral</SelectItem>
+                  <SelectItem value="During semester">During semester</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={(value) => updateFilter("mandatoryOptional", value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="Mandatory">Mandatory</SelectItem>
+                  <SelectItem value="Optional">Optional</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={(value) => updateFilter("whichYear", value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  <SelectItem value="1">Year 1</SelectItem>
+                  <SelectItem value="2">Year 2</SelectItem>
+                  <SelectItem value="3">Year 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="mt-4 max-w-xs">
+              <label className="text-sm font-medium mb-2 block">
+                ECTS Credits: {ectsRange[0]} - {ectsRange[1]}
+              </label>
+              <Slider
+                min={0}
+                max={30}
+                step={1}
+                value={ectsRange}
+                onValueChange={handleEctsChange}
+                className="w-full"
+              />
             </div>
           </div>
         </section>
