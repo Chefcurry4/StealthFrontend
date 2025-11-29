@@ -1,36 +1,16 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Search, Microscope, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useLabs, LabFilters } from "@/hooks/useLabs";
 
 const Labs = () => {
-  const sampleLabs = [
-    {
-      id: 1,
-      name: "Artificial Intelligence Laboratory",
-      university: "EPFL",
-      professors: "Prof. Martin Jaggi, Prof. Antoine Bosselut",
-      topics: ["Machine Learning", "Natural Language Processing", "Computer Vision"],
-      description: "Leading research in AI with focus on deep learning and neural architectures",
-    },
-    {
-      id: 2,
-      name: "Quantum Computing Lab",
-      university: "ETH Zürich",
-      professors: "Prof. Andreas Wallraff",
-      topics: ["Quantum Computing", "Quantum Information", "Superconducting Circuits"],
-      description: "Pioneering research in quantum computing hardware and algorithms",
-    },
-    {
-      id: 3,
-      name: "Robotics Systems Laboratory",
-      university: "EPFL",
-      professors: "Prof. Aude Billard",
-      topics: ["Robotics", "Human-Robot Interaction", "Learning Algorithms"],
-      description: "Research on adaptive robots and learning from demonstration",
-    },
-  ];
+  const [filters, setFilters] = useState<LabFilters>({});
+  const { data: labs, isLoading, error } = useLabs(filters);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -53,6 +33,8 @@ const Labs = () => {
                   type="text"
                   placeholder="Search labs by name or research area..."
                   className="pl-10 bg-background"
+                  value={filters.search || ""}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 />
               </div>
             </div>
@@ -62,47 +44,73 @@ const Labs = () => {
         {/* Labs List */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {sampleLabs.map((lab) => (
-                <Card key={lab.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Microscope className="h-6 w-6 text-primary" />
+            {isLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-64" />
+                ))}
+              </div>
+            ) : error ? (
+              <p className="text-center text-muted-foreground">
+                Error loading labs. Please try again.
+              </p>
+            ) : labs?.length === 0 ? (
+              <p className="text-center text-muted-foreground">
+                No labs found matching your search.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {labs?.map((lab) => (
+                  <Card key={lab.id_lab} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Microscope className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl mb-2">{lab.name}</CardTitle>
+                          {lab.faculty_match && (
+                            <p className="text-sm text-muted-foreground">{lab.faculty_match}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-2">{lab.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{lab.university}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {lab.professors && (
+                        <div className="flex items-start gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-muted-foreground">{lab.professors}</p>
+                        </div>
+                      )}
+                      {lab.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {lab.description}
+                        </p>
+                      )}
+                      {lab.topics && (
+                        <div className="flex flex-wrap gap-2">
+                          {lab.topics.split(',').slice(0, 3).map((topic, idx) => (
+                            <Badge key={idx} variant="secondary">
+                              {topic.trim()}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Link to={`/labs/${lab.slug || lab.id_lab}`} className="flex-1">
+                          <Button variant="default" size="sm" className="w-full">
+                            View Details
+                          </Button>
+                        </Link>
+                        <Button variant="outline" size="sm">
+                          Save Lab
+                        </Button>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-start gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-muted-foreground">{lab.professors}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {lab.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {lab.topics.map((topic) => (
-                        <Badge key={topic} variant="secondary">
-                          {topic}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="default" size="sm" className="flex-1">
-                        View Details
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Save Lab
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </div>
