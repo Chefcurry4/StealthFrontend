@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, Microscope, Users, Filter } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, Microscope, Users, Filter, Bookmark } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLabs, LabFilters } from "@/hooks/useLabs";
 import { useUniversities } from "@/hooks/useUniversities";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
   const { data: labs, isLoading, error } = useLabs(filters);
   const { data: universities } = useUniversities();
+  const { user } = useAuth();
+  const { data: savedLabs } = useSavedLabs();
+  const toggleSave = useToggleSaveLab();
+  const navigate = useNavigate();
 
   const updateFilter = (key: keyof LabFilters, value: string | undefined) => {
     setFilters((prev) => ({
@@ -156,8 +162,18 @@ const Labs = () => {
                             View Details
                           </Button>
                         </Link>
-                        <Button variant="outline" size="sm">
-                          Save Lab
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (!user) {
+                              navigate("/auth");
+                              return;
+                            }
+                            toggleSave.mutate(lab.id_lab);
+                          }}
+                        >
+                          <Bookmark className={`h-4 w-4 ${savedLabs?.some((s: any) => s.lab_id === lab.id_lab) ? 'fill-current' : ''}`} />
                         </Button>
                       </div>
                     </CardContent>

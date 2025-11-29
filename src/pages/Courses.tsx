@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, BookOpen, GraduationCap, Clock, Filter } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, BookOpen, GraduationCap, Clock, Filter, Bookmark } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Slider } from "@/components/ui/slider";
 import { useCourses, CourseFilters } from "@/hooks/useCourses";
 import { useUniversities } from "@/hooks/useUniversities";
 import { usePrograms } from "@/hooks/usePrograms";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 
 const Courses = () => {
   const [filters, setFilters] = useState<CourseFilters>({});
@@ -18,6 +20,10 @@ const Courses = () => {
   const { data: courses, isLoading, error } = useCourses(filters);
   const { data: universities } = useUniversities();
   const { data: programs } = usePrograms();
+  const { user } = useAuth();
+  const { data: savedCourses } = useSavedCourses();
+  const toggleSave = useToggleSaveCourse();
+  const navigate = useNavigate();
 
   const updateFilter = (key: keyof CourseFilters, value: string | number | undefined) => {
     setFilters((prev) => ({
@@ -256,8 +262,18 @@ const Courses = () => {
                             View Details
                           </Button>
                         </Link>
-                        <Button variant="outline" size="sm">
-                          Save Course
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (!user) {
+                              navigate("/auth");
+                              return;
+                            }
+                            toggleSave.mutate(course.id_course);
+                          }}
+                        >
+                          <Bookmark className={`h-4 w-4 ${savedCourses?.some((s: any) => s.course_id === course.id_course) ? 'fill-current' : ''}`} />
                         </Button>
                       </div>
                     </CardContent>

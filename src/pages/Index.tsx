@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, FileText, ArrowRight } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, FileText, ArrowRight, UserPlus } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
   const features = [
     {
       icon: GraduationCap,
@@ -53,7 +55,15 @@ const Index = () => {
               Discover universities, explore courses, and build your learning agreement with AI-powered guidance
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
+              {!user && (
+                <Button size="lg" asChild>
+                  <Link to="/auth">
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Get Started Free
+                  </Link>
+                </Button>
+              )}
+              <Button size="lg" variant={user ? "default" : "outline"} asChild>
                 <Link to="/universities">
                   Browse Universities
                   <ArrowRight className="ml-2 h-5 w-5" />
