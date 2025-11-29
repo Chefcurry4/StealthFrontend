@@ -1,12 +1,21 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, FileText, ArrowRight, UserPlus } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, FileText, ArrowRight, UserPlus, BarChart3 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUniversities } from "@/hooks/useUniversities";
+import { useCourses } from "@/hooks/useCourses";
+import { usePrograms } from "@/hooks/usePrograms";
+import { useLabs } from "@/hooks/useLabs";
 
 const Index = () => {
   const { user } = useAuth();
+  const { data: universities } = useUniversities();
+  const { data: courses } = useCourses({});
+  const { data: programs } = usePrograms();
+  const { data: labs } = useLabs();
+  
   const features = [
     {
       icon: GraduationCap,
@@ -15,13 +24,18 @@ const Index = () => {
     },
     {
       icon: BookOpen,
-      title: "1000+ Courses",
+      title: `${courses?.length || 1420}+ Courses`,
       description: "Comprehensive course catalog with detailed information and reviews",
     },
     {
       icon: Microscope,
       title: "Research Labs",
-      description: "Explore cutting-edge research facilities and opportunities",
+      description: `Explore ${labs?.length || 424} cutting-edge research facilities and opportunities`,
+    },
+    {
+      icon: BarChart3,
+      title: "Data & Statistics",
+      description: "View comprehensive statistics and insights about all academic resources",
     },
     {
       icon: Bot,
@@ -85,7 +99,7 @@ const Index = () => {
               Everything You Need for Study Planning
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive tools and resources to make your exchange semester planning seamless
+              Browse {universities?.length || 12} universities, {courses?.length || 1420} courses, {programs?.length || 33} programs, and {labs?.length || 424} research labs
             </p>
           </div>
 

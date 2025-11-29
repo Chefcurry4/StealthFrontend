@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
+import Statistics from "./pages/Statistics";
 import Universities from "./pages/Universities";
 import UniversityDetail from "./pages/UniversityDetail";
 import Programs from "./pages/Programs";
@@ -39,6 +40,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/statistics" element={<Statistics />} />
                 <Route path="/universities" element={<Universities />} />
                 <Route path="/universities/:slug" element={<UniversityDetail />} />
                 <Route path="/programs" element={<Programs />} />
@@ -51,6 +53,8 @@ const App = () => (
                 <Route path="/labs/:slug" element={<LabDetail />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learning-agreements/:id" element={<LearningAgreementDetail />} />
+                <Route path="/ai-advisor" element={<AIAdvisor />} />
+                <Route path="/email-drafts" element={<EmailDrafts />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

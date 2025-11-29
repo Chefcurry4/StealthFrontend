@@ -96,10 +96,25 @@ const Profile = () => {
                         to={`/courses/${saved.course_id}`}
                         className="block p-4 border rounded-lg hover:bg-accent transition-colors"
                       >
-                        <p className="font-semibold">Course saved</p>
-                        {saved.note && (
-                          <p className="text-sm text-muted-foreground mt-1">{saved.note}</p>
-                        )}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <p className="font-semibold">{saved.Courses?.name_course || 'Course'}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {saved.Courses?.code && (
+                                <Badge variant="secondary" className="text-xs">{saved.Courses.code}</Badge>
+                              )}
+                              {saved.Courses?.ects && (
+                                <span className="text-xs text-muted-foreground">{saved.Courses.ects} ECTS</span>
+                              )}
+                              {saved.Courses?.ba_ma && (
+                                <Badge variant="outline" className="text-xs">{saved.Courses.ba_ma === 'Ba' ? 'Bachelor' : 'Master'}</Badge>
+                              )}
+                            </div>
+                            {saved.note && (
+                              <p className="text-sm text-muted-foreground mt-2">{saved.note}</p>
+                            )}
+                          </div>
+                        </div>
                       </Link>
                     ))}
                   </div>
@@ -181,12 +196,21 @@ const Profile = () => {
                     {savedLabs?.map((saved: any) => (
                       <Link
                         key={saved.id}
-                        to={`/labs/${saved.lab_id}`}
+                        to={`/labs/${saved.Labs?.slug || saved.lab_id}`}
                         className="block p-4 border rounded-lg hover:bg-accent transition-colors"
                       >
-                        <p className="font-semibold">Lab saved</p>
+                        <p className="font-semibold">{saved.Labs?.name || 'Lab'}</p>
+                        {saved.Labs?.topics && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {saved.Labs.topics.split(',').slice(0, 3).map((topic: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {topic.trim()}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                         {saved.note && (
-                          <p className="text-sm text-muted-foreground mt-1">{saved.note}</p>
+                          <p className="text-sm text-muted-foreground mt-2">{saved.note}</p>
                         )}
                       </Link>
                     ))}
@@ -218,12 +242,17 @@ const Profile = () => {
                     {savedPrograms?.map((saved: any) => (
                       <Link
                         key={saved.id}
-                        to={`/programs/${saved.id_program}`}
+                        to={`/programs/${saved.Programs?.slug || saved.id_program}`}
                         className="block p-4 border rounded-lg hover:bg-accent transition-colors"
                       >
-                        <p className="font-semibold">Program saved</p>
+                        <p className="font-semibold">{saved.Programs?.name || 'Program'}</p>
+                        {saved.Programs?.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {saved.Programs.description}
+                          </p>
+                        )}
                         {saved.note && (
-                          <p className="text-sm text-muted-foreground mt-1">{saved.note}</p>
+                          <p className="text-sm text-muted-foreground mt-2 italic">{saved.note}</p>
                         )}
                       </Link>
                     ))}
