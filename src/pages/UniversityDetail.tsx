@@ -1,12 +1,19 @@
 import { useParams, Link } from "react-router-dom";
 import { useUniversity } from "@/hooks/useUniversities";
-import { ExternalLink, MapPin, Loader2, ArrowLeft } from "lucide-react";
+import { useProgramsByUniversity } from "@/hooks/usePrograms";
+import { useLabsByUniversity } from "@/hooks/useLabs";
+import { useCoursesByUniversity } from "@/hooks/useCourses";
+import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const UniversityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: university, isLoading, error } = useUniversity(slug || "");
+  const { data: programs } = useProgramsByUniversity(university?.uuid || "");
+  const { data: labs } = useLabsByUniversity(university?.uuid || "");
+  const { data: courses } = useCoursesByUniversity(university?.uuid || "");
 
   if (isLoading) {
     return (
@@ -76,42 +83,126 @@ const UniversityDetail = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Programs Offered</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              Programs Offered ({programs?.length || 0})
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Programs will be displayed here
-            </p>
+            {programs && programs.length > 0 ? (
+              <div className="space-y-2">
+                {programs.slice(0, 5).map((program: any) => (
+                  <Link
+                    key={program.id}
+                    to={`/programs/${program.slug || program.id}`}
+                    className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <h3 className="font-semibold">{program.name}</h3>
+                  </Link>
+                ))}
+                {programs.length > 5 && (
+                  <Link to="/programs">
+                    <Button variant="outline" size="sm" className="w-full mt-2">
+                      View All Programs
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No programs found</p>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Research Labs</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Microscope className="h-5 w-5" />
+              Research Labs ({labs?.length || 0})
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Labs will be displayed here
-            </p>
+            {labs && labs.length > 0 ? (
+              <div className="space-y-2">
+                {labs.slice(0, 5).map((lab: any) => (
+                  <Link
+                    key={lab.id_lab}
+                    to={`/labs/${lab.slug || lab.id_lab}`}
+                    className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <h3 className="font-semibold mb-1">{lab.name}</h3>
+                    {lab.topics && (
+                      <div className="flex flex-wrap gap-1">
+                        {lab.topics.split(',').slice(0, 2).map((topic: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {topic.trim()}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </Link>
+                ))}
+                {labs.length > 5 && (
+                  <Link to="/labs">
+                    <Button variant="outline" size="sm" className="w-full mt-2">
+                      View All Labs
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No labs found</p>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Courses Available</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Courses Available ({courses?.length || 0})
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Courses will be displayed here
-            </p>
-            <Link to="/courses">
-              <Button className="mt-4 w-full" variant="outline">
-                Browse All Courses
-              </Button>
-            </Link>
+            {courses && courses.length > 0 ? (
+              <div className="space-y-2">
+                {courses.slice(0, 5).map((course: any) => (
+                  <Link
+                    key={course.id_course}
+                    to={`/courses/${course.id_course}`}
+                    className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{course.name_course}</h3>
+                        {course.code && (
+                          <Badge variant="secondary" className="text-xs mt-1">
+                            {course.code}
+                          </Badge>
+                        )}
+                      </div>
+                      {course.ects && (
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {course.ects} ECTS
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+                {courses.length > 5 && (
+                  <Link to="/courses">
+                    <Button variant="outline" size="sm" className="w-full mt-2">
+                      View All Courses
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No courses found</p>
+            )}
           </CardContent>
         </Card>
       </div>

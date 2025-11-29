@@ -1,0 +1,86 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Lab {
+  id_lab: string;
+  name: string;
+  slug: string | null;
+  description: string | null;
+  professors: string | null;
+  topics: string | null;
+  faculty_match: string | null;
+  link: string | null;
+  image: string | null;
+}
+
+export interface LabFilters {
+  search?: string;
+  universityId?: string;
+}
+
+export const useLabs = (filters?: LabFilters) => {
+  return useQuery({
+    queryKey: ["labs", filters],
+    queryFn: async () => {
+      let query = supabase
+        .from("Labs(L)")
+        .select("*")
+        .order("name");
+
+      if (filters?.search) {
+        query = query.or(`name.ilike.%${filters.search}%,topics.ilike.%${filters.search}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data as Lab[];
+    },
+  });
+};
+
+export const useLab = (slug: string) => {
+  return useQuery({
+    queryKey: ["lab", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Labs(L)")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error("Lab not found");
+      return data as Lab;
+    },
+    enabled: !!slug,
+  });
+};
+
+export const useLabsByUniversity = (universityId: string) => {
+  return useQuery({
+    queryKey: ["labs", "university", universityId],
+    queryFn: async () => {
+      const { data: bridgeData, error: bridgeError } = await supabase
+        .from("bridge_ul(U-L)")
+        .select("id_lab")
+        .eq("id_uni", universityId);
+
+      if (bridgeError) throw bridgeError;
+
+      const labIds = bridgeData.map((b) => b.id_lab).filter(Boolean);
+
+      if (labIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("Labs(L)")
+        .select("*")
+        .in("id_lab", labIds)
+        .order("name");
+
+      if (error) throw error;
+      return data as Lab[];
+    },
+    enabled: !!universityId,
+  });
+};

@@ -8,8 +8,12 @@ import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Universities from "./pages/Universities";
 import UniversityDetail from "./pages/UniversityDetail";
+import Programs from "./pages/Programs";
+import ProgramDetail from "./pages/ProgramDetail";
 import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
 import Labs from "./pages/Labs";
+import LabDetail from "./pages/LabDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,8 +31,12 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/universities" element={<Universities />} />
               <Route path="/universities/:slug" element={<UniversityDetail />} />
+              <Route path="/programs" element={<Programs />} />
+              <Route path="/programs/:slug" element={<ProgramDetail />} />
               <Route path="/courses" element={<Courses />} />
+              <Route path="/courses/:id" element={<CourseDetail />} />
               <Route path="/labs" element={<Labs />} />
+              <Route path="/labs/:slug" element={<LabDetail />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
