@@ -20,6 +20,8 @@ import LabDetail from "./pages/LabDetail";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import LearningAgreementDetail from "./pages/LearningAgreementDetail";
+import AIAdvisor from "./pages/AIAdvisor";
+import EmailDrafts from "./pages/EmailDrafts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

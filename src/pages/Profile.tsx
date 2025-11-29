@@ -2,12 +2,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
+import { useAICourseRecommendations } from "@/hooks/useAI";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, GraduationCap, Beaker, FileText, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, GraduationCap, Beaker, FileText, User, Sparkles, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -16,6 +19,19 @@ const Profile = () => {
   const { data: savedLabs, isLoading: labsLoading } = useSavedLabs();
   const { data: savedPrograms, isLoading: programsLoading } = useSavedPrograms();
   const { data: agreements, isLoading: agreementsLoading } = useLearningAgreements();
+  const aiRecommendations = useAICourseRecommendations();
+
+  const handleGetRecommendations = async () => {
+    try {
+      await aiRecommendations.mutateAsync({
+        savedCourses: savedCourses || [],
+        academicLevel: "Undergraduate",
+      });
+      toast.success("Recommendations generated!");
+    } catch (error) {
+      toast.error("Failed to get recommendations");
+    }
+  };
 
   if (loading) {
     return (
@@ -49,6 +65,7 @@ const Profile = () => {
         <Tabs defaultValue="courses" className="space-y-6">
           <TabsList>
             <TabsTrigger value="courses">Saved Courses</TabsTrigger>
+            <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
             <TabsTrigger value="labs">Saved Labs</TabsTrigger>
             <TabsTrigger value="programs">Saved Programs</TabsTrigger>
             <TabsTrigger value="agreements">Learning Agreements</TabsTrigger>
@@ -84,6 +101,57 @@ const Profile = () => {
                           <p className="text-sm text-muted-foreground mt-1">{saved.note}</p>
                         )}
                       </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="recommendations">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    AI Course Recommendations
+                  </CardTitle>
+                  <Button 
+                    onClick={handleGetRecommendations}
+                    disabled={aiRecommendations.isPending}
+                  >
+                    {aiRecommendations.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Get Recommendations
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!aiRecommendations.data ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Click "Get Recommendations" to discover courses tailored to your interests!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {aiRecommendations.data.recommendations.map((rec: any, idx: number) => (
+                      <div key={idx} className="p-4 border rounded-lg">
+                        <h3 className="font-semibold mb-2">{rec.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-3">{rec.reason}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {rec.skills?.map((skill: string, i: number) => (
+                            <Badge key={i} variant="secondary">{skill}</Badge>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
