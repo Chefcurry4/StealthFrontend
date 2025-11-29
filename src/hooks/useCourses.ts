@@ -17,6 +17,8 @@ export interface Course {
   type_exam: string | null;
   mandatory_optional: string | null;
   programs: string | null;
+  software_equipment: string | null;
+  which_year: string | null;
 }
 
 export interface CourseFilters {
@@ -26,6 +28,11 @@ export interface CourseFilters {
   language?: string;
   level?: string;
   term?: string;
+  ectsMin?: number;
+  ectsMax?: number;
+  examType?: string;
+  mandatoryOptional?: string;
+  whichYear?: string;
 }
 
 export const useCourses = (filters?: CourseFilters) => {
@@ -38,7 +45,35 @@ export const useCourses = (filters?: CourseFilters) => {
         .order("name_course");
 
       if (filters?.search) {
-        query = query.or(`name_course.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
+        query = query.or(`name_course.ilike.%${filters.search}%,code.ilike.%${filters.search}%,description.ilike.%${filters.search}%,topics.ilike.%${filters.search}%,professor_name.ilike.%${filters.search}%`);
+      }
+
+      if (filters?.universityId) {
+        const { data: bridgeData } = await supabase
+          .from("bridge_course_uni(U-C)")
+          .select("id_course")
+          .eq("id_uni", filters.universityId);
+        
+        if (bridgeData && bridgeData.length > 0) {
+          const courseIds = bridgeData.map(b => b.id_course);
+          query = query.in("id_course", courseIds);
+        } else {
+          return [];
+        }
+      }
+
+      if (filters?.programId) {
+        const { data: bridgeData } = await supabase
+          .from("bridge_cp(C-P)")
+          .select("id_course")
+          .eq("id_program", filters.programId);
+        
+        if (bridgeData && bridgeData.length > 0) {
+          const courseIds = bridgeData.map(b => b.id_course);
+          query = query.in("id_course", courseIds);
+        } else {
+          return [];
+        }
       }
 
       if (filters?.language) {
@@ -51,6 +86,26 @@ export const useCourses = (filters?: CourseFilters) => {
 
       if (filters?.term) {
         query = query.eq("term", filters.term);
+      }
+
+      if (filters?.ectsMin) {
+        query = query.gte("ects", filters.ectsMin);
+      }
+
+      if (filters?.ectsMax) {
+        query = query.lte("ects", filters.ectsMax);
+      }
+
+      if (filters?.examType) {
+        query = query.eq("type_exam", filters.examType);
+      }
+
+      if (filters?.mandatoryOptional) {
+        query = query.eq("mandatory_optional", filters.mandatoryOptional);
+      }
+
+      if (filters?.whichYear) {
+        query = query.eq("which_year", filters.whichYear);
       }
 
       const { data, error } = await query;
