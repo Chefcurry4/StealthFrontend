@@ -1,14 +1,15 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Microscope, Users, ExternalLink } from "lucide-react";
+import { ArrowLeft, Microscope, Users, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLab } from "@/hooks/useLabs";
+import { useLab, useUniversitiesByLab } from "@/hooks/useLabs";
 
 const LabDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: lab, isLoading, error } = useLab(slug!);
+  const { data: universities } = useUniversitiesByLab(lab?.id_lab || "");
 
   if (isLoading) {
     return (
@@ -51,6 +52,18 @@ const LabDetail = () => {
         </Link>
 
         <div className="mb-8">
+          {lab.image && (
+            <div className="mb-6">
+              <img
+                src={lab.image}
+                alt={lab.name}
+                className="w-full h-64 object-cover rounded-lg"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-primary/10 rounded-lg">
               <Microscope className="h-8 w-8 text-primary" />
@@ -108,6 +121,47 @@ const LabDetail = () => {
           </div>
 
           <div className="space-y-6">
+            {universities && universities.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Universities with this Lab ({universities.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {universities.map((uni: any) => (
+                      <Link
+                        key={uni.uuid}
+                        to={`/universities/${uni.slug}`}
+                        className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          {uni.logo_url && (
+                            <img 
+                              src={uni.logo_url} 
+                              alt={uni.name} 
+                              className="h-8 w-8 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div>
+                            <h3 className="font-semibold">{uni.name}</h3>
+                            {uni.country && (
+                              <p className="text-sm text-muted-foreground">{uni.country}</p>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {lab.link && (
               <Card>
                 <CardHeader>

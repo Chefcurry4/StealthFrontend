@@ -1,16 +1,31 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Microscope, Users } from "lucide-react";
+import { Search, Microscope, Users, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLabs, LabFilters } from "@/hooks/useLabs";
+import { useUniversities } from "@/hooks/useUniversities";
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
   const { data: labs, isLoading, error } = useLabs(filters);
+  const { data: universities } = useUniversities();
+
+  const updateFilter = (key: keyof LabFilters, value: string | undefined) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value === "all" ? undefined : value,
+    }));
+  };
+
+  // Extract unique faculty areas from labs
+  const uniqueFacultyAreas = Array.from(
+    new Set(labs?.map(l => l.faculty_match).filter(Boolean))
+  ) as string[];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -34,9 +49,48 @@ const Labs = () => {
                   placeholder="Search labs by name or research area..."
                   className="pl-10 bg-background"
                   value={filters.search || ""}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  onChange={(e) => updateFilter("search", e.target.value)}
                 />
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Filters */}
+        <section className="py-6 border-b bg-background/50">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Filters:</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Select onValueChange={(value) => updateFilter("universityId", value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="University" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Universities</SelectItem>
+                  {universities?.map((uni) => (
+                    <SelectItem key={uni.uuid} value={uni.uuid}>
+                      {uni.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={(value) => updateFilter("facultyArea", value)}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Faculty Area" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Faculty Areas</SelectItem>
+                  {uniqueFacultyAreas.slice(0, 20).sort().map((area) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>

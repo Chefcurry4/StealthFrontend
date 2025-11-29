@@ -16,6 +16,7 @@ export interface Lab {
 export interface LabFilters {
   search?: string;
   universityId?: string;
+  facultyArea?: string;
 }
 
 export const useLabs = (filters?: LabFilters) => {
@@ -29,6 +30,24 @@ export const useLabs = (filters?: LabFilters) => {
 
       if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,topics.ilike.%${filters.search}%`);
+      }
+
+      if (filters?.universityId) {
+        const { data: bridgeData } = await supabase
+          .from("bridge_ul(U-L)")
+          .select("id_lab")
+          .eq("id_uni", filters.universityId);
+        
+        if (bridgeData && bridgeData.length > 0) {
+          const labIds = bridgeData.map(b => b.id_lab).filter(Boolean);
+          query = query.in("id_lab", labIds);
+        } else {
+          return [];
+        }
+      }
+
+      if (filters?.facultyArea) {
+        query = query.ilike("faculty_match", `%${filters.facultyArea}%`);
       }
 
       const { data, error } = await query;
@@ -82,5 +101,33 @@ export const useLabsByUniversity = (universityId: string) => {
       return data as Lab[];
     },
     enabled: !!universityId,
+  });
+};
+
+export const useUniversitiesByLab = (labId: string) => {
+  return useQuery({
+    queryKey: ["universities", "lab", labId],
+    queryFn: async () => {
+      const { data: bridgeData, error: bridgeError } = await supabase
+        .from("bridge_ul(U-L)")
+        .select("id_uni")
+        .eq("id_lab", labId);
+
+      if (bridgeError) throw bridgeError;
+
+      const universityIds = bridgeData.map((b) => b.id_uni).filter(Boolean);
+
+      if (universityIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("Universities(U)")
+        .select("*")
+        .in("uuid", universityIds)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!labId,
   });
 };

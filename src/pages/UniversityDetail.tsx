@@ -3,7 +3,8 @@ import { useUniversity } from "@/hooks/useUniversities";
 import { useProgramsByUniversity } from "@/hooks/usePrograms";
 import { useLabsByUniversity } from "@/hooks/useLabs";
 import { useCoursesByUniversity } from "@/hooks/useCourses";
-import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen } from "lucide-react";
+import { useTeachersByUniversity } from "@/hooks/useTeachers";
+import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ const UniversityDetail = () => {
   const { data: programs } = useProgramsByUniversity(university?.uuid || "");
   const { data: labs } = useLabsByUniversity(university?.uuid || "");
   const { data: courses } = useCoursesByUniversity(university?.uuid || "");
+  const { data: teachers } = useTeachersByUniversity(university?.uuid || "");
 
   if (isLoading) {
     return (
@@ -155,6 +157,42 @@ const UniversityDetail = () => {
               </div>
             ) : (
               <p className="text-muted-foreground">No labs found</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Featured Faculty ({teachers?.length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {teachers && teachers.length > 0 ? (
+              <div className="space-y-2">
+                {teachers.slice(0, 5).map((teacher: any) => (
+                  <Link
+                    key={teacher.id_teacher}
+                    to={`/teachers/${teacher.id_teacher}`}
+                    className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <h3 className="font-semibold">{teacher.full_name || teacher.name}</h3>
+                    {teacher["h-index"] && (
+                      <p className="text-sm text-muted-foreground">h-index: {teacher["h-index"]}</p>
+                    )}
+                  </Link>
+                ))}
+                {teachers.length > 5 && (
+                  <Link to="/teachers">
+                    <Button variant="outline" size="sm" className="w-full mt-2">
+                      View All Faculty
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No faculty information available</p>
             )}
           </CardContent>
         </Card>
