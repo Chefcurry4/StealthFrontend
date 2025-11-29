@@ -203,6 +203,50 @@ export type Database = {
         }
         Relationships: []
       }
+      course_reviews: {
+        Row: {
+          comment: string | null
+          course_id: string
+          created_at: string
+          difficulty: string | null
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+          workload: string | null
+        }
+        Insert: {
+          comment?: string | null
+          course_id: string
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+          workload?: string | null
+        }
+        Update: {
+          comment?: string | null
+          course_id?: string
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+          workload?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_reviews_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "Courses(C)"
+            referencedColumns: ["id_course"]
+          },
+        ]
+      }
       "Courses(C)": {
         Row: {
           ba_ma: string | null
@@ -275,6 +319,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_drafts: {
+        Row: {
+          ai_generated: boolean | null
+          body: string | null
+          created_at: string
+          id: string
+          recipient: string | null
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          recipient?: string | null
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          recipient?: string | null
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       "Labs(L)": {
         Row: {
           created_at: string
@@ -316,6 +393,52 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      learning_agreement_courses: {
+        Row: {
+          agreement_id: string
+          course_id: string | null
+          created_at: string
+          id: string
+          lab_id: string | null
+        }
+        Insert: {
+          agreement_id: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          lab_id?: string | null
+        }
+        Update: {
+          agreement_id?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          lab_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_agreement_courses_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "Learning_agreements(LA)"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_agreement_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "Courses(C)"
+            referencedColumns: ["id_course"]
+          },
+          {
+            foreignKeyName: "learning_agreement_courses_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "Labs(L)"
+            referencedColumns: ["id_lab"]
+          },
+        ]
       }
       "Learning_agreements(LA)": {
         Row: {
@@ -463,6 +586,73 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      university_media: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          likes_count: number
+          type: string
+          university_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          likes_count?: number
+          type: string
+          university_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          likes_count?: number
+          type?: string
+          university_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_media_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "Universities(U)"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
+      university_media_likes: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_media_likes_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "university_media"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       "user_saved_courses(US-C)": {
         Row: {
