@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Universities from "./pages/Universities";
+import UniversityDetail from "./pages/UniversityDetail";
 import Courses from "./pages/Courses";
 import Labs from "./pages/Labs";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/universities" element={<Universities />} />
+              <Route path="/universities/:slug" element={<UniversityDetail />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/labs" element={<Labs />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
