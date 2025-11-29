@@ -107,6 +107,7 @@ const UniversityDetail = () => {
           programs={programs}
           labs={labs}
           teachers={teachers}
+          courses={courses}
         />
 
         <Card>
