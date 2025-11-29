@@ -1,15 +1,33 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Microscope, Users, ExternalLink, MapPin } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Microscope, Users, ExternalLink, MapPin, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLab, useUniversitiesByLab } from "@/hooks/useLabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 
 const LabDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { data: lab, isLoading, error } = useLab(slug!);
   const { data: universities } = useUniversitiesByLab(lab?.id_lab || "");
+  const { user } = useAuth();
+  const { data: savedLabs } = useSavedLabs();
+  const toggleSave = useToggleSaveLab();
+
+  const isSaved = savedLabs?.some((saved: any) => saved.lab_id === lab?.id_lab);
+
+  const handleSave = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (lab) {
+      toggleSave.mutate(lab.id_lab);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -182,7 +200,10 @@ const LabDetail = () => {
             )}
 
             <div className="space-y-2">
-              <Button className="w-full">Save Lab</Button>
+              <Button className="w-full" onClick={handleSave} disabled={toggleSave.isPending}>
+                <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaved ? 'Saved' : 'Save Lab'}
+              </Button>
               <Button variant="outline" className="w-full">
                 Contact Lab
               </Button>

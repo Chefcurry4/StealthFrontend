@@ -1,16 +1,32 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCourse } from "@/hooks/useCourses";
 import { useTeacherIdByCourse } from "@/hooks/useTeachers";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: course, isLoading, error } = useCourse(id!);
   const { data: teacherId } = useTeacherIdByCourse(id!);
+  const { user } = useAuth();
+  const { data: savedCourses } = useSavedCourses();
+  const toggleSave = useToggleSaveCourse();
+
+  const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
+
+  const handleSave = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    toggleSave.mutate(id!);
+  };
 
   if (isLoading) {
     return (
@@ -199,7 +215,10 @@ const CourseDetail = () => {
             </Card>
 
             <div className="space-y-2">
-              <Button className="w-full">Save Course</Button>
+              <Button className="w-full" onClick={handleSave} disabled={toggleSave.isPending}>
+                <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaved ? 'Saved' : 'Save Course'}
+              </Button>
               <Button variant="outline" className="w-full">
                 Add to Learning Agreement
               </Button>

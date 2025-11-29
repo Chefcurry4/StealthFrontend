@@ -1,15 +1,33 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, GraduationCap, BookOpen } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, GraduationCap, BookOpen, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProgram, useProgramCourses } from "@/hooks/usePrograms";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedPrograms, useToggleSaveProgram } from "@/hooks/useSavedItems";
 
 const ProgramDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { data: program, isLoading, error } = useProgram(slug!);
   const { data: courses, isLoading: coursesLoading } = useProgramCourses(program?.id || "");
+  const { user } = useAuth();
+  const { data: savedPrograms } = useSavedPrograms();
+  const toggleSave = useToggleSaveProgram();
+
+  const isSaved = savedPrograms?.some((saved: any) => saved.id_program === program?.id);
+
+  const handleSave = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (program) {
+      toggleSave.mutate(program.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -114,7 +132,10 @@ const ProgramDetail = () => {
           </Card>
 
           <div className="flex gap-3">
-            <Button className="flex-1">Save Program</Button>
+            <Button className="flex-1" onClick={handleSave} disabled={toggleSave.isPending}>
+              <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+              {isSaved ? 'Saved' : 'Save Program'}
+            </Button>
             <Button variant="outline" className="flex-1">
               Add to Learning Agreement
             </Button>

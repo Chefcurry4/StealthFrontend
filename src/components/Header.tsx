@@ -1,11 +1,20 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, GraduationCap } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, GraduationCap, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -16,6 +25,11 @@ export const Header = () => {
     { name: "Labs", href: "/labs" },
     { name: "AI Advisor", href: "/ai-advisor" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -37,9 +51,28 @@ export const Header = () => {
               {item.name}
             </Link>
           ))}
-          <Button variant="default" size="sm">
-            Sign In
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" size="sm" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Profile
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/auth">
+              <Button variant="default" size="sm">
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -74,9 +107,18 @@ export const Header = () => {
               {item.name}
             </Link>
           ))}
-          <Button variant="default" size="sm" className="w-full">
-            Sign In
-          </Button>
+          {user ? (
+            <Button variant="default" size="sm" className="w-full" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          ) : (
+            <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="default" size="sm" className="w-full">
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>
