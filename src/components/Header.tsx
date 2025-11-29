@@ -60,6 +60,10 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="h-4 w-4 mr-2" />
+                  My Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -108,10 +112,18 @@ export const Header = () => {
             </Link>
           ))}
           {user ? (
-            <Button variant="default" size="sm" className="w-full" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <>
+              <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full mb-2">
+                  <User className="h-4 w-4 mr-2" />
+                  My Profile
+                </Button>
+              </Link>
+              <Button variant="default" size="sm" className="w-full" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
           ) : (
             <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="default" size="sm" className="w-full">

@@ -1,21 +1,35 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useUniversity } from "@/hooks/useUniversities";
 import { useProgramsByUniversity } from "@/hooks/usePrograms";
 import { useLabsByUniversity } from "@/hooks/useLabs";
 import { useCoursesByUniversity } from "@/hooks/useCourses";
 import { useTeachersByUniversity } from "@/hooks/useTeachers";
-import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users } from "lucide-react";
+import { useUniversityMedia, useToggleLikeMedia } from "@/hooks/useUniversityMedia";
+import { useAuth } from "@/contexts/AuthContext";
+import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users, Image as ImageIcon, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const UniversityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: university, isLoading, error } = useUniversity(slug || "");
   const { data: programs } = useProgramsByUniversity(university?.uuid || "");
   const { data: labs } = useLabsByUniversity(university?.uuid || "");
   const { data: courses } = useCoursesByUniversity(university?.uuid || "");
   const { data: teachers } = useTeachersByUniversity(university?.uuid || "");
+  const { data: media } = useUniversityMedia(university?.uuid || "");
+  const toggleLike = useToggleLikeMedia();
+
+  const handleLike = (mediaId: string) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    toggleLike.mutate(mediaId);
+  };
 
   if (isLoading) {
     return (
@@ -240,6 +254,41 @@ const UniversityDetail = () => {
               </div>
             ) : (
               <p className="text-muted-foreground">No courses found</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Campus Photos ({media?.length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {media?.length === 0 ? (
+              <p className="text-muted-foreground">No photos yet. Be the first to share!</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {media?.map((item: any) => (
+                  <div key={item.id} className="relative group">
+                    <img
+                      src={item.image_url}
+                      alt="Campus photo"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute bottom-2 right-2 bg-background/80 hover:bg-background"
+                      onClick={() => handleLike(item.id)}
+                    >
+                      <Heart className="h-4 w-4 mr-1" />
+                      {item.likes_count}
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

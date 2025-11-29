@@ -18,6 +18,8 @@ import TeacherDetail from "./pages/TeacherDetail";
 import Labs from "./pages/Labs";
 import LabDetail from "./pages/LabDetail";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import LearningAgreementDetail from "./pages/LearningAgreementDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +47,8 @@ const App = () => (
                 <Route path="/teachers/:id" element={<TeacherDetail />} />
                 <Route path="/labs" element={<Labs />} />
                 <Route path="/labs/:slug" element={<LabDetail />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/learning-agreements/:id" element={<LearningAgreementDetail />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
