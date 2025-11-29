@@ -1,5 +1,8 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark, Star } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +11,8 @@ import { useCourse } from "@/hooks/useCourses";
 import { useTeacherIdByCourse } from "@/hooks/useTeachers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
+import { useCourseReviews, useCreateCourseReview } from "@/hooks/useCourseReviews";
+import { useState } from "react";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,8 +22,19 @@ const CourseDetail = () => {
   const { user } = useAuth();
   const { data: savedCourses } = useSavedCourses();
   const toggleSave = useToggleSaveCourse();
+  const { data: reviews } = useCourseReviews(id!);
+  const createReview = useCreateCourseReview();
+
+  const [rating, setRating] = useState(5);
+  const [difficulty, setDifficulty] = useState("");
+  const [workload, setWorkload] = useState("");
+  const [comment, setComment] = useState("");
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
+
+  const averageRating = reviews?.length
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
 
   const handleSave = () => {
     if (!user) {
@@ -26,6 +42,30 @@ const CourseDetail = () => {
       return;
     }
     toggleSave.mutate(id!);
+  };
+
+  const handleSubmitReview = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    createReview.mutate(
+      {
+        course_id: id!,
+        rating,
+        difficulty,
+        workload,
+        comment,
+      },
+      {
+        onSuccess: () => {
+          setRating(5);
+          setDifficulty("");
+          setWorkload("");
+          setComment("");
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -147,12 +187,98 @@ const CourseDetail = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Course Reviews</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5" />
+                  Course Reviews {averageRating && `(${averageRating}/5)`}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Course reviews coming soon. Sign up to be the first to review this course!
-                </p>
+              <CardContent className="space-y-6">
+                {user && (
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <h3 className="font-semibold">Write a Review</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Rating (1-5)</Label>
+                        <Select value={rating.toString()} onValueChange={(v) => setRating(Number(v))}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <SelectItem key={n} value={n.toString()}>
+                                {n} Star{n !== 1 && "s"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Difficulty</Label>
+                        <Select value={difficulty} onValueChange={setDifficulty}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select difficulty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Easy">Easy</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Hard">Hard</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Workload</Label>
+                        <Select value={workload} onValueChange={setWorkload}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select workload" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Light">Light</SelectItem>
+                            <SelectItem value="Moderate">Moderate</SelectItem>
+                            <SelectItem value="Heavy">Heavy</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Comment</Label>
+                        <Textarea
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          placeholder="Share your experience..."
+                          rows={4}
+                        />
+                      </div>
+                      <Button onClick={handleSubmitReview} disabled={createReview.isPending}>
+                        Submit Review
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {reviews?.length === 0 ? (
+                    <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                  ) : (
+                    reviews?.map((review: any) => (
+                      <div key={review.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  i < review.rating ? "fill-primary text-primary" : "text-muted"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
+                          {review.workload && <Badge variant="outline">{review.workload}</Badge>}
+                        </div>
+                        {review.comment && <p className="text-sm">{review.comment}</p>}
+                      </div>
+                    ))
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
