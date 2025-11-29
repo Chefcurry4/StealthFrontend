@@ -6,8 +6,7 @@ import { useCoursesByUniversity } from "@/hooks/useCourses";
 import { useTeachersByUniversity } from "@/hooks/useTeachers";
 import { useUniversityMedia, useToggleLikeMedia } from "@/hooks/useUniversityMedia";
 import { useAuth } from "@/contexts/AuthContext";
-import { UniversityNetwork } from "@/components/UniversityNetwork";
-import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users, Image as ImageIcon, Heart } from "lucide-react";
+import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users, Image as ImageIcon, Heart, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -101,14 +100,60 @@ const UniversityDetail = () => {
       </div>
 
       <div className="space-y-6">
-        <UniversityNetwork
-          universityId={university.uuid}
-          universityName={university.name}
-          programs={programs}
-          labs={labs}
-          teachers={teachers}
-          courses={courses}
-        />
+        {/* Statistics Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                Programs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{programs?.length || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                Courses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{courses?.length || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ba: {courses?.filter(c => c.ba_ma === 'Ba').length || 0} • 
+                Ma: {courses?.filter(c => c.ba_ma === 'Ma').length || 0}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Microscope className="h-4 w-4 text-muted-foreground" />
+                Labs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{labs?.length || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                Faculty
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{teachers?.length || 0}</div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>

@@ -14,8 +14,21 @@ export const useSavedCourses = () => {
       
       const { data, error } = await supabase
         .from("user_saved_courses(US-C)")
-        .select("*")
-        .eq("user_id", user.id);
+        .select(`
+          id,
+          course_id,
+          note,
+          created_at,
+          Courses:course_id (
+            id_course,
+            name_course,
+            code,
+            ects,
+            ba_ma
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -93,8 +106,20 @@ export const useSavedLabs = () => {
       
       const { data, error } = await supabase
         .from("user_saved_labs(US-L)")
-        .select("*")
-        .eq("user_id", user.id);
+        .select(`
+          id,
+          lab_id,
+          note,
+          created_at,
+          Labs:lab_id (
+            id_lab,
+            name,
+            slug,
+            topics
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -169,8 +194,20 @@ export const useSavedPrograms = () => {
       
       const { data, error } = await supabase
         .from("user_saved_programs(US-P)")
-        .select("*")
-        .eq("user_id", user.id);
+        .select(`
+          id,
+          id_program,
+          note,
+          created_at,
+          Programs:id_program (
+            id,
+            name,
+            slug,
+            description
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
