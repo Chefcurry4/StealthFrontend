@@ -6,6 +6,7 @@ import { useCoursesByUniversity } from "@/hooks/useCourses";
 import { useTeachersByUniversity } from "@/hooks/useTeachers";
 import { useUniversityMedia, useToggleLikeMedia } from "@/hooks/useUniversityMedia";
 import { useAuth } from "@/contexts/AuthContext";
+import { UniversityNetwork } from "@/components/UniversityNetwork";
 import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users, Image as ImageIcon, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,6 +101,14 @@ const UniversityDetail = () => {
       </div>
 
       <div className="space-y-6">
+        <UniversityNetwork
+          universityId={university.uuid}
+          universityName={university.name}
+          programs={programs}
+          labs={labs}
+          teachers={teachers}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

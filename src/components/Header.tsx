@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut } from "lucide-react";
+import { Menu, X, GraduationCap, User, LogOut, Bot, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +23,11 @@ export const Header = () => {
     { name: "Courses", href: "/courses" },
     { name: "Teachers", href: "/teachers" },
     { name: "Labs", href: "/labs" },
-    { name: "AI Advisor", href: "/ai-advisor" },
+  ];
+
+  const userNavigation = [
+    { name: "AI Advisor", href: "/ai-advisor", icon: Bot },
+    { name: "Email Drafts", href: "/email-drafts", icon: Mail },
   ];
 
   const handleSignOut = async () => {
@@ -48,6 +52,16 @@ export const Header = () => {
               to={item.href}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
+              {item.name}
+            </Link>
+          ))}
+          {user && userNavigation.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <item.icon className="h-4 w-4" />
               {item.name}
             </Link>
           ))}
@@ -108,6 +122,17 @@ export const Header = () => {
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
+              {item.name}
+            </Link>
+          ))}
+          {user && userNavigation.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <item.icon className="h-4 w-4" />
               {item.name}
             </Link>
           ))}
