@@ -10,13 +10,13 @@ There are several ways of editing your application.
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9a1bc962-3c20-4c50-97f3-605b5e43d674) and start prompting.
+Visit the [Lovable Project](https://lovable.dev/projects/9a1bc962-3c20-4c50-97f3-605b5e43d674) and start prompting. BUT Don't overuse the prompts there !!!.
 
 Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE (VS Code), you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -37,6 +37,8 @@ npm run dev
 ```
 
 **Edit a file directly in GitHub**
+
+Yes, this is also an option... 
 
 - Navigate to the desired file(s).
 - Click the "Edit" button (pencil icon) at the top right of the file view.
@@ -62,12 +64,9 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/9a1bc962-3c20-4c50-97f3-605b5e43d674) and click on Share -> Publish.
+This is what lovable suggests...
 
-## Can I connect a custom domain to my Lovable project?
+Simply open [Lovable](https://lovable.dev/projects/9a1bc962-3c20-4c50-97f3-605b5e43d674) and click on Share -> Publish. 
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain. Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+But probably we'll do more research regarding that.. Maybe using Netlify for the hosting and buying a custom third-partly domain.
