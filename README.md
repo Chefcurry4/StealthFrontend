@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Stealth Frontend Project 
 
 ## Project info
 
@@ -70,3 +70,8 @@ Simply open [Lovable](https://lovable.dev/projects/9a1bc962-3c20-4c50-97f3-605b5
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain. Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 
 But probably we'll do more research regarding that.. Maybe using Netlify for the hosting and buying a custom third-partly domain.
+
+<p align="center">
+  <!-- Reference to your SVG image -->
+  <img src="rocket.svg" width="100%" alt="Animated rocket launching"/>
+</p>
