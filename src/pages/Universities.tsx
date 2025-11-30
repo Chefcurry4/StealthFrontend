@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UniversityCardImage } from "@/components/UniversityCardImage";
 import { Search, MapPin, Globe, Loader2, Map as MapIcon, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientBackground } from "@/components/GradientBackground";
@@ -25,7 +26,7 @@ const Universities = () => {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
         {/* Hero Section */}
-        <GradientBackground variant="night">
+        <GradientBackground variant="warm">
           <section className="py-16">
             <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-accent-foreground mb-4">
@@ -102,23 +103,18 @@ const Universities = () => {
                 {filteredUniversities && filteredUniversities.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredUniversities.map((university) => (
-                      <Card key={university.uuid} className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                          <div className="flex items-start gap-3">
-                            {university.logo_url && (
-                              <img 
-                                src={university.logo_url} 
-                                alt={university.name} 
-                                className="h-12 w-12 object-contain flex-shrink-0"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            )}
-                            <CardTitle className="text-lg leading-tight">{university.name}</CardTitle>
-                          </div>
+                      <Card key={university.uuid} className="flex flex-col overflow-hidden">
+                        <UniversityCardImage 
+                          universityId={university.uuid}
+                          universityName={university.name}
+                          logoUrl={university.logo_url}
+                          country={university.country}
+                          className="h-40"
+                        />
+                        <CardHeader className="flex-1">
+                          <CardTitle className="text-lg leading-tight line-clamp-2">{university.name}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-3">
                           {university.country && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <MapPin className="h-4 w-4" />
