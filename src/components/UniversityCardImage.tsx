@@ -6,6 +6,15 @@ interface UniversityCardImageProps {
   className?: string;
 }
 
+// Generate Unsplash image URL based on university name
+const getUniversityCampusImage = (universityName: string, universityId: string): string => {
+  // Use university name as search query for more relevant images
+  const searchQuery = encodeURIComponent(`${universityName} campus building`);
+  // Add university ID as seed for consistency
+  const seed = universityId.substring(0, 8);
+  return `https://source.unsplash.com/800x600/?${searchQuery}&sig=${seed}`;
+};
+
 export const UniversityCardImage = ({ 
   universityId, 
   universityName,
@@ -13,38 +22,28 @@ export const UniversityCardImage = ({
   country,
   className = "" 
 }: UniversityCardImageProps) => {
-  // Generate purple/indigo color palette
-  const hash = universityId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const hue = 240 + (hash % 60); // Purple to indigo range: 240-300
-  const saturation = 60 + (hash % 25);
-  const lightness = 55 + (hash % 20);
-  
-  const color1 = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  const color2 = `hsl(${(hue + 30) % 360}, ${saturation - 10}%, ${lightness - 10}%)`;
-  const color3 = `hsl(${(hue + 15) % 360}, ${saturation + 5}%, ${lightness + 5}%)`;
-
-  const gradientStyle = {
-    background: `linear-gradient(135deg, ${color1} 0%, ${color2} 50%, ${color3} 100%)`,
-  };
+  const campusImageUrl = getUniversityCampusImage(universityName, universityId);
 
   return (
-    <div className={`relative overflow-hidden ${className}`} style={gradientStyle}>
-      {/* Noise texture overlay */}
-      <div 
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`,
-          backgroundSize: '190px 190px',
-        }}
+    <div className={`relative overflow-hidden bg-muted ${className}`}>
+      {/* Campus photo */}
+      <img 
+        src={campusImageUrl} 
+        alt={`${universityName} campus`}
+        className="w-full h-full object-cover"
+        loading="lazy"
       />
       
-      {/* Logo overlay if available */}
+      {/* Gradient overlay for better text contrast */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+      
+      {/* Logo overlay in top-left corner if available */}
       {logoUrl && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+        <div className="absolute top-3 left-3 bg-background/95 backdrop-blur-sm p-2 rounded-lg shadow-lg">
           <img 
             src={logoUrl} 
             alt={universityName}
-            className="h-16 w-auto object-contain drop-shadow-lg"
+            className="h-10 w-auto object-contain"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
@@ -52,15 +51,12 @@ export const UniversityCardImage = ({
         </div>
       )}
       
-      {/* Country indicator */}
-      {country && !logoUrl && (
-        <div className="absolute bottom-2 right-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium text-foreground">
-          {country}
+      {/* Country badge in bottom-right */}
+      {country && (
+        <div className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold text-foreground shadow-lg">
+          📍 {country}
         </div>
       )}
-      
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
     </div>
   );
 };
