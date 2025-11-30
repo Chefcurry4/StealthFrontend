@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, GraduationCap, Mail, Award, BookOpen } from "lucide-react";
+import { Search, Mail, Award, BookOpen } from "lucide-react";
+import { TeacherCardImage } from "@/components/TeacherCardImage";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
@@ -61,62 +63,45 @@ const Teachers = () => {
                 No teachers found matching your search.
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {teachers?.map((teacher) => (
-                  <Link key={teacher.id_teacher} to={`/teachers/${teacher.id_teacher}`}>
-                    <Card className="h-full hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-start gap-3">
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <GraduationCap className="h-6 w-6 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg line-clamp-2">
-                              {teacher.full_name || teacher.name}
-                            </CardTitle>
-                          </div>
+                  <Card key={teacher.id_teacher} className="flex flex-col overflow-hidden">
+                    <TeacherCardImage 
+                      teacherId={teacher.id_teacher}
+                      teacherName={teacher.full_name || teacher.name || "Unknown"}
+                      className="h-32"
+                    />
+                    <CardHeader className="flex-1">
+                      <CardTitle className="text-lg line-clamp-2">{teacher.full_name || teacher.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {teacher.email && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                          <Mail className="h-4 w-4 flex-shrink-0" />
+                          <a href={`mailto:${teacher.email}`} className="hover:text-primary truncate">
+                            {teacher.email}
+                          </a>
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {teacher.email && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Mail className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">{teacher.email}</span>
-                          </div>
-                        )}
-
+                      )}
+                      {teacher.topics && teacher.topics.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                          {teacher["h-index"] && (
-                            <Badge variant="secondary" className="flex items-center gap-1">
-                              <Award className="h-3 w-3" />
-                              h-index: {teacher["h-index"]}
-                            </Badge>
-                          )}
-                          {teacher.citations && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <BookOpen className="h-3 w-3" />
-                              {teacher.citations} citations
-                            </Badge>
-                          )}
+                          {teacher.topics.slice(0, 3).map((topic, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground"
+                            >
+                              {topic}
+                            </span>
+                          ))}
                         </div>
-
-                        {teacher.topics && teacher.topics.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {teacher.topics.slice(0, 3).map((topic, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs">
-                                {topic}
-                              </Badge>
-                            ))}
-                            {teacher.topics.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{teacher.topics.length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Link>
+                      )}
+                      <Link to={`/teachers/${teacher.id_teacher}`}>
+                        <Button variant="default" size="sm" className="w-full">
+                          View Profile
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, GraduationCap } from "lucide-react";
+import { Search } from "lucide-react";
+import { ProgramCardImage } from "@/components/ProgramCardImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
@@ -58,22 +59,20 @@ const Programs = () => {
                 No programs found matching your search.
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {programs?.map((program) => (
-                  <Card key={program.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <GraduationCap className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-xl">{program.name}</CardTitle>
-                        </div>
-                      </div>
+                  <Card key={program.id} className="flex flex-col overflow-hidden">
+                    <ProgramCardImage 
+                      programId={program.id}
+                      programName={program.name}
+                      className="h-32"
+                    />
+                    <CardHeader className="flex-1">
+                      <CardTitle className="text-lg line-clamp-2">{program.name}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {program.description && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                           {program.description}
                         </p>
                       )}
