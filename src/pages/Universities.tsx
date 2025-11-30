@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, MapPin, Globe, Loader2, Map as MapIcon, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,8 +25,9 @@ const Universities = () => {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
         {/* Hero Section */}
-        <section className="bg-accent py-16">
-          <div className="container mx-auto px-4">
+        <GradientBackground variant="night">
+          <section className="py-16">
+            <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-accent-foreground mb-4">
               Explore Universities
             </h1>
@@ -58,9 +60,10 @@ const Universities = () => {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </GradientBackground>
 
         {/* Universities List/Map */}
         <section className="py-12">

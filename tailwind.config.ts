@@ -63,28 +63,46 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
-  		keyframes: {
-  			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
-  			},
-  			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
-  			}
-  		},
-  		animation: {
-  			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
-  		},
+		keyframes: {
+			'accordion-down': {
+				from: {
+					height: '0'
+				},
+				to: {
+					height: 'var(--radix-accordion-content-height)'
+				}
+			},
+			'accordion-up': {
+				from: {
+					height: 'var(--radix-accordion-content-height)'
+				},
+				to: {
+					height: '0'
+				}
+			},
+			'hover-lift': {
+				'0%': {
+					transform: 'translateY(0) scale(1)'
+				},
+				'100%': {
+					transform: 'translateY(-4px) scale(1.02)'
+				}
+			},
+			'hover-glow': {
+				'0%': {
+					boxShadow: '0 0 0 0 hsl(var(--primary) / 0)'
+				},
+				'100%': {
+					boxShadow: '0 10px 40px -10px hsl(var(--primary) / 0.4)'
+				}
+			}
+		},
+		animation: {
+			'accordion-down': 'accordion-down 0.2s ease-out',
+			'accordion-up': 'accordion-up 0.2s ease-out',
+			'hover-lift': 'hover-lift 0.3s ease-out forwards',
+			'hover-glow': 'hover-glow 0.3s ease-out forwards'
+		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',
   			xs: 'var(--shadow-xs)',

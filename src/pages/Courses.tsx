@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, BookOpen, GraduationCap, Clock, Filter, Bookmark } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,8 +61,9 @@ const Courses = () => {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
         {/* Hero Section */}
-        <section className="bg-accent py-16">
-          <div className="container mx-auto px-4">
+        <GradientBackground variant="subtle">
+          <section className="py-16">
+            <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-accent-foreground mb-4">
               Discover Courses
             </h1>
@@ -81,9 +83,10 @@ const Courses = () => {
                   onChange={(e) => updateFilter("search", e.target.value)}
                 />
               </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </GradientBackground>
 
         {/* Filters */}
         <section className="py-6 border-b bg-background/50">
