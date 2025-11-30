@@ -10,6 +10,7 @@ import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, Bo
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { UniversityCampusGallery } from "@/components/UniversityCampusGallery";
 
 const UniversityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -65,36 +66,44 @@ const UniversityDetail = () => {
       </Link>
 
       <div className="mb-8">
-        <div className="flex items-start gap-6 mb-6">
-          {university.logo_url && (
-            <img 
-              src={university.logo_url} 
-              alt={university.name} 
-              className="h-20 w-20 object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+        <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="flex items-start gap-6">
+            {university.logo_url && (
+              <img 
+                src={university.logo_url} 
+                alt={university.name} 
+                className="h-20 w-20 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{university.name}</h1>
+              {university.country && (
+                <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                  <MapPin className="h-5 w-5" />
+                  <span className="text-lg">{university.country}</span>
+                </div>
+              )}
+              {university.website && (
+                <a
+                  href={university.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Visit Official Website
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <UniversityCampusGallery 
+              universityName={university.name}
+              universityId={university.uuid}
             />
-          )}
-          <div>
-            <h1 className="text-4xl font-bold mb-2">{university.name}</h1>
-            {university.country && (
-              <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                <MapPin className="h-5 w-5" />
-                <span className="text-lg">{university.country}</span>
-              </div>
-            )}
-            {university.website && (
-              <a
-                href={university.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-primary hover:underline"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Visit Official Website
-              </a>
-            )}
           </div>
         </div>
       </div>
