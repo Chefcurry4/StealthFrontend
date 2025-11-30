@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientBackground } from "@/components/GradientBackground";
 import { BarChart3, BookOpen, GraduationCap, Microscope, Users, Globe } from "lucide-react";
 import { useCourses } from "@/hooks/useCourses";
 import { usePrograms } from "@/hooks/usePrograms";
@@ -49,8 +50,9 @@ const Statistics = () => {
     .slice(0, 10);
 
   return (
-    <div className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
+    <GradientBackground variant="subtle" className="min-h-screen">
+      <div className="py-12">
+        <div className="container mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
             <BarChart3 className="h-10 w-10 text-primary" />
@@ -223,8 +225,9 @@ const Statistics = () => {
             </CardContent>
           </Card>
         </div>
+        </div>
       </div>
-    </div>
+    </GradientBackground>
   );
 };
 

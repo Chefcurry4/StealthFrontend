@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,8 +15,9 @@ const Programs = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
-        <section className="bg-accent py-16">
-          <div className="container mx-auto px-4">
+        <GradientBackground variant="ethereal">
+          <section className="py-16">
+            <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-accent-foreground mb-4">
               Explore Programs
             </h1>
@@ -34,9 +36,10 @@ const Programs = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </GradientBackground>
 
         <section className="py-12">
           <div className="container mx-auto px-4">

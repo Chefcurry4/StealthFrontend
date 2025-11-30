@@ -4,6 +4,7 @@ import { Menu, X, GraduationCap, User, LogOut, Bot, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +46,7 @@ export const Header = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-4">
           {navigation.map((item) => (
             <Link
               key={item.name}
@@ -65,6 +66,7 @@ export const Header = () => {
               {item.name}
             </Link>
           ))}
+          <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

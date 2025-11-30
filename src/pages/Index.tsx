@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientBackground } from "@/components/GradientBackground";
 import { GraduationCap, BookOpen, Microscope, Bot, FileText, ArrowRight, UserPlus, BarChart3 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,44 +53,46 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-accent to-background">
-        <div className="absolute inset-0 opacity-20">
-          <img 
-            src={heroImage} 
-            alt="Students collaborating" 
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="relative container mx-auto px-4 py-24 md:py-32">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              Plan Your International Study Semester
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">
-              Discover universities, explore courses, and build your learning agreement with AI-powered guidance
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {!user && (
-                <Button size="lg" asChild>
-                  <Link to="/auth">
-                    <UserPlus className="mr-2 h-5 w-5" />
-                    Get Started Free
+      <GradientBackground variant="aurora">
+        <section className="relative overflow-hidden py-24 md:py-32">
+          <div className="absolute inset-0 opacity-10">
+            <img 
+              src={heroImage} 
+              alt="Students collaborating" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="relative container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+                Plan Your International Study Semester
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground mb-8">
+                Discover universities, explore courses, and build your learning agreement with AI-powered guidance
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {!user && (
+                  <Button size="lg" asChild>
+                    <Link to="/auth">
+                      <UserPlus className="mr-2 h-5 w-5" />
+                      Get Started Free
+                    </Link>
+                  </Button>
+                )}
+                <Button size="lg" variant={user ? "default" : "outline"} asChild>
+                  <Link to="/universities">
+                    Browse Universities
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-              )}
-              <Button size="lg" variant={user ? "default" : "outline"} asChild>
-                <Link to="/universities">
-                  Browse Universities
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/courses">Explore Courses</Link>
-              </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link to="/courses">Explore Courses</Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </GradientBackground>
 
       {/* Features Section */}
       <section className="py-20 bg-background">

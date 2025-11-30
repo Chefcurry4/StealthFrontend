@@ -94,6 +94,10 @@ All colors MUST be HSL.
     --tracking-normal: 0em;
 
     --spacing: 0.25rem;
+
+    /* Enhanced hover effects */
+    --hover-lift-distance: -4px;
+    --hover-glow-color: var(--primary);
   }
 
   .dark {
@@ -156,5 +160,25 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Enhanced card hover effects */
+  .card-hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-hover-lift:hover {
+    @apply -translate-y-1 shadow-xl;
+  }
+  
+  .card-hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .card-hover-glow:hover {
+    @apply shadow-lg;
+    box-shadow: 0 10px 40px -10px hsl(var(--primary) / 0.4);
   }
 }
