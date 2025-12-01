@@ -66,24 +66,24 @@ const UniversityDetail = () => {
       </Link>
 
       <div className="mb-8">
-        <div className="flex items-start justify-between gap-6 mb-6">
-          <div className="flex items-start gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-6">
+          <div className="flex items-start gap-4 sm:gap-6">
             {university.logo_url && (
               <img 
                 src={university.logo_url} 
                 alt={university.name} 
-                className="h-20 w-20 object-contain"
+                className="h-16 w-16 sm:h-20 sm:w-20 object-contain flex-shrink-0"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             )}
             <div>
-              <h1 className="text-4xl font-bold mb-2">{university.name}</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold mb-2">{university.name}</h1>
               {university.country && (
                 <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                  <MapPin className="h-5 w-5" />
-                  <span className="text-lg">{university.country}</span>
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-base sm:text-lg">{university.country}</span>
                 </div>
               )}
               {university.website && (
@@ -91,7 +91,7 @@ const UniversityDetail = () => {
                   href={university.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:underline"
+                  className="inline-flex items-center gap-2 text-primary hover:underline text-sm sm:text-base"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Visit Official Website
@@ -99,7 +99,7 @@ const UniversityDetail = () => {
               )}
             </div>
           </div>
-          <div className="flex-shrink-0">
+          <div className="w-full sm:w-auto sm:flex-shrink-0">
             <UniversityCampusGallery 
               universityName={university.name}
               universityId={university.uuid}
