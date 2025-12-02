@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ProgramCardSkeleton } from "@/components/skeletons/ProgramCardSkeleton";
 import { usePrograms } from "@/hooks/usePrograms";
 
 const Programs = () => {
@@ -45,9 +45,9 @@ const Programs = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-48" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <ProgramCardSkeleton key={i} />
                 ))}
               </div>
             ) : error ? (

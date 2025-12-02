@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUniversities } from "@/hooks/useUniversities";
 import { Link } from "react-router-dom";
 import UniversityMap from "@/components/UniversityMap";
+import { UniversityCardSkeleton } from "@/components/skeletons/UniversityCardSkeleton";
 
 const Universities = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,8 +84,10 @@ const Universities = () => {
 
               <TabsContent value="list">
                 {isLoading && (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <UniversityCardSkeleton key={i} />
+                    ))}
                   </div>
                 )}
 
