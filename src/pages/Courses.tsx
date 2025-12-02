@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CourseCardSkeleton } from "@/components/skeletons/CourseCardSkeleton";
 import { Slider } from "@/components/ui/slider";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useCourses, CourseFilters } from "@/hooks/useCourses";
@@ -220,9 +220,9 @@ const Courses = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-48" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <CourseCardSkeleton key={i} />
                 ))}
               </div>
             ) : error ? (
