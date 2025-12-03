@@ -776,8 +776,14 @@ export type Database = {
           birthday: string | null
           country: string | null
           created_at: string
+          display_compact: boolean | null
+          display_items_per_page: number | null
           email: string
           id: string
+          language_preference: string | null
+          notification_agreements: boolean | null
+          notification_email: boolean | null
+          notification_reviews: boolean | null
           profile_photo_url: string | null
           university_id: string | null
           updated_at: string
@@ -787,8 +793,14 @@ export type Database = {
           birthday?: string | null
           country?: string | null
           created_at?: string
+          display_compact?: boolean | null
+          display_items_per_page?: number | null
           email: string
           id?: string
+          language_preference?: string | null
+          notification_agreements?: boolean | null
+          notification_email?: boolean | null
+          notification_reviews?: boolean | null
           profile_photo_url?: string | null
           university_id?: string | null
           updated_at?: string
@@ -798,8 +810,14 @@ export type Database = {
           birthday?: string | null
           country?: string | null
           created_at?: string
+          display_compact?: boolean | null
+          display_items_per_page?: number | null
           email?: string
           id?: string
+          language_preference?: string | null
+          notification_agreements?: boolean | null
+          notification_email?: boolean | null
+          notification_reviews?: boolean | null
           profile_photo_url?: string | null
           university_id?: string | null
           updated_at?: string
