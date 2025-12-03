@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader } from "@/components/Loader";
+import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
+import { PreferencesSettings } from "@/components/profile/PreferencesSettings";
 import { 
   User, 
   Mail, 
@@ -21,9 +23,10 @@ import {
   Upload,
   Calendar,
   MapPin,
-  School,
   Trash2,
-  Edit
+  Edit,
+  Settings,
+  Activity
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -140,22 +143,30 @@ const Profile = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              <span className="hidden sm:inline">Activity</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Preferences</span>
+            </TabsTrigger>
             <TabsTrigger value="drafts" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              <span className="hidden sm:inline">Email Drafts</span>
+              <span className="hidden sm:inline">Drafts</span>
             </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
-              <span className="hidden sm:inline">Appearance</span>
+              <span className="hidden sm:inline">Theme</span>
             </TabsTrigger>
             <TabsTrigger value="danger" className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              <span className="hidden sm:inline">Danger Zone</span>
+              <span className="hidden sm:inline">Danger</span>
             </TabsTrigger>
           </TabsList>
 
@@ -166,7 +177,7 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Your personal details and preferences</CardDescription>
+                    <CardDescription>Your personal details</CardDescription>
                   </div>
                   {!isEditing ? (
                     <Button onClick={handleEdit} variant="outline" size="sm">
@@ -244,6 +255,16 @@ const Profile = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity">
+            <ActivityTimeline />
+          </TabsContent>
+
+          {/* Preferences Tab */}
+          <TabsContent value="preferences">
+            <PreferencesSettings />
           </TabsContent>
 
           {/* Email Drafts Tab */}
@@ -342,7 +363,7 @@ const Profile = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Appearance</CardTitle>
-                <CardDescription>Customize how the app looks to you</CardDescription>
+                <CardDescription>Customize how the app looks</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -369,7 +390,7 @@ const Profile = () => {
                 <div className="rounded-lg border border-destructive/50 p-4">
                   <h3 className="font-semibold mb-2">Delete Account</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Once you delete your account, there is no going back. Please be certain.
+                    Once you delete your account, there is no going back.
                   </p>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -382,7 +403,7 @@ const Profile = () => {
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently delete your
-                          account and remove all your data from our servers.
+                          account and remove all your data.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
