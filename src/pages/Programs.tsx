@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { ProgramCardImage } from "@/components/ProgramCardImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProgramCardSkeleton } from "@/components/skeletons/ProgramCardSkeleton";
@@ -16,31 +15,29 @@ const Programs = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
-        <GradientBackground variant="ethereal">
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-accent-foreground mb-4">
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Explore Programs
             </h1>
-            <p className="text-lg text-accent-foreground/80 mb-8 max-w-2xl">
+            <p className="text-lg opacity-80 mb-8 max-w-2xl">
               Discover academic programs across partner universities
             </p>
 
             <div className="max-w-2xl">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-50 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Search programs by name..."
-                  className="pl-10 bg-background"
+                  className="pl-10 bg-white/10 backdrop-blur border-white/20"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              </div>
             </div>
-          </section>
-        </GradientBackground>
+          </div>
+        </section>
 
         <section className="py-12">
           <div className="container mx-auto px-4">
@@ -51,17 +48,17 @@ const Programs = () => {
                 ))}
               </div>
             ) : error ? (
-              <p className="text-center text-muted-foreground">
+              <p className="text-center opacity-70">
                 Error loading programs. Please try again.
               </p>
             ) : programs?.length === 0 ? (
-              <p className="text-center text-muted-foreground">
+              <p className="text-center opacity-70">
                 No programs found matching your search.
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {programs?.map((program) => (
-                  <Card key={program.id} className="flex flex-col overflow-hidden">
+                  <Card key={program.id} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
                     <ProgramCardImage 
                       programId={program.id}
                       programName={program.name}
@@ -72,12 +69,12 @@ const Programs = () => {
                     </CardHeader>
                     <CardContent>
                       {program.description && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        <p className="text-sm opacity-70 mb-4 line-clamp-2">
                           {program.description}
                         </p>
                       )}
                       <Link to={`/programs/${program.slug || program.id}`}>
-                        <Button variant="default" size="sm" className="w-full">
+                        <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
                           View Details
                         </Button>
                       </Link>
