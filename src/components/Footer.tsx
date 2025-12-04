@@ -23,16 +23,16 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="border-t border-border bg-card mt-auto">
+    <footer className="border-t border-white/20 backdrop-blur-md bg-white/5 mt-auto">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="flex flex-col gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <GraduationCap className="h-8 w-8 text-primary" />
+              <GraduationCap className="h-8 w-8" />
               <span className="text-xl font-bold">Students Hub</span>
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm opacity-70">
               Plan your international study semester with AI-powered guidance
             </p>
           </div>
@@ -45,7 +45,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
                   >
                     {link.name}
                   </Link>
@@ -62,7 +62,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
                   >
                     {link.name}
                   </Link>
@@ -79,7 +79,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
                   >
                     {link.name}
                   </Link>
@@ -89,7 +89,7 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+        <div className="mt-8 pt-8 border-t border-white/20 text-center text-sm opacity-70">
           © 2025 Students Hub. All rights reserved.
         </div>
       </div>

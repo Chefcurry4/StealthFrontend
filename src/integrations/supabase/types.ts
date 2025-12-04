@@ -773,6 +773,7 @@ export type Database = {
       }
       "Users(US)": {
         Row: {
+          background_theme: string | null
           birthday: string | null
           country: string | null
           created_at: string
@@ -790,6 +791,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          background_theme?: string | null
           birthday?: string | null
           country?: string | null
           created_at?: string
@@ -807,6 +809,7 @@ export type Database = {
           username: string
         }
         Update: {
+          background_theme?: string | null
           birthday?: string | null
           country?: string | null
           created_at?: string

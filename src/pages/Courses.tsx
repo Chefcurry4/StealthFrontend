@@ -1,12 +1,10 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, BookOpen, GraduationCap, Clock, Filter, Bookmark } from "lucide-react";
+import { Search, Filter, Bookmark } from "lucide-react";
 import { CourseCardImage } from "@/components/CourseCardImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GradientBackground } from "@/components/GradientBackground";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CourseCardSkeleton } from "@/components/skeletons/CourseCardSkeleton";
 import { Slider } from "@/components/ui/slider";
@@ -46,7 +44,7 @@ const Courses = () => {
       ...prev,
       [key]: value === "all" ? undefined : value,
     }));
-    setCurrentPage(1); // Reset to page 1 when filtering
+    setCurrentPage(1);
   };
 
   const handleEctsChange = (value: number[]) => {
@@ -62,43 +60,41 @@ const Courses = () => {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
         {/* Hero Section */}
-        <GradientBackground variant="warm-subtle">
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-accent-foreground mb-4">
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Discover Courses
             </h1>
-            <p className="text-lg text-accent-foreground/80 mb-8 max-w-2xl">
+            <p className="text-lg opacity-80 mb-8 max-w-2xl">
               Browse 1000+ courses across partner universities and build your perfect learning agreement
             </p>
 
             {/* Search Bar */}
             <div className="max-w-2xl">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-50 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Search by course code, title, or keywords..."
-                  className="pl-10 bg-background"
+                  className="pl-10 bg-white/10 backdrop-blur border-white/20"
                   value={filters.search || ""}
                   onChange={(e) => updateFilter("search", e.target.value)}
                 />
               </div>
-              </div>
             </div>
-          </section>
-        </GradientBackground>
+          </div>
+        </section>
 
         {/* Filters */}
-        <section className="py-6 border-b bg-background/50">
+        <section className="py-6 border-b border-white/10 backdrop-blur bg-white/5">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-2 mb-3">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 opacity-70" />
               <span className="text-sm font-medium">Filters:</span>
             </div>
             <div className="flex flex-wrap gap-3">
               <Select onValueChange={(value) => updateFilter("universityId", value)}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px] bg-white/10 border-white/20">
                   <SelectValue placeholder="University" />
                 </SelectTrigger>
                 <SelectContent>
@@ -112,7 +108,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("programId", value)}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Program" />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +122,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("language", value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Language" />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,7 +135,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("level", value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,7 +146,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("term", value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Term" />
                 </SelectTrigger>
                 <SelectContent>
@@ -165,7 +161,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("examType", value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Exam Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,7 +173,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("mandatoryOptional", value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -188,7 +184,7 @@ const Courses = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("whichYear", value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-white/10 border-white/20">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,16 +222,16 @@ const Courses = () => {
                 ))}
               </div>
             ) : error ? (
-              <p className="text-center text-muted-foreground">
+              <p className="text-center opacity-70">
                 Error loading courses. Please try again.
               </p>
             ) : courses.length === 0 ? (
-              <p className="text-center text-muted-foreground">
+              <p className="text-center opacity-70">
                 No courses found matching your filters.
               </p>
             ) : (
               <>
-                <div className="mb-4 text-sm text-muted-foreground">
+                <div className="mb-4 text-sm opacity-70">
                   Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, allCourses?.length || 0)} of {allCourses?.length || 0} courses
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -243,7 +239,7 @@ const Courses = () => {
                     const isSaved = savedCourses?.some((sc: any) => sc.course_id === course.id_course);
                     
                     return (
-                      <Card key={course.id_course} className="flex flex-col overflow-hidden">
+                      <Card key={course.id_course} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
                         <CourseCardImage 
                           courseId={course.id_course}
                           courseName={course.name_course}
@@ -253,31 +249,32 @@ const Courses = () => {
                         <CardHeader className="flex-1">
                           <CardTitle className="text-lg line-clamp-2">{course.name_course}</CardTitle>
                           {course.code && (
-                            <p className="text-sm text-muted-foreground">{course.code}</p>
+                            <p className="text-sm opacity-70">{course.code}</p>
                           )}
                         </CardHeader>
                         <CardContent className="space-y-3">
                           <div className="flex flex-wrap gap-2">
                             {course.ects && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20">
                                 {course.ects} ECTS
                               </span>
                             )}
                             {course.language && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/10">
                                 {course.language}
                               </span>
                             )}
                           </div>
                           <div className="flex gap-2">
                             <Link to={`/courses/${course.id_course}`} className="flex-1">
-                              <Button variant="default" size="sm" className="w-full">
+                              <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
                                 View Details
                               </Button>
                             </Link>
                             <Button
                               variant={isSaved ? "default" : "outline"}
                               size="sm"
+                              className="bg-white/10 border-white/20 hover:bg-white/20"
                               onClick={() => {
                                 if (!user) {
                                   navigate("/auth");
