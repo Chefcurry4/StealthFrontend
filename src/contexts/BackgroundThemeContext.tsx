@@ -1,26 +1,32 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { ThemeId, ColorPalette } from '@/themes/types';
+import { ThemeId, ThemeMode, ColorPalette, ThemeModeConfig } from '@/themes/types';
 import { THEMES } from '@/themes/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BackgroundThemeContextType {
   themeId: ThemeId;
+  mode: ThemeMode;
   palette: ColorPalette;
+  modeConfig: ThemeModeConfig;
   setBackgroundTheme: (id: ThemeId) => Promise<void>;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  toggleMode: () => Promise<void>;
   isLoading: boolean;
 }
 
 const BackgroundThemeContext = createContext<BackgroundThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'background-theme';
+const MODE_STORAGE_KEY = 'background-theme-mode';
 
 export const BackgroundThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [themeId, setThemeId] = useState<ThemeId>(ThemeId.QUARTZ);
+  const [mode, setMode] = useState<ThemeMode>('day');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load theme on mount
+  // Load theme and mode on mount
   useEffect(() => {
     const loadTheme = async () => {
       setIsLoading(true);
@@ -29,21 +35,27 @@ export const BackgroundThemeProvider: React.FC<{ children: React.ReactNode }> = 
         // Load from database for authenticated users
         const { data, error } = await supabase
           .from('Users(US)')
-          .select('background_theme')
+          .select('background_theme, background_theme_mode')
           .eq('id', user.id)
           .single();
         
-        if (!error && data?.background_theme) {
-          const savedTheme = data.background_theme as ThemeId;
-          if (Object.values(ThemeId).includes(savedTheme)) {
-            setThemeId(savedTheme);
+        if (!error && data) {
+          if (data.background_theme && Object.values(ThemeId).includes(data.background_theme as ThemeId)) {
+            setThemeId(data.background_theme as ThemeId);
+          }
+          if (data.background_theme_mode && ['day', 'night'].includes(data.background_theme_mode)) {
+            setMode(data.background_theme_mode as ThemeMode);
           }
         }
       } else {
         // Load from localStorage for guests
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored && Object.values(ThemeId).includes(stored as ThemeId)) {
-          setThemeId(stored as ThemeId);
+        const storedTheme = localStorage.getItem(STORAGE_KEY);
+        if (storedTheme && Object.values(ThemeId).includes(storedTheme as ThemeId)) {
+          setThemeId(storedTheme as ThemeId);
+        }
+        const storedMode = localStorage.getItem(MODE_STORAGE_KEY);
+        if (storedMode && ['day', 'night'].includes(storedMode)) {
+          setMode(storedMode as ThemeMode);
         }
       }
       
@@ -55,11 +67,8 @@ export const BackgroundThemeProvider: React.FC<{ children: React.ReactNode }> = 
 
   const setBackgroundTheme = useCallback(async (id: ThemeId) => {
     setThemeId(id);
-    
-    // Always save to localStorage
     localStorage.setItem(STORAGE_KEY, id);
     
-    // Save to database if authenticated
     if (user) {
       await supabase
         .from('Users(US)')
@@ -68,10 +77,37 @@ export const BackgroundThemeProvider: React.FC<{ children: React.ReactNode }> = 
     }
   }, [user]);
 
+  const setThemeMode = useCallback(async (newMode: ThemeMode) => {
+    setMode(newMode);
+    localStorage.setItem(MODE_STORAGE_KEY, newMode);
+    
+    if (user) {
+      await supabase
+        .from('Users(US)')
+        .update({ background_theme_mode: newMode })
+        .eq('id', user.id);
+    }
+  }, [user]);
+
+  const toggleMode = useCallback(async () => {
+    const newMode = mode === 'day' ? 'night' : 'day';
+    await setThemeMode(newMode);
+  }, [mode, setThemeMode]);
+
   const palette = THEMES[themeId];
+  const modeConfig = palette[mode];
 
   return (
-    <BackgroundThemeContext.Provider value={{ themeId, palette, setBackgroundTheme, isLoading }}>
+    <BackgroundThemeContext.Provider value={{ 
+      themeId, 
+      mode, 
+      palette, 
+      modeConfig, 
+      setBackgroundTheme, 
+      setThemeMode, 
+      toggleMode, 
+      isLoading 
+    }}>
       {children}
     </BackgroundThemeContext.Provider>
   );

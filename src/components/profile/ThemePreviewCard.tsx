@@ -1,31 +1,35 @@
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { ColorPalette, ThemeId } from '@/themes/types';
+import { ThemeId, ThemeMode } from '@/themes/types';
 import { THEMES } from '@/themes/constants';
+import { Sun, Moon } from 'lucide-react';
 
 interface ThemePreviewCardProps {
   themeId: ThemeId;
+  mode: ThemeMode;
   isSelected: boolean;
   onClick: () => void;
 }
 
 export const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
   themeId,
+  mode,
   isSelected,
   onClick,
 }) => {
   const palette = THEMES[themeId];
+  const modeConfig = palette[mode];
   const config = palette.grain;
 
   // Generate simplified blobs for preview (3 blobs instead of 5)
   const { blobs, keyframesStyle, filterId } = useMemo(() => {
-    const id = `noise-${themeId}-${Math.random().toString(36).substring(7)}`;
+    const id = `noise-${themeId}-${mode}-${Math.random().toString(36).substring(7)}`;
     let allKeyframes = '';
     
     const previewColors = palette.colors.slice(0, 3);
     
     const generatedBlobs = previewColors.map((color, i) => {
-      const animationName = `preview-blob-${themeId}-${i}-${Math.random().toString(36).substring(7)}`;
+      const animationName = `preview-blob-${themeId}-${mode}-${i}-${Math.random().toString(36).substring(7)}`;
       
       const randomPos = () => Math.random() * 60 - 30;
       const randomScale = () => 0.8 + Math.random() * 0.4;
@@ -62,9 +66,9 @@ export const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
     });
 
     return { blobs: generatedBlobs, keyframesStyle: allKeyframes, filterId: id };
-  }, [themeId, palette.colors]);
+  }, [themeId, mode, palette.colors]);
 
-  const blendMode = palette.blendMode || 'multiply';
+  const blendMode = modeConfig.blendMode || 'multiply';
 
   return (
     <button
@@ -73,16 +77,21 @@ export const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
         "relative overflow-hidden rounded-xl transition-all duration-300 group",
         "w-full aspect-[3/2]",
         isSelected 
-          ? "ring-2 ring-white shadow-lg scale-105" 
+          ? "ring-2 ring-offset-2 ring-offset-transparent shadow-lg scale-105" 
           : "hover:scale-102 hover:shadow-md ring-1 ring-white/20"
       )}
+      style={{
+        ...(isSelected && { 
+          '--tw-ring-color': modeConfig.ui.buttonPrimary 
+        } as React.CSSProperties)
+      }}
     >
       <style>{keyframesStyle}</style>
       
       {/* Background */}
       <div 
         className="absolute inset-0 transition-colors duration-500"
-        style={{ backgroundColor: palette.background }}
+        style={{ backgroundColor: modeConfig.background }}
       />
       
       {/* Blobs */}
@@ -121,6 +130,21 @@ export const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
         />
       </div>
 
+      {/* Mode indicator */}
+      <div 
+        className="absolute top-1.5 left-1.5 p-1 rounded-full"
+        style={{ 
+          backgroundColor: modeConfig.ui.cardBackground,
+          color: modeConfig.textColor 
+        }}
+      >
+        {mode === 'day' ? (
+          <Sun className="h-3 w-3" />
+        ) : (
+          <Moon className="h-3 w-3" />
+        )}
+      </div>
+
       {/* Theme name overlay */}
       <div 
         className={cn(
@@ -139,7 +163,10 @@ export const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({
 
       {/* Selection indicator */}
       {isSelected && (
-        <div className="absolute top-1 right-1 w-3 h-3 bg-white rounded-full shadow-lg" />
+        <div 
+          className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full shadow-lg"
+          style={{ backgroundColor: modeConfig.ui.buttonPrimary }}
+        />
       )}
     </button>
   );

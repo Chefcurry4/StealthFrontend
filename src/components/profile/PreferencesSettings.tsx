@@ -6,17 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Globe, LayoutGrid, Mail, Star, FileText, Palette } from "lucide-react";
+import { Bell, Globe, LayoutGrid, Mail, Star, FileText, Palette, Sun, Moon } from "lucide-react";
 import { Loader } from "@/components/Loader";
 import { ThemePreviewCard } from "./ThemePreviewCard";
-import { ThemeId } from "@/themes/types";
+import { ThemeId, ThemeMode } from "@/themes/types";
 import { THEMES } from "@/themes/constants";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 
 export const PreferencesSettings = () => {
   const { data: profile, isLoading } = useUserProfile();
   const updatePreferences = useUpdatePreferences();
-  const { themeId: currentThemeId, setBackgroundTheme } = useBackgroundTheme();
+  const { themeId: currentThemeId, mode: currentMode, setBackgroundTheme, toggleMode } = useBackgroundTheme();
 
   const [preferences, setPreferences] = useState({
     notification_email: true,
@@ -50,14 +50,17 @@ export const PreferencesSettings = () => {
     await updatePreferences.mutateAsync({ [key]: value });
   };
 
-  const handleThemeSelect = async (themeId: ThemeId) => {
+  const handleThemeSelect = async (themeId: ThemeId, mode: ThemeMode) => {
     await setBackgroundTheme(themeId);
+    if (mode !== currentMode) {
+      await toggleMode();
+    }
   };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Card className="backdrop-blur-md bg-white/10 border-white/20">
+        <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
           <CardContent className="flex items-center justify-center py-12">
             <Loader />
           </CardContent>
@@ -71,27 +74,70 @@ export const PreferencesSettings = () => {
   return (
     <div className="space-y-6">
       {/* Background Theme */}
-      <Card className="backdrop-blur-md bg-white/10 border-white/20">
+      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            <CardTitle>Background Theme</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              <CardTitle>Background Theme</CardTitle>
+            </div>
+            {/* Day/Night Toggle */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'var(--theme-btn-secondary)' }}>
+              <Sun className="h-4 w-4" style={{ opacity: currentMode === 'day' ? 1 : 0.4 }} />
+              <Switch
+                checked={currentMode === 'night'}
+                onCheckedChange={toggleMode}
+                className="data-[state=checked]:bg-slate-700 data-[state=unchecked]:bg-amber-400"
+              />
+              <Moon className="h-4 w-4" style={{ opacity: currentMode === 'night' ? 1 : 0.4 }} />
+            </div>
           </div>
-          <CardDescription>Choose your preferred animated background style</CardDescription>
+          <CardDescription>Choose your preferred animated background style and mode</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {themeIds.map((id) => (
-              <ThemePreviewCard
-                key={id}
-                themeId={id}
-                isSelected={currentThemeId === id}
-                onClick={() => handleThemeSelect(id)}
-              />
-            ))}
+          {/* Day Themes */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Sun className="h-4 w-4" />
+              <span className="text-sm font-medium">Day Mode</span>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {themeIds.map((id) => (
+                <ThemePreviewCard
+                  key={`${id}-day`}
+                  themeId={id}
+                  mode="day"
+                  isSelected={currentThemeId === id && currentMode === 'day'}
+                  onClick={() => handleThemeSelect(id, 'day')}
+                />
+              ))}
+            </div>
           </div>
-          <div className="mt-4 p-3 rounded-lg bg-white/5 border border-white/10">
-            <p className="text-sm font-medium">{THEMES[currentThemeId].name}</p>
+          
+          {/* Night Themes */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Moon className="h-4 w-4" />
+              <span className="text-sm font-medium">Night Mode</span>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {themeIds.map((id) => (
+                <ThemePreviewCard
+                  key={`${id}-night`}
+                  themeId={id}
+                  mode="night"
+                  isSelected={currentThemeId === id && currentMode === 'night'}
+                  onClick={() => handleThemeSelect(id, 'night')}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg border" style={{ background: 'var(--theme-btn-secondary)', borderColor: 'var(--theme-card-border)' }}>
+            <div className="flex items-center gap-2">
+              {currentMode === 'day' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <p className="text-sm font-medium">{THEMES[currentThemeId].name} ({currentMode})</p>
+            </div>
             <p className="text-xs opacity-70 mt-1">
               {THEMES[currentThemeId].description}
             </p>
@@ -99,8 +145,8 @@ export const PreferencesSettings = () => {
               {THEMES[currentThemeId].colors.map((color, i) => (
                 <div
                   key={i}
-                  className="w-5 h-5 rounded-full border border-white/20"
-                  style={{ backgroundColor: color }}
+                  className="w-5 h-5 rounded-full border"
+                  style={{ backgroundColor: color, borderColor: 'var(--theme-card-border)' }}
                 />
               ))}
             </div>
@@ -109,7 +155,7 @@ export const PreferencesSettings = () => {
       </Card>
 
       {/* Notifications */}
-      <Card className="backdrop-blur-md bg-white/10 border-white/20">
+      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -135,7 +181,7 @@ export const PreferencesSettings = () => {
             />
           </div>
 
-          <Separator className="bg-white/10" />
+          <Separator style={{ background: 'var(--theme-card-border)' }} />
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -154,7 +200,7 @@ export const PreferencesSettings = () => {
             />
           </div>
 
-          <Separator className="bg-white/10" />
+          <Separator style={{ background: 'var(--theme-card-border)' }} />
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -176,7 +222,7 @@ export const PreferencesSettings = () => {
       </Card>
 
       {/* Language */}
-      <Card className="backdrop-blur-md bg-white/10 border-white/20">
+      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
@@ -197,7 +243,7 @@ export const PreferencesSettings = () => {
               onValueChange={(value) => handleSelect("language_preference", value)}
               disabled={updatePreferences.isPending}
             >
-              <SelectTrigger className="w-[180px] bg-white/5 border-white/20">
+              <SelectTrigger className="w-[180px]" style={{ background: 'var(--theme-input-bg)', borderColor: 'var(--theme-input-border)' }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -213,7 +259,7 @@ export const PreferencesSettings = () => {
       </Card>
 
       {/* Display */}
-      <Card className="backdrop-blur-md bg-white/10 border-white/20">
+      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-5 w-5" />
@@ -236,7 +282,7 @@ export const PreferencesSettings = () => {
             />
           </div>
 
-          <Separator className="bg-white/10" />
+          <Separator style={{ background: 'var(--theme-card-border)' }} />
 
           <div className="flex items-center justify-between">
             <div>
@@ -250,7 +296,7 @@ export const PreferencesSettings = () => {
               onValueChange={(value) => handleSelect("display_items_per_page", parseInt(value))}
               disabled={updatePreferences.isPending}
             >
-              <SelectTrigger className="w-[100px] bg-white/5 border-white/20">
+              <SelectTrigger className="w-[100px]" style={{ background: 'var(--theme-input-bg)', borderColor: 'var(--theme-input-border)' }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
