@@ -1,17 +1,34 @@
-import React, { useMemo } from 'react';
-import { ColorPalette } from '@/themes/types';
+import React, { useMemo, useEffect } from 'react';
+import { ColorPalette, ThemeModeConfig } from '@/themes/types';
 
 interface GrainyBackgroundProps {
   palette: ColorPalette;
+  modeConfig: ThemeModeConfig;
   children: React.ReactNode;
 }
 
 export const GrainyBackground: React.FC<GrainyBackgroundProps> = ({ 
   palette, 
+  modeConfig,
   children,
 }) => {
   const config = palette.grain;
   const isSerpent = palette.blobType === 'serpent';
+
+  // Inject CSS variables for theme-aware UI components
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--theme-card-bg', modeConfig.ui.cardBackground);
+    root.style.setProperty('--theme-card-border', modeConfig.ui.cardBorder);
+    root.style.setProperty('--theme-btn-primary', modeConfig.ui.buttonPrimary);
+    root.style.setProperty('--theme-btn-primary-text', modeConfig.ui.buttonPrimaryText);
+    root.style.setProperty('--theme-btn-secondary', modeConfig.ui.buttonSecondary);
+    root.style.setProperty('--theme-btn-secondary-text', modeConfig.ui.buttonSecondaryText);
+    root.style.setProperty('--theme-input-bg', modeConfig.ui.inputBackground);
+    root.style.setProperty('--theme-input-border', modeConfig.ui.inputBorder);
+    root.style.setProperty('--theme-text', modeConfig.textColor);
+    root.style.setProperty('--theme-background', modeConfig.background);
+  }, [modeConfig]);
 
   const { blobs, keyframesStyle } = useMemo(() => {
     let allKeyframes = '';
@@ -66,13 +83,13 @@ export const GrainyBackground: React.FC<GrainyBackgroundProps> = ({
     return { blobs: generatedBlobs, keyframesStyle: allKeyframes };
   }, [palette, isSerpent]);
 
-  const blendMode = palette.blendMode || 'multiply';
+  const blendMode = modeConfig.blendMode || 'multiply';
   const blurClass = isSerpent ? 'blur-[50px] md:blur-[80px]' : 'blur-[100px] md:blur-[160px]';
 
   return (
     <div 
-      className="relative w-full min-h-screen overflow-hidden transition-colors duration-1000 ease-in-out"
-      style={{ backgroundColor: palette.background }}
+      className="relative w-full min-h-screen overflow-hidden transition-colors duration-700 ease-in-out"
+      style={{ backgroundColor: modeConfig.background, color: modeConfig.textColor }}
     >
       <style>{keyframesStyle}</style>
 

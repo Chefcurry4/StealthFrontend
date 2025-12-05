@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { GraduationCap } from "lucide-react";
+import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 
 export const Footer = () => {
+  const { modeConfig } = useBackgroundTheme();
+
   const footerLinks = {
     product: [
       { name: "Home", href: "/" },
@@ -23,7 +26,14 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="border-t border-white/20 backdrop-blur-md bg-white/5 mt-auto">
+    <footer 
+      className="border-t backdrop-blur-md mt-auto"
+      style={{ 
+        borderColor: modeConfig.ui.cardBorder,
+        backgroundColor: modeConfig.ui.cardBackground,
+        color: modeConfig.textColor
+      }}
+    >
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -89,7 +99,10 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-white/20 text-center text-sm opacity-70">
+        <div 
+          className="mt-8 pt-8 border-t text-center text-sm opacity-70"
+          style={{ borderColor: modeConfig.ui.cardBorder }}
+        >
           © 2025 Students Hub. All rights reserved.
         </div>
       </div>

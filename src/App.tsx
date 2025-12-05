@@ -35,11 +35,11 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
-  const { palette } = useBackgroundTheme();
+  const { palette, modeConfig } = useBackgroundTheme();
 
   return (
-    <GrainyBackground palette={palette}>
-      <div className="flex flex-col min-h-screen" style={{ color: palette.textColor }}>
+    <GrainyBackground palette={palette} modeConfig={modeConfig}>
+      <div className="flex flex-col min-h-screen" style={{ color: modeConfig.textColor }}>
         <Header />
         <main className="flex-1">
           <Suspense fallback={<Loader fullScreen />}>

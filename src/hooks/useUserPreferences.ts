@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { ThemeId } from "@/themes/types";
+import { ThemeId, ThemeMode } from "@/themes/types";
 
 interface UserPreferences {
   notification_email?: boolean;
@@ -12,6 +12,7 @@ interface UserPreferences {
   display_compact?: boolean;
   display_items_per_page?: number;
   background_theme?: ThemeId;
+  background_theme_mode?: ThemeMode;
 }
 
 export const useUpdatePreferences = () => {

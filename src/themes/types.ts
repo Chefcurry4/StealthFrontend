@@ -4,28 +4,32 @@ export interface GrainConfig {
   type: 'fractalNoise' | 'turbulence'; // SVG filter type
 }
 
+export type ThemeMode = 'day' | 'night';
+
+export interface ThemeModeConfig {
+  background: string;
+  textColor: string;
+  blendMode: 'multiply' | 'screen' | 'overlay' | 'normal' | 'lighten' | 'soft-light' | 'hard-light';
+  ui: {
+    cardBackground: string;
+    cardBorder: string;
+    buttonPrimary: string;
+    buttonPrimaryText: string;
+    buttonSecondary: string;
+    buttonSecondaryText: string;
+    inputBackground: string;
+    inputBorder: string;
+  };
+}
+
 export interface ColorPalette {
   name: string;
   colors: string[];
-  background: string;
-  textColor: string;
   description: string;
-  /**
-   * CSS mix-blend-mode for the blobs. 
-   * Light themes typically look best with 'multiply'.
-   * Dark themes often need 'screen', 'overlay', or 'lighten' to make colors pop.
-   */
-  blendMode?: 'multiply' | 'screen' | 'overlay' | 'normal' | 'lighten' | 'soft-light' | 'hard-light';
-  /**
-   * Specific grain configuration for this theme to match reference aesthetics.
-   */
   grain: GrainConfig;
-  /**
-   * Controls the shape and behavior of the background blobs.
-   * 'default' = large, round, nebulous blobs.
-   * 'serpent' = thinner, elongated, snake-like flows.
-   */
   blobType?: 'default' | 'serpent';
+  day: ThemeModeConfig;
+  night: ThemeModeConfig;
 }
 
 export enum ThemeId {
