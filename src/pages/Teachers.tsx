@@ -45,8 +45,8 @@ const Teachers = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                   <Skeleton key={i} className="h-64" />
                 ))}
               </div>
@@ -59,13 +59,13 @@ const Teachers = () => {
                 No teachers found matching your search.
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {teachers?.map((teacher) => (
                   <Card key={teacher.id_teacher} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
                     <TeacherCardImage 
                       teacherId={teacher.id_teacher}
                       teacherName={teacher.full_name || teacher.name || "Unknown"}
-                      className="h-32"
+                      className="h-28"
                     />
                     <CardHeader className="flex-1">
                       <CardTitle className="text-lg line-clamp-2">{teacher.full_name || teacher.name}</CardTitle>
