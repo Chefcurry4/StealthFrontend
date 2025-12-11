@@ -12,6 +12,8 @@ import { GrainyBackground } from "@/components/GrainyBackground";
 import { PageTransition } from "@/components/PageTransition";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { SwipeIndicator } from "@/components/SwipeIndicator";
 import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import Universities from "./pages/Universities";
@@ -36,6 +38,9 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const location = useLocation();
   const { palette, modeConfig } = useBackgroundTheme();
+  
+  // Enable swipe navigation on mobile
+  useSwipeNavigation();
 
   return (
     <GrainyBackground palette={palette} modeConfig={modeConfig}>
@@ -68,6 +73,7 @@ const AppContent = () => {
             </PageTransition>
           </Suspense>
         </main>
+        <SwipeIndicator />
         <Footer />
       </div>
     </GrainyBackground>

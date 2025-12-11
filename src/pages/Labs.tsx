@@ -105,9 +105,9 @@ const Labs = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                  <Skeleton key={i} className="h-80" />
+                  <Skeleton key={i} className="h-52 sm:h-64 lg:h-80" />
                 ))}
               </div>
             ) : error ? (
@@ -119,7 +119,7 @@ const Labs = () => {
                 No labs found matching your search.
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                 {labs?.map((lab) => {
                   const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3) || [];
                   

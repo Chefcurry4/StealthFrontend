@@ -81,7 +81,7 @@ const Universities = () => {
 
               <TabsContent value="list">
                 {isLoading && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                       <UniversityCardSkeleton key={i} />
                     ))}
@@ -101,7 +101,7 @@ const Universities = () => {
                 )}
 
                 {filteredUniversities && filteredUniversities.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                     {filteredUniversities.map((university) => (
                       <Card key={university.uuid} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
                         <UniversityCardImage 
