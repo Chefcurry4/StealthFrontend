@@ -81,8 +81,8 @@ const Universities = () => {
 
               <TabsContent value="list">
                 {isLoading && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                       <UniversityCardSkeleton key={i} />
                     ))}
                   </div>
@@ -101,7 +101,7 @@ const Universities = () => {
                 )}
 
                 {filteredUniversities && filteredUniversities.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {filteredUniversities.map((university) => (
                       <Card key={university.uuid} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
                         <UniversityCardImage 
@@ -109,7 +109,7 @@ const Universities = () => {
                           universityName={university.name}
                           logoUrl={university.logo_url}
                           country={university.country}
-                          className="h-40"
+                          className="h-32"
                         />
                         <CardHeader className="flex-1">
                           <CardTitle className="text-lg leading-tight line-clamp-2">{university.name}</CardTitle>
