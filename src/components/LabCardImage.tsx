@@ -1,9 +1,10 @@
 interface LabCardImageProps {
   labName: string;
   labId: string;
+  className?: string;
 }
 
-export const LabCardImage = ({ labName, labId }: LabCardImageProps) => {
+export const LabCardImage = ({ labName, labId, className = "h-32" }: LabCardImageProps) => {
   // Generate a unique gradient based on lab ID
   const gradients = [
     "from-blue-400 via-purple-400 to-pink-400",
@@ -22,7 +23,7 @@ export const LabCardImage = ({ labName, labId }: LabCardImageProps) => {
   const gradient = gradients[gradientIndex];
 
   return (
-    <div className={`relative h-32 w-full bg-gradient-to-br ${gradient} overflow-hidden rounded-t-lg`}>
+    <div className={`relative w-full bg-gradient-to-br ${gradient} overflow-hidden rounded-t-lg ${className}`}>
       {/* Fluid blob effect */}
       <div className="absolute inset-0 opacity-30">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">

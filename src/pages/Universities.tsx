@@ -109,21 +109,21 @@ const Universities = () => {
                           universityName={university.name}
                           logoUrl={university.logo_url}
                           country={university.country}
-                          className="h-32"
+                          className="h-20 sm:h-24 lg:h-32"
                         />
-                        <CardHeader className="flex-1">
-                          <CardTitle className="text-lg leading-tight line-clamp-2">{university.name}</CardTitle>
+                        <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
+                          <CardTitle className="text-sm sm:text-base lg:text-lg leading-tight line-clamp-2">{university.name}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
                           {university.country && (
-                            <div className="flex items-center gap-2 text-sm opacity-70">
-                              <MapPin className="h-4 w-4" />
+                            <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm opacity-70">
+                              <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span>{university.country}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-2">
                             <Link to={`/universities/${university.slug}`} className="flex-1">
-                              <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
+                              <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
                                 View Details
                               </Button>
                             </Link>
@@ -134,8 +134,8 @@ const Universities = () => {
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 hover:bg-white/20">
-                                  <Globe className="h-4 w-4" />
+                                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 hover:bg-white/20 p-2 sm:p-2.5">
+                                  <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </a>
                             )}

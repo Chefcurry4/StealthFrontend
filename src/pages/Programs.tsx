@@ -62,19 +62,19 @@ const Programs = () => {
                     <ProgramCardImage 
                       programId={program.id}
                       programName={program.name}
-                      className="h-28"
+                      className="h-20 sm:h-24 lg:h-28"
                     />
-                    <CardHeader className="flex-1">
-                      <CardTitle className="text-lg line-clamp-2">{program.name}</CardTitle>
+                    <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
+                      <CardTitle className="text-sm sm:text-base lg:text-lg line-clamp-2">{program.name}</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 sm:p-4 lg:p-6 pt-0">
                       {program.description && (
-                        <p className="text-sm opacity-70 mb-4 line-clamp-2">
+                        <p className="text-xs sm:text-sm opacity-70 mb-2 sm:mb-4 line-clamp-2">
                           {program.description}
                         </p>
                       )}
                       <Link to={`/programs/${program.slug || program.id}`}>
-                        <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
+                        <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
                           View Details
                         </Button>
                       </Link>
