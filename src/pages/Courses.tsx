@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Filter, Bookmark } from "lucide-react";
 import { CourseCardImage } from "@/components/CourseCardImage";
@@ -14,14 +14,22 @@ import { useUniversities } from "@/hooks/useUniversities";
 import { usePrograms } from "@/hooks/usePrograms";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Courses = () => {
   const [filters, setFilters] = useState<CourseFilters>({});
   const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const queryClient = useQueryClient();
   
-  const { data: allCourses, isLoading, error } = useCourses(filters);
+  const { data: allCourses, isLoading, error, refetch } = useCourses(filters);
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["courses"] });
+    await refetch();
+  }, [queryClient, refetch]);
 
   const { courses, totalPages } = useMemo(() => {
     if (!allCourses) return { courses: [], totalPages: 0 };
@@ -57,7 +65,7 @@ const Courses = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         {/* Hero Section */}
         <section className="py-16">
@@ -340,7 +348,7 @@ const Courses = () => {
           </div>
         </section>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 

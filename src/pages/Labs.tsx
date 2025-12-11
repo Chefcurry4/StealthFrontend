@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Filter, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,15 +12,23 @@ import { useLabs, LabFilters } from "@/hooks/useLabs";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
-  const { data: labs, isLoading, error } = useLabs(filters);
+  const { data: labs, isLoading, error, refetch } = useLabs(filters);
   const { data: universities } = useUniversities();
   const { user } = useAuth();
   const { data: savedLabs } = useSavedLabs();
   const toggleSave = useToggleSaveLab();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["labs"] });
+    await refetch();
+  }, [queryClient, refetch]);
 
   const updateFilter = (key: keyof LabFilters, value: string | undefined) => {
     setFilters((prev) => ({
@@ -34,7 +42,7 @@ const Labs = () => {
   ) as string[];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         {/* Hero Section */}
         <section className="py-16">
@@ -169,7 +177,7 @@ const Labs = () => {
           </div>
         </section>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 
