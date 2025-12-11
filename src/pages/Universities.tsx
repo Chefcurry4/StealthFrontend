@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { UniversityCardImage } from "@/components/UniversityCardImage";
 import { Search, MapPin, Globe, Map as MapIcon, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +10,19 @@ import { useUniversities } from "@/hooks/useUniversities";
 import { Link } from "react-router-dom";
 import UniversityMap from "@/components/UniversityMap";
 import { UniversityCardSkeleton } from "@/components/skeletons/UniversityCardSkeleton";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Universities = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState<string>("all");
-  const { data: universities, isLoading, error } = useUniversities(searchQuery);
+  const { data: universities, isLoading, error, refetch } = useUniversities(searchQuery);
+  const queryClient = useQueryClient();
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["universities"] });
+    await refetch();
+  }, [queryClient, refetch]);
 
   const filteredUniversities = universities?.filter(uni => 
     countryFilter === "all" || uni.country === countryFilter
@@ -23,7 +31,7 @@ const Universities = () => {
   const uniqueCountries = Array.from(new Set(universities?.map(u => u.country).filter(Boolean))) as string[];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         {/* Hero Section */}
         <section className="py-16">
@@ -160,7 +168,7 @@ const Universities = () => {
           </div>
         </section>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 

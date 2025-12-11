@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { ProgramCardImage } from "@/components/ProgramCardImage";
@@ -7,13 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProgramCardSkeleton } from "@/components/skeletons/ProgramCardSkeleton";
 import { usePrograms } from "@/hooks/usePrograms";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Programs = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: programs, isLoading, error } = usePrograms(searchQuery);
+  const { data: programs, isLoading, error, refetch } = usePrograms(searchQuery);
+  const queryClient = useQueryClient();
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["programs"] });
+    await refetch();
+  }, [queryClient, refetch]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         <section className="py-16">
           <div className="container mx-auto px-4">
@@ -86,7 +94,7 @@ const Programs = () => {
           </div>
         </section>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 
