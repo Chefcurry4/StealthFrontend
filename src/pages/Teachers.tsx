@@ -65,26 +65,26 @@ const Teachers = () => {
                     <TeacherCardImage 
                       teacherId={teacher.id_teacher}
                       teacherName={teacher.full_name || teacher.name || "Unknown"}
-                      className="h-28"
+                      className="h-20 sm:h-24 lg:h-28"
                     />
-                    <CardHeader className="flex-1">
-                      <CardTitle className="text-lg line-clamp-2">{teacher.full_name || teacher.name}</CardTitle>
+                    <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
+                      <CardTitle className="text-sm sm:text-base lg:text-lg line-clamp-2">{teacher.full_name || teacher.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
                       {teacher.email && (
-                        <div className="flex items-center gap-2 text-sm opacity-70 truncate">
-                          <Mail className="h-4 w-4 flex-shrink-0" />
+                        <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm opacity-70 truncate">
+                          <Mail className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <a href={`mailto:${teacher.email}`} className="hover:opacity-100 truncate">
                             {teacher.email}
                           </a>
                         </div>
                       )}
                       {teacher.topics && teacher.topics.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1 sm:gap-2">
                           {teacher.topics.slice(0, 3).map((topic, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20"
+                              className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-white/20"
                             >
                               {topic}
                             </span>
@@ -92,7 +92,7 @@ const Teachers = () => {
                         </div>
                       )}
                       <Link to={`/teachers/${teacher.id_teacher}`}>
-                        <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
+                        <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
                           View Profile
                         </Button>
                       </Link>

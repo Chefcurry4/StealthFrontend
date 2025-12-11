@@ -125,14 +125,14 @@ const Labs = () => {
                   
                   return (
                     <Card key={lab.id_lab} className="overflow-hidden flex flex-col backdrop-blur-md bg-white/10 border-white/20">
-                      <LabCardImage labName={lab.name} labId={lab.id_lab} />
-                      <CardContent className="p-4 flex flex-col flex-1">
-                        <h3 className="font-bold text-lg mb-3 line-clamp-2">{lab.name}</h3>
+                      <LabCardImage labName={lab.name} labId={lab.id_lab} className="h-20 sm:h-24 lg:h-28" />
+                      <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
+                        <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 sm:mb-3 line-clamp-2">{lab.name}</h3>
                         
                         {topics.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-4 flex-1">
+                          <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-4 flex-1">
                             {topics.map((topic, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs bg-white/20">
+                              <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs bg-white/20">
                                 {topic}
                               </Badge>
                             ))}
@@ -141,7 +141,7 @@ const Labs = () => {
                         
                         <div className="flex gap-2 mt-auto">
                           <Link to={`/labs/${lab.slug || lab.id_lab}`} className="flex-1">
-                            <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
+                            <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
                               View Details
                             </Button>
                           </Link>

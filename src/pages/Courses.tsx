@@ -244,37 +244,37 @@ const Courses = () => {
                           courseId={course.id_course}
                           courseName={course.name_course}
                           level={course.ba_ma}
-                          className="h-28"
+                          className="h-20 sm:h-24 lg:h-28"
                         />
-                        <CardHeader className="flex-1">
-                          <CardTitle className="text-lg line-clamp-2">{course.name_course}</CardTitle>
+                        <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
+                          <CardTitle className="text-sm sm:text-base lg:text-lg line-clamp-2">{course.name_course}</CardTitle>
                           {course.code && (
-                            <p className="text-sm opacity-70">{course.code}</p>
+                            <p className="text-xs sm:text-sm opacity-70">{course.code}</p>
                           )}
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex flex-wrap gap-2">
+                        <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
+                          <div className="flex flex-wrap gap-1 sm:gap-2">
                             {course.ects && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20">
+                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-white/20">
                                 {course.ects} ECTS
                               </span>
                             )}
                             {course.language && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/10">
+                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-white/10">
                                 {course.language}
                               </span>
                             )}
                           </div>
                           <div className="flex gap-2">
                             <Link to={`/courses/${course.id_course}`} className="flex-1">
-                              <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30">
+                              <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
                                 View Details
                               </Button>
                             </Link>
                             <Button
                               variant={isSaved ? "default" : "outline"}
                               size="sm"
-                              className="bg-white/10 border-white/20 hover:bg-white/20"
+                              className="bg-white/10 border-white/20 hover:bg-white/20 p-2 sm:p-2.5"
                               onClick={() => {
                                 if (!user) {
                                   navigate("/auth");
@@ -283,7 +283,7 @@ const Courses = () => {
                                 toggleSave.mutate(course.id_course);
                               }}
                             >
-                              <Bookmark className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+                              <Bookmark className={`h-3 w-3 sm:h-4 sm:w-4 ${isSaved ? "fill-current" : ""}`} />
                             </Button>
                           </div>
                         </CardContent>
