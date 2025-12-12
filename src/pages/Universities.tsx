@@ -50,13 +50,13 @@ const Universities = () => {
                 <Input
                   type="text"
                   placeholder="Search universities by name..."
-                  className="pl-10 bg-white/10 backdrop-blur border-white/20"
+                  className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Select value={countryFilter} onValueChange={setCountryFilter}>
-                <SelectTrigger className="w-[200px] bg-white/10 backdrop-blur border-white/20">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -76,7 +76,7 @@ const Universities = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             <Tabs defaultValue="list" className="w-full">
-              <TabsList className="mb-6 bg-white/10 backdrop-blur">
+              <TabsList className="mb-6 theme-card backdrop-blur">
                 <TabsTrigger value="list" className="flex items-center gap-2">
                   <List className="h-4 w-4" />
                   List View
@@ -111,7 +111,7 @@ const Universities = () => {
                 {filteredUniversities && filteredUniversities.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                     {filteredUniversities.map((university) => (
-                      <Card key={university.uuid} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
+                      <Card key={university.uuid} className="flex flex-col overflow-hidden backdrop-blur-md">
                         <UniversityCardImage 
                           universityId={university.uuid}
                           universityName={university.name}
@@ -131,7 +131,7 @@ const Universities = () => {
                           )}
                           <div className="flex items-center gap-2">
                             <Link to={`/universities/${university.slug}`} className="flex-1">
-                              <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
+                              <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
                                 View Details
                               </Button>
                             </Link>
@@ -142,7 +142,7 @@ const Universities = () => {
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 hover:bg-white/20 p-2 sm:p-2.5">
+                                <Button variant="outline" size="sm" className="theme-btn-secondary p-2 sm:p-2.5">
                                   <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </a>

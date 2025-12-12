@@ -38,7 +38,7 @@ const Programs = () => {
                 <Input
                   type="text"
                   placeholder="Search programs by name..."
-                  className="pl-10 bg-white/10 backdrop-blur border-white/20"
+                  className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -66,7 +66,7 @@ const Programs = () => {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                 {programs?.map((program) => (
-                  <Card key={program.id} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
+                  <Card key={program.id} className="flex flex-col overflow-hidden backdrop-blur-md">
                     <ProgramCardImage 
                       programId={program.id}
                       programName={program.name}
@@ -82,7 +82,7 @@ const Programs = () => {
                         </p>
                       )}
                       <Link to={`/programs/${program.slug || program.id}`}>
-                        <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
+                        <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
                           View Details
                         </Button>
                       </Link>

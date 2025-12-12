@@ -61,7 +61,7 @@ const Labs = () => {
                 <Input
                   type="text"
                   placeholder="Search labs by name or research area..."
-                  className="pl-10 bg-white/10 backdrop-blur border-white/20"
+                  className="pl-10"
                   value={filters.search || ""}
                   onChange={(e) => updateFilter("search", e.target.value)}
                 />
@@ -71,7 +71,7 @@ const Labs = () => {
         </section>
 
         {/* Filters */}
-        <section className="py-6 border-b border-white/10 backdrop-blur bg-white/5">
+        <section className="py-6 border-b backdrop-blur theme-section" style={{ borderColor: 'var(--theme-card-border)' }}>
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-2 mb-3">
               <Filter className="h-4 w-4 opacity-70" />
@@ -79,7 +79,7 @@ const Labs = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               <Select onValueChange={(value) => updateFilter("universityId", value)}>
-                <SelectTrigger className="w-[200px] bg-white/10 border-white/20">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="University" />
                 </SelectTrigger>
                 <SelectContent>
@@ -93,7 +93,7 @@ const Labs = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("facultyArea", value)}>
-                <SelectTrigger className="w-[250px] bg-white/10 border-white/20">
+                <SelectTrigger className="w-[250px]">
                   <SelectValue placeholder="Faculty Area" />
                 </SelectTrigger>
                 <SelectContent>
@@ -132,7 +132,7 @@ const Labs = () => {
                   const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3) || [];
                   
                   return (
-                    <Card key={lab.id_lab} className="overflow-hidden flex flex-col backdrop-blur-md bg-white/10 border-white/20">
+                    <Card key={lab.id_lab} className="overflow-hidden flex flex-col backdrop-blur-md">
                       <LabCardImage labName={lab.name} labId={lab.id_lab} className="h-20 sm:h-24 lg:h-28" />
                       <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
                         <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 sm:mb-3 line-clamp-2">{lab.name}</h3>
@@ -140,7 +140,7 @@ const Labs = () => {
                         {topics.length > 0 && (
                           <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-4 flex-1">
                             {topics.map((topic, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs bg-white/20">
+                              <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs theme-badge">
                                 {topic}
                               </Badge>
                             ))}
@@ -149,14 +149,14 @@ const Labs = () => {
                         
                         <div className="flex gap-2 mt-auto">
                           <Link to={`/labs/${lab.slug || lab.id_lab}`} className="flex-1">
-                            <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
+                            <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
                               View Details
                             </Button>
                           </Link>
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="bg-white/10 border-white/20 hover:bg-white/20"
+                            className="theme-btn-secondary"
                             onClick={() => {
                               if (!user) {
                                 navigate("/auth");
