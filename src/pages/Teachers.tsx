@@ -52,7 +52,7 @@ const Teachers = () => {
                   <Input
                     type="text"
                     placeholder="Search by name or email..."
-                    className="pl-10 bg-white/10 backdrop-blur border-white/20"
+                    className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -81,7 +81,7 @@ const Teachers = () => {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                   {teachers?.map((teacher) => (
-                    <Card key={teacher.id_teacher} className="flex flex-col overflow-hidden backdrop-blur-md bg-white/10 border-white/20">
+                    <Card key={teacher.id_teacher} className="flex flex-col overflow-hidden backdrop-blur-md">
                       <TeacherCardImage 
                         teacherId={teacher.id_teacher}
                         teacherName={teacher.full_name || teacher.name || "Unknown"}
@@ -110,7 +110,7 @@ const Teachers = () => {
                             {teacher.topics.slice(0, 3).map((topic, index) => (
                               <span
                                 key={index}
-                                className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-white/20"
+                                className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium theme-badge"
                               >
                                 {topic}
                               </span>
@@ -118,7 +118,7 @@ const Teachers = () => {
                           </div>
                         )}
                         <Link to={`/teachers/${teacher.id_teacher}`}>
-                          <Button variant="secondary" size="sm" className="w-full bg-white/20 hover:bg-white/30 text-xs sm:text-sm">
+                          <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
                             View Profile
                           </Button>
                         </Link>

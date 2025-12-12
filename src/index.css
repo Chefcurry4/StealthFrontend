@@ -181,4 +181,53 @@ All colors MUST be HSL.
     @apply shadow-lg;
     box-shadow: 0 10px 40px -10px hsl(var(--primary) / 0.4);
   }
+
+  /* Theme-aware utility classes */
+  .theme-card {
+    background: var(--theme-card-bg, hsl(var(--card)));
+    border-color: var(--theme-card-border, hsl(var(--border)));
+    color: var(--theme-text, hsl(var(--foreground)));
+  }
+
+  .theme-input {
+    background: var(--theme-input-bg, hsl(var(--background)));
+    border-color: var(--theme-input-border, hsl(var(--border)));
+    color: var(--theme-text, hsl(var(--foreground)));
+  }
+
+  .theme-btn-primary {
+    background: var(--theme-btn-primary, hsl(var(--primary)));
+    color: var(--theme-btn-primary-text, hsl(var(--primary-foreground)));
+  }
+
+  .theme-btn-primary:hover {
+    opacity: 0.9;
+  }
+
+  .theme-btn-secondary {
+    background: var(--theme-btn-secondary, hsl(var(--secondary)));
+    color: var(--theme-btn-secondary-text, hsl(var(--secondary-foreground)));
+  }
+
+  .theme-btn-secondary:hover {
+    opacity: 0.9;
+  }
+
+  .theme-section {
+    background: var(--theme-card-bg, hsl(var(--card) / 0.5));
+  }
+
+  .theme-badge {
+    background: var(--theme-card-bg, hsl(var(--muted)));
+    color: var(--theme-text, hsl(var(--foreground)));
+  }
+
+  .theme-text {
+    color: var(--theme-text, hsl(var(--foreground)));
+  }
+
+  .theme-text-muted {
+    color: var(--theme-text, hsl(var(--foreground)));
+    opacity: 0.7;
+  }
 }

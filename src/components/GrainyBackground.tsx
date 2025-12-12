@@ -28,6 +28,12 @@ export const GrainyBackground: React.FC<GrainyBackgroundProps> = ({
     root.style.setProperty('--theme-input-border', modeConfig.ui.inputBorder);
     root.style.setProperty('--theme-text', modeConfig.textColor);
     root.style.setProperty('--theme-background', modeConfig.background);
+    
+    // Additional CSS variables for better theming
+    root.style.setProperty('--theme-badge-bg', modeConfig.ui.cardBackground);
+    root.style.setProperty('--theme-section-bg', modeConfig.ui.cardBackground);
+    root.style.setProperty('--theme-popover-bg', modeConfig.ui.inputBackground);
+    root.style.setProperty('--theme-popover-border', modeConfig.ui.inputBorder);
   }, [modeConfig]);
 
   const { blobs, keyframesStyle } = useMemo(() => {

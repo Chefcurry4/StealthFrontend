@@ -70,20 +70,20 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {!user && (
-                <Button size="lg" asChild className="bg-white/20 hover:bg-white/30 backdrop-blur">
+                <Button size="lg" asChild className="theme-btn-primary backdrop-blur">
                   <Link to="/auth">
                     <UserPlus className="mr-2 h-5 w-5" />
                     Get Started Free
                   </Link>
                 </Button>
               )}
-              <Button size="lg" variant={user ? "default" : "outline"} asChild className="backdrop-blur bg-white/10 hover:bg-white/20 border-white/20">
+              <Button size="lg" variant={user ? "default" : "outline"} asChild className="backdrop-blur theme-btn-secondary">
                 <Link to="/universities">
                   Browse Universities
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="backdrop-blur bg-white/10 hover:bg-white/20 border-white/20">
+              <Button size="lg" variant="outline" asChild className="backdrop-blur theme-btn-secondary">
                 <Link to="/courses">Explore Courses</Link>
               </Button>
             </div>
@@ -92,7 +92,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 backdrop-blur-sm bg-white/5">
+      <section className="py-20 backdrop-blur-sm theme-section">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -107,9 +107,9 @@ const Index = () => {
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
-                <Card key={feature.title} className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20 transition-colors">
+                <Card key={feature.title} className="backdrop-blur-md transition-all hover:scale-[1.02]">
                   <CardHeader>
-                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 theme-badge">
                       <Icon className="h-6 w-6" />
                     </div>
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
@@ -125,7 +125,7 @@ const Index = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 backdrop-blur-sm bg-white/10">
+      <section className="py-20 backdrop-blur-sm theme-section">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -144,7 +144,7 @@ const Index = () => {
               { step: "4", title: "Get AI Guidance", description: "Consult our AI advisor for personalized recommendations" },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                <div className="w-16 h-16 backdrop-blur rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 theme-badge">
                   {item.step}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
@@ -156,7 +156,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 backdrop-blur-md bg-white/20">
+      <section className="py-20 backdrop-blur-md theme-section">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Ready to Start Planning?
@@ -164,7 +164,7 @@ const Index = () => {
           <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
             Join thousands of students who have successfully planned their exchange semesters with Students Hub
           </p>
-          <Button size="lg" className="bg-white/20 hover:bg-white/30 backdrop-blur">
+          <Button size="lg" className="theme-btn-primary backdrop-blur">
             Create Free Account
           </Button>
         </div>
