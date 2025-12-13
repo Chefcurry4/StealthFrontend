@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut, Bot, Mail, Sun, Moon } from "lucide-react";
+import { Menu, X, GraduationCap, User, LogOut, Bot, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +18,7 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { mode, modeConfig, toggleMode } = useBackgroundTheme();
+  const { data: profile } = useUserProfile();
   const navigate = useNavigate();
 
   const navigation = [
@@ -29,13 +32,14 @@ export const Header = () => {
 
   const userNavigation = [
     { name: "AI Advisor", href: "/ai-advisor", icon: Bot },
-    { name: "Email Drafts", href: "/email-drafts", icon: Mail },
   ];
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
+
+  const userInitial = profile?.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
   return (
     <header 
@@ -101,7 +105,12 @@ export const Header = () => {
                     color: modeConfig.ui.buttonSecondaryText
                   }}
                 >
-                  <User className="h-4 w-4" />
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={profile?.profile_photo_url || ""} />
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {userInitial}
+                    </AvatarFallback>
+                  </Avatar>
                   Profile
                 </Button>
               </DropdownMenuTrigger>
@@ -221,7 +230,12 @@ export const Header = () => {
                     color: modeConfig.ui.buttonSecondaryText
                   }}
                 >
-                  <User className="h-4 w-4 mr-2" />
+                  <Avatar className="h-5 w-5 mr-2">
+                    <AvatarImage src={profile?.profile_photo_url || ""} />
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {userInitial}
+                    </AvatarFallback>
+                  </Avatar>
                   My Profile
                 </Button>
               </Link>
