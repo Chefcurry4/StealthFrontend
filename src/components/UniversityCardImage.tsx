@@ -6,8 +6,36 @@ interface UniversityCardImageProps {
   className?: string;
 }
 
+// Prefer local campus images when available.
+// File naming convention (Option B):
+// - src/assets/universities/uni_<universityId>.jpg|jpeg|png|webp
+// Example:
+// - src/assets/universities/uni_4a6e2b10-9c8f-4152-8c9a-5b6d7e8f9a01.jpg
+const campusImagesById = import.meta.glob<string>(
+  "@/assets/universities/uni_*.{jpg,jpeg,png,webp}",
+  { eager: true, import: "default" }
+);
+
+const findLocalCampusImage = (universityId: string): string | undefined => {
+  const suffixes = [
+    `/uni_${universityId}.jpg`,
+    `/uni_${universityId}.jpeg`,
+    `/uni_${universityId}.png`,
+    `/uni_${universityId}.webp`,
+  ];
+
+  for (const [key, value] of Object.entries(campusImagesById)) {
+    if (suffixes.some((s) => key.endsWith(s))) return value;
+  }
+
+  return undefined;
+};
+
 // Generate Unsplash image URL based on university name
 const getUniversityCampusImage = (universityName: string, universityId: string): string => {
+  const local = findLocalCampusImage(universityId);
+  if (local) return local;
+
   // Use university name as search query for more relevant images
   const searchQuery = encodeURIComponent(`${universityName} campus building`);
   // Add university ID as seed for consistency

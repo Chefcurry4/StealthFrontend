@@ -116,11 +116,11 @@ const Universities = () => {
                           universityId={university.uuid}
                           universityName={university.name}
                           logoUrl={university.logo_url}
-                          country={university.country}
-                          className="h-20 sm:h-24 lg:h-32"
+                          country={university.country_code}
+                          className="h-20 sm:h-24 lg:h-26"
                         />
                         <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
-                          <CardTitle className="text-sm sm:text-base lg:text-lg leading-tight line-clamp-2">{university.name}</CardTitle>
+                          <CardTitle className="text-base sm:text-lg lg:text-xl leading-tight line-clamp-2">{university.name}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
                           {university.country && (

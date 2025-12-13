@@ -1,0 +1,16 @@
+# Python dependencies for StealthFrontend project
+# These are optional Python tools that can be used alongside the main JS/TS project
+
+# Development utilities
+python-dotenv==1.0.0       # Environment variable management
+requests==2.31.0           # HTTP library for API calls
+httpx==0.25.2              # Modern async HTTP client
+
+# If using Python for any backend scripts or AI processing
+openai==1.6.1              # OpenAI API client (optional)
+google-generativeai==0.3.2 # Google Gemini API client (optional)
+
+# Utilities
+pydantic==2.5.2            # Data validation
+click==8.1.7               # CLI utilities
+rich==13.7.0               # Rich terminal output
