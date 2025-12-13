@@ -1,153 +1,510 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { streamAIStudyAdvisor } from "@/hooks/useAI";
+import { useAIStudyAdvisor } from "@/hooks/useAI";
 import { useSavedCourses } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, Loader2, ArrowLeft } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  Send, 
+  Loader2, 
+  ArrowLeft, 
+  Copy, 
+  Check, 
+  Paperclip, 
+  X, 
+  ChevronDown,
+  Sparkles,
+  Zap,
+  Brain,
+  RefreshCw,
+  ThumbsUp,
+  ThumbsDown,
+  GraduationCap
+} from "lucide-react";
 import { toast } from "sonner";
 
-interface Message {
-  role: "user" | "assistant";
+interface Attachment {
+  id: string;
+  name: string;
+  type: string;
   content: string;
 }
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  attachments?: Attachment[];
+  timestamp: Date;
+}
+
+type ModelType = "fast" | "thinking";
+
+const models: { id: ModelType; name: string; description: string; icon: React.ReactNode }[] = [
+  { 
+    id: "fast", 
+    name: "studentAI Fast", 
+    description: "Quick responses for simple questions",
+    icon: <Zap className="h-4 w-4" />
+  },
+  { 
+    id: "thinking", 
+    name: "studentAI Pro", 
+    description: "Deep reasoning for complex problems",
+    icon: <Brain className="h-4 w-4" />
+  },
+];
 
 const AIAdvisor = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelType>("fast");
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const advisor = useAIStudyAdvisor();
   const { data: savedCourses } = useSavedCourses();
   const { data: agreements } = useLearningAgreements();
-  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    // Auto-scroll to bottom when messages change
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, advisor.isPending]);
 
   if (!user) {
     navigate("/auth");
     return null;
   }
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const generateId = () => Math.random().toString(36).substring(2, 9);
 
-    const userMessage: Message = { role: "user", content: input };
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("text/") && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx")) {
+        toast.error(`${file.name}: Only text files are supported`);
+        continue;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name}: File too large (max 5MB)`);
+        continue;
+      }
+
+      try {
+        const content = await file.text();
+        setAttachments(prev => [...prev, {
+          id: generateId(),
+          name: file.name,
+          type: file.type,
+          content: content.substring(0, 10000)
+        }]);
+      } catch {
+        toast.error(`Failed to read ${file.name}`);
+      }
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleCopy = async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(messageId);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const handleRegenerate = async (messageIndex: number) => {
+    const messagesUpToIndex = messages.slice(0, messageIndex);
+    const lastUserMessageIndex = messagesUpToIndex.map(m => m.role).lastIndexOf("user");
+    
+    if (lastUserMessageIndex === -1) return;
+
+    const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
+    
+    try {
+      const userContext = {
+        savedCoursesCount: savedCourses?.length || 0,
+        learningAgreementsCount: agreements?.length || 0,
+        model: selectedModel,
+      };
+
+      const response = await advisor.mutateAsync({
+        messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
+        userContext,
+      });
+
+      const newMessages = [...messagesToSend, {
+        id: generateId(),
+        role: "assistant" as const,
+        content: response.message,
+        timestamp: new Date()
+      }];
+      setMessages(newMessages);
+    } catch {
+      toast.error("Failed to regenerate response");
+    }
+  };
+
+  const handleSend = async () => {
+    if ((!input.trim() && attachments.length === 0) || advisor.isPending) return;
+
+    const userMessage: Message = { 
+      id: generateId(),
+      role: "user", 
+      content: input, 
+      attachments: attachments.length > 0 ? [...attachments] : undefined,
+      timestamp: new Date()
+    };
+    
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
-    setIsLoading(true);
-
-    let assistantContent = "";
-
-    const updateAssistantMessage = (chunk: string) => {
-      assistantContent += chunk;
-      setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
-          return prev.map((m, i) => 
-            i === prev.length - 1 ? { ...m, content: assistantContent } : m
-          );
-        }
-        return [...prev, { role: "assistant", content: assistantContent }];
-      });
-    };
+    setAttachments([]);
 
     try {
       const userContext = {
         savedCoursesCount: savedCourses?.length || 0,
         learningAgreementsCount: agreements?.length || 0,
+        model: selectedModel,
       };
 
-      await streamAIStudyAdvisor({
-        messages: newMessages,
-        userContext,
-        onDelta: (chunk) => updateAssistantMessage(chunk),
-        onDone: () => setIsLoading(false),
+      const messagesForAI = newMessages.map(m => {
+        if (m.attachments && m.attachments.length > 0) {
+          let content = m.content;
+          content += "\n\n--- Attached Files ---\n";
+          m.attachments.forEach(a => {
+            content += `\n[${a.name}]\n${a.content}\n`;
+          });
+          return { role: m.role, content };
+        }
+        return { role: m.role, content: m.content };
       });
-    } catch (error) {
-      console.error("Stream error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to get response from AI advisor");
-      setIsLoading(false);
+
+      const response = await advisor.mutateAsync({
+        messages: messagesForAI,
+        userContext,
+      });
+
+      setMessages([...newMessages, { 
+        id: generateId(),
+        role: "assistant", 
+        content: response.message,
+        timestamp: new Date()
+      }]);
+    } catch {
+      toast.error("Failed to get response from studentAI");
     }
   };
 
+  const selectedModelData = models.find(m => m.id === selectedModel)!;
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Button variant="ghost" className="mb-6 theme-btn-secondary" onClick={() => navigate(-1)}>
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
-
-      <Card className="backdrop-blur-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-6 w-6" />
-            AI Study Advisor
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ScrollArea className="h-[500px] pr-4" ref={scrollRef}>
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center opacity-70">
-                <Bot className="h-16 w-16 mb-4 opacity-50" />
-                <p className="text-lg font-semibold mb-2">Ask me anything!</p>
-                <p className="text-sm">
-                  I can help with course selection, study abroad planning, learning agreements, and more.
-                </p>
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate(-1)}
+            className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
+                <GraduationCap className="h-5 w-5 text-primary" />
               </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.role === "user"
-                          ? "theme-btn-primary"
-                          : "theme-card"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-                  <div className="flex justify-start">
-                    <div className="theme-card rounded-lg px-4 py-2">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    </div>
-                  </div>
+            </div>
+            <div>
+              <h1 className="font-bold text-xl text-foreground/80 dark:text-foreground leading-none">hubAI</h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Model Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="gap-2 border-border bg-transparent hover:bg-accent/30 transition-all text-foreground/70 dark:text-foreground"
+            >
+              <span className="text-primary">{selectedModelData.icon}</span>
+              <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            {models.map(model => (
+              <DropdownMenuItem
+                key={model.id}
+                onClick={() => setSelectedModel(model.id)}
+                className="flex items-start gap-3 p-3 cursor-pointer"
+              >
+                <div className="mt-0.5 text-primary">{model.icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-xs opacity-70">{model.description}</div>
+                </div>
+                {selectedModel === model.id && (
+                  <Check className="h-4 w-4 text-primary mt-0.5" />
                 )}
-              </div>
-            )}
-          </ScrollArea>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-          <div className="flex gap-2">
+      {/* Chat Area */}
+      <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+        <div className="py-8 space-y-6">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+              {/* Hero Avatar */}
+              <div className="relative mb-8">
+                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center ring-4 ring-primary/10 shadow-lg shadow-primary/10">
+                  <Sparkles className="h-12 w-12 text-primary" />
+                </div>
+              </div>
+
+              <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-10 leading-relaxed">
+                Ask me about course selection, 
+                finding research labs, study planning, answering any 
+                questions about your academic journey...
+              </p>
+              
+              {/* Suggestion Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
+                {[
+                  { text: "Help me choose courses for next semester", icon: "📚" },
+                  { text: "Find research labs in computer science", icon: "🔬" },
+                  { text: "What are the best universities for my exchange?", icon: "🌍" },
+                  { text: "How do I create a learning agreement?", icon: "📝" }
+                ].map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    className="group flex items-start gap-3 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 hover:shadow-md transition-all duration-200 text-left"
+                    onClick={() => setInput(suggestion.text)}
+                  >
+                    <span className="text-xl">{suggestion.icon}</span>
+                    <span className="text-sm text-foreground/70 dark:text-foreground/80 group-hover:text-foreground transition-colors">
+                      {suggestion.text}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              {messages.map((message, idx) => (
+                <div key={message.id} className="group animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <div className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                    {/* Avatar */}
+                    {message.role === "assistant" ? (
+                      <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          <Sparkles className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Avatar className="h-9 w-9 shrink-0 ring-2 ring-border shadow-sm">
+                        <AvatarFallback className="bg-secondary text-secondary-foreground text-sm font-medium">
+                          {user.email?.charAt(0).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+
+                    {/* Message Content */}
+                    <div className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
+                      <div
+                        className={`inline-block rounded-2xl px-4 py-3 shadow-sm ${
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground rounded-tr-md"
+                            : "bg-card border border-border/50 text-foreground rounded-tl-md"
+                        }`}
+                      >
+                        {/* Attachments indicator */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {message.attachments.map(a => (
+                              <span 
+                                key={a.id} 
+                                className="inline-flex items-center gap-1 text-xs bg-primary-foreground/20 rounded-md px-2 py-1"
+                              >
+                                <Paperclip className="h-3 w-3" />
+                                {a.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="whitespace-pre-wrap text-left leading-relaxed">{message.content}</p>
+                      </div>
+
+                      {/* Message Actions */}
+                      {message.role === "assistant" && (
+                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={() => handleCopy(message.content, message.id)}
+                          >
+                            {copiedId === message.id ? (
+                              <Check className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={() => handleRegenerate(idx)}
+                            disabled={advisor.isPending}
+                          >
+                            <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
+                            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
+                            <ThumbsDown className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Loading state */}
+              {advisor.isPending && (
+                <div className="flex gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-card border border-border/50 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                      <span className="text-sm text-muted-foreground ml-1">studentAI is thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Input Area - Fixed bottom */}
+      <div className="border-t border-border/50 bg-transparent p-4">
+        {/* Attachments Preview */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {attachments.map(attachment => (
+              <div
+                key={attachment.id}
+                className="flex items-center gap-2 bg-accent/50 border border-border/50 rounded-lg px-3 py-1.5 text-sm"
+              >
+                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="max-w-32 truncate text-foreground">{attachment.name}</span>
+                <button
+                  onClick={() => removeAttachment(attachment.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-end gap-2">
+          {/* Attachment Button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".txt,.md,.json,.csv,.pdf,.docx"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={advisor.isPending}
+          >
+            <Paperclip className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
+          </Button>
+
+          {/* Text Input */}
+          <div className="flex-1 relative">
             <Input
-              placeholder="Ask your question..."
+              placeholder="Message hubAI..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              disabled={isLoading}
+              onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+              disabled={advisor.isPending}
+              className="pr-14 py-6 rounded-xl border border-foreground/20 dark:border-border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground"
             />
-            <Button onClick={handleSend} disabled={isLoading || !input.trim()} className="theme-btn-primary">
-              <Send className="h-4 w-4" />
+            <Button
+              size="icon"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+              onClick={handleSend}
+              disabled={advisor.isPending || (!input.trim() && attachments.length === 0)}
+            >
+              {advisor.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="text-xs text-center text-foreground/40 dark:text-muted-foreground/70 mt-3">
+          hubAI can make mistakes. Consider checking important information.
+        </p>
+      </div>
     </div>
   );
 };
