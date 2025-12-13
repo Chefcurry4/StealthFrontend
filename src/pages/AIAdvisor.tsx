@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAIStudyAdvisor } from "@/hooks/useAI";
+import { streamAIStudyAdvisor } from "@/hooks/useAI";
 import { useSavedCourses } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,17 @@ const AIAdvisor = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const advisor = useAIStudyAdvisor();
+  const [isLoading, setIsLoading] = useState(false);
   const { data: savedCourses } = useSavedCourses();
   const { data: agreements } = useLearningAgreements();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Auto-scroll to bottom when messages change
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   if (!user) {
     navigate("/auth");
@@ -31,12 +39,28 @@ const AIAdvisor = () => {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || advisor.isPending) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: input };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
+    setIsLoading(true);
+
+    let assistantContent = "";
+
+    const updateAssistantMessage = (chunk: string) => {
+      assistantContent += chunk;
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant") {
+          return prev.map((m, i) => 
+            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+          );
+        }
+        return [...prev, { role: "assistant", content: assistantContent }];
+      });
+    };
 
     try {
       const userContext = {
@@ -44,26 +68,27 @@ const AIAdvisor = () => {
         learningAgreementsCount: agreements?.length || 0,
       };
 
-      const response = await advisor.mutateAsync({
+      await streamAIStudyAdvisor({
         messages: newMessages,
         userContext,
+        onDelta: (chunk) => updateAssistantMessage(chunk),
+        onDone: () => setIsLoading(false),
       });
-
-      setMessages([...newMessages, { role: "assistant", content: response.message }]);
     } catch (error) {
-      toast.error("Failed to get response from AI advisor");
-      console.error(error);
+      console.error("Stream error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to get response from AI advisor");
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+      <Button variant="ghost" className="mb-6 theme-btn-secondary" onClick={() => navigate(-1)}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back
       </Button>
 
-      <Card>
+      <Card className="backdrop-blur-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-6 w-6" />
@@ -71,9 +96,9 @@ const AIAdvisor = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <ScrollArea className="h-[500px] pr-4">
+          <ScrollArea className="h-[500px] pr-4" ref={scrollRef}>
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-full text-center opacity-70">
                 <Bot className="h-16 w-16 mb-4 opacity-50" />
                 <p className="text-lg font-semibold mb-2">Ask me anything!</p>
                 <p className="text-sm">
@@ -90,17 +115,17 @@ const AIAdvisor = () => {
                     <div
                       className={`max-w-[80%] rounded-lg px-4 py-2 ${
                         message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
+                          ? "theme-btn-primary"
+                          : "theme-card"
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
                   </div>
                 ))}
-                {advisor.isPending && (
+                {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
                   <div className="flex justify-start">
-                    <div className="bg-muted rounded-lg px-4 py-2">
+                    <div className="theme-card rounded-lg px-4 py-2">
                       <Loader2 className="h-5 w-5 animate-spin" />
                     </div>
                   </div>
@@ -115,9 +140,9 @@ const AIAdvisor = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              disabled={advisor.isPending}
+              disabled={isLoading}
             />
-            <Button onClick={handleSend} disabled={advisor.isPending || !input.trim()}>
+            <Button onClick={handleSend} disabled={isLoading || !input.trim()} className="theme-btn-primary">
               <Send className="h-4 w-4" />
             </Button>
           </div>

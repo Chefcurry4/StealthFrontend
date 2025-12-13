@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, userContext } = await req.json();
-    console.log("Received request with messages:", messages?.length, "userContext:", userContext);
+    const { messages, userContext, stream = false } = await req.json();
+    console.log("Received request with messages:", messages?.length, "stream:", stream);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -33,7 +33,7 @@ ${userContext ? JSON.stringify(userContext, null, 2) : "No context provided"}
 
 Provide helpful, specific, and actionable advice. Be encouraging and supportive. Format your responses clearly with bullet points when listing options.`;
 
-    console.log("Calling Lovable AI Gateway...");
+    console.log("Calling Lovable AI Gateway...", stream ? "(streaming)" : "(non-streaming)");
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -46,6 +46,7 @@ Provide helpful, specific, and actionable advice. Be encouraging and supportive.
           { role: "system", content: systemPrompt },
           ...messages,
         ],
+        stream,
       }),
     });
 
@@ -68,6 +69,15 @@ Provide helpful, specific, and actionable advice. Be encouraging and supportive.
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
+    // If streaming, return the stream directly
+    if (stream) {
+      console.log("Returning streaming response");
+      return new Response(response.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
+
+    // Non-streaming response
     const data = await response.json();
     console.log("AI response received successfully");
     
