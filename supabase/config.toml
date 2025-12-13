@@ -1,1 +1,10 @@
 project_id = "zbgcvuocupxfugtfjids"
+
+[functions.ai-study-advisor]
+verify_jwt = false
+
+[functions.ai-course-recommendations]
+verify_jwt = false
+
+[functions.ai-email-draft]
+verify_jwt = false
