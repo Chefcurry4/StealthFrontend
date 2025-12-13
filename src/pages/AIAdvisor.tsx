@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AIAdvisorSidebar } from "@/components/AIAdvisorSidebar";
 import { 
   Send, 
   Loader2, 
@@ -29,9 +30,11 @@ import {
   RefreshCw,
   ThumbsUp,
   ThumbsDown,
-  GraduationCap
+  GraduationCap,
+  PanelLeft
 } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Attachment {
   id: string;
@@ -68,17 +71,36 @@ const models: { id: ModelType; name: string; description: string; icon: React.Re
 const AIAdvisor = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState<ModelType>("fast");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const advisor = useAIStudyAdvisor();
   const { data: savedCourses } = useSavedCourses();
   const { data: agreements } = useLearningAgreements();
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentConversationId(undefined);
+    setInput("");
+    setAttachments([]);
+  };
+
+  const handleSelectConversation = (id: string) => {
+    // For now, just set the ID - conversation loading would be implemented with persistence
+    setCurrentConversationId(id);
+    // Close sidebar on mobile after selection
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -228,14 +250,35 @@ const AIAdvisor = () => {
   const selectedModelData = models.find(m => m.id === selectedModel)!;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate(-1)}
+    <div className="flex h-[calc(100vh-4rem)]">
+      {/* Sidebar */}
+      <AIAdvisorSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onNewChat={handleNewChat}
+        currentConversationId={currentConversationId}
+        onSelectConversation={handleSelectConversation}
+      />
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            {!sidebarOpen && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setSidebarOpen(true)}
+                className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
+              >
+                <PanelLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate(-1)}
             className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -504,6 +547,7 @@ const AIAdvisor = () => {
         <p className="text-xs text-center text-foreground/40 dark:text-muted-foreground/70 mt-3">
           hubAI can make mistakes. Consider checking important information.
         </p>
+      </div>
       </div>
     </div>
   );
