@@ -30,7 +30,6 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import LearningAgreementDetail from "./pages/LearningAgreementDetail";
 import AIAdvisor from "./pages/AIAdvisor";
-import EmailDrafts from "./pages/EmailDrafts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,7 +65,6 @@ const AppContent = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learning-agreements/:id" element={<LearningAgreementDetail />} />
                 <Route path="/ai-advisor" element={<AIAdvisor />} />
-                <Route path="/email-drafts" element={<EmailDrafts />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
