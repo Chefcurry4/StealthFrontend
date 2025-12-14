@@ -80,12 +80,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) return { error };
+
+      // Ensure user profile exists (for users who signed up before profile creation was added)
+      if (data.user) {
+        const { data: existingProfile } = await supabase
+          .from('Users(US)')
+          .select('id')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          await supabase.from('Users(US)').insert({
+            id: data.user.id,
+            email: data.user.email || email,
+            username: data.user.user_metadata?.username || email.split('@')[0],
+          });
+        }
+      }
 
       return { error: null };
     } catch (error: any) {

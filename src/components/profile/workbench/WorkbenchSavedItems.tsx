@@ -4,9 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FlaskConical, GraduationCap, ExternalLink } from "lucide-react";
+import { BookOpen, FlaskConical, GraduationCap, ExternalLink, Bot } from "lucide-react";
 import { Loader } from "@/components/Loader";
-
 export const WorkbenchSavedItems = () => {
   const { data: savedCourses, isLoading: loadingCourses } = useSavedCourses();
   const { data: savedLabs, isLoading: loadingLabs } = useSavedLabs();
@@ -23,8 +22,16 @@ export const WorkbenchSavedItems = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Saved Items</h3>
-        <Badge variant="secondary">{totalSaved} total</Badge>
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold">Saved Items</h3>
+          <Badge variant="secondary">{totalSaved} total</Badge>
+        </div>
+        <Button asChild variant="outline" size="sm" className="gap-2">
+          <Link to="/ai-advisor">
+            <Bot className="h-4 w-4" />
+            Open AI Advisor
+          </Link>
+        </Button>
       </div>
 
       <Tabs defaultValue="courses" className="w-full">

@@ -110,6 +110,8 @@ const AIAdvisor = () => {
     }
   }, [loadedMessages]);
 
+  const generateId = () => Math.random().toString(36).substring(2, 9);
+
   const handleNewChat = () => {
     setMessages([]);
     setCurrentConversationId(undefined);
@@ -131,6 +133,27 @@ const AIAdvisor = () => {
     setInput(prev => prev + (prev ? " " : "") + `Tell me about the lab "${labName}"`);
   };
 
+  const handleReferenceDocument = async (docName: string, docUrl: string) => {
+    // Fetch document content if it's a text-based file
+    try {
+      const response = await fetch(docUrl);
+      const text = await response.text();
+      const truncatedContent = text.substring(0, 10000);
+      
+      setAttachments(prev => [...prev, {
+        id: generateId(),
+        name: docName,
+        type: "text/plain",
+        content: truncatedContent
+      }]);
+      
+      setInput(prev => prev + (prev ? " " : "") + `Based on my document "${docName}", `);
+      toast.success(`Document "${docName}" added to context`);
+    } catch {
+      toast.error(`Failed to load document "${docName}"`);
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
@@ -142,8 +165,6 @@ const AIAdvisor = () => {
     navigate("/auth");
     return null;
   }
-
-  const generateId = () => Math.random().toString(36).substring(2, 9);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -346,6 +367,7 @@ const AIAdvisor = () => {
         onSelectConversation={handleSelectConversation}
         onReferenceCourse={handleReferenceCourse}
         onReferenceLab={handleReferenceLab}
+        onReferenceDocument={handleReferenceDocument}
       />
 
       {/* Main Chat Area */}
