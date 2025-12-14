@@ -22,14 +22,13 @@ import Programs from "./pages/Programs";
 import ProgramDetail from "./pages/ProgramDetail";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
-import Teachers from "./pages/Teachers";
 import TeacherDetail from "./pages/TeacherDetail";
 import Labs from "./pages/Labs";
 import LabDetail from "./pages/LabDetail";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import LearningAgreementDetail from "./pages/LearningAgreementDetail";
-import AIAdvisor from "./pages/AIAdvisor";
+import Workbench from "./pages/Workbench";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,13 +57,12 @@ const AppContent = () => {
                 <Route path="/programs/:slug" element={<ProgramDetail />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetail />} />
-                <Route path="/teachers" element={<Teachers />} />
                 <Route path="/teachers/:id" element={<TeacherDetail />} />
                 <Route path="/labs" element={<Labs />} />
                 <Route path="/labs/:slug" element={<LabDetail />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learning-agreements/:id" element={<LearningAgreementDetail />} />
-                <Route path="/ai-advisor" element={<AIAdvisor />} />
+                <Route path="/workbench" element={<Workbench />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
