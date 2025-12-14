@@ -143,12 +143,15 @@ export const GlobalSearch = ({
         <div
           className={cn(
             "absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50",
-            "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
             variant === "hero" ? "max-h-[400px]" : "max-h-[320px]"
           )}
+          style={{
+            background: 'hsl(var(--card))',
+            borderColor: 'hsl(var(--border))',
+          }}
         >
           {results.length === 0 && !isLoading ? (
-            <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="p-4 text-center text-sm text-muted-foreground">
               No results found for "{query}"
             </div>
           ) : (
@@ -157,24 +160,30 @@ export const GlobalSearch = ({
                 const typeResults = groupedResults[type];
                 if (!typeResults || typeResults.length === 0) return null;
 
-                return (
-                  <div key={type}>
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 sticky top-0 bg-white dark:bg-gray-800">
+                  return (
+                    <div key={type}>
+                      <div 
+                        className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card"
+                      >
                       {typeLabels[type]}s
                     </div>
                     {typeResults.map((result) => (
                       <button
                         key={`${result.type}-${result.id}`}
                         onClick={() => handleResultClick(result)}
-                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left text-gray-700 dark:text-gray-200"
+                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-primary/10 transition-colors text-left"
+                        style={{ color: modeConfig.textColor }}
                       >
-                        <span className="shrink-0 text-gray-400 dark:text-gray-500">
+                        <span 
+                          className="shrink-0 opacity-60"
+                          style={{ color: modeConfig.textColor }}
+                        >
                           {typeIcons[result.type]}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate text-gray-800 dark:text-white">{result.title}</div>
+                          <div className="font-medium truncate">{result.title}</div>
                           {result.subtitle && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{result.subtitle}</div>
+                            <div className="text-xs opacity-60 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </button>
