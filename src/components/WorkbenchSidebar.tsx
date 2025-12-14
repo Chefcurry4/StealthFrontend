@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAIConversations, useDeleteConversation, useUpdateConversation } from "@/hooks/useAIConversations";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
-import { useEmailDrafts } from "@/hooks/useEmailDrafts";
+import { useEmailDrafts, useCreateEmailDraft, useDeleteEmailDraft } from "@/hooks/useEmailDrafts";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Collapsible,
@@ -36,7 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface AIAdvisorSidebarProps {
+interface WorkbenchSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   onNewChat: () => void;
@@ -47,7 +48,7 @@ interface AIAdvisorSidebarProps {
   onReferenceDocument?: (docName: string, docUrl: string) => void;
 }
 
-export const AIAdvisorSidebar = ({
+export const WorkbenchSidebar = ({
   isOpen,
   onToggle,
   onNewChat,
@@ -56,8 +57,12 @@ export const AIAdvisorSidebar = ({
   onReferenceCourse,
   onReferenceLab,
   onReferenceDocument,
-}: AIAdvisorSidebarProps) => {
+}: WorkbenchSidebarProps) => {
   const [openSections, setOpenSections] = useState<string[]>(["chats"]);
+  const [showDraftForm, setShowDraftForm] = useState(false);
+  const [draftSubject, setDraftSubject] = useState("");
+  const [draftRecipient, setDraftRecipient] = useState("");
+  const [draftBody, setDraftBody] = useState("");
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +77,8 @@ export const AIAdvisorSidebar = ({
   const { data: userDocuments } = useUserDocuments();
   const deleteConversation = useDeleteConversation();
   const updateConversation = useUpdateConversation();
+  const createEmailDraft = useCreateEmailDraft();
+  const deleteEmailDraft = useDeleteEmailDraft();
 
   // Focus input when editing starts
   useEffect(() => {
@@ -391,22 +398,104 @@ export const AIAdvisorSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {emailDrafts?.length === 0 ? (
+              {/* New Draft Button / Form */}
+              {showDraftForm ? (
+                <div className="p-2 space-y-2 bg-accent/30 rounded-lg">
+                  <Input
+                    placeholder="Recipient email"
+                    value={draftRecipient}
+                    onChange={(e) => setDraftRecipient(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Input
+                    placeholder="Subject"
+                    value={draftSubject}
+                    onChange={(e) => setDraftSubject(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Textarea
+                    placeholder="Email body..."
+                    value={draftBody}
+                    onChange={(e) => setDraftBody(e.target.value)}
+                    className="text-xs min-h-[60px] resize-none"
+                  />
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      className="flex-1 h-7 text-xs"
+                      onClick={async () => {
+                        if (draftSubject.trim() || draftBody.trim()) {
+                          await createEmailDraft.mutateAsync({
+                            subject: draftSubject,
+                            body: draftBody,
+                            recipient: draftRecipient,
+                          });
+                          setDraftSubject("");
+                          setDraftBody("");
+                          setDraftRecipient("");
+                          setShowDraftForm(false);
+                        }
+                      }}
+                      disabled={createEmailDraft.isPending}
+                    >
+                      {createEmailDraft.isPending ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setShowDraftForm(false);
+                        setDraftSubject("");
+                        setDraftBody("");
+                        setDraftRecipient("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowDraftForm(true)}
+                >
+                  <Plus className="h-3 w-3" />
+                  New Email Draft
+                </Button>
+              )}
+              
+              {emailDrafts?.length === 0 && !showDraftForm ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
                   No email drafts
                 </p>
               ) : (
                 emailDrafts?.slice(0, 5).map((draft) => (
-                  <Link
+                  <div
                     key={draft.id}
-                    to="/profile?tab=workbench&section=drafts"
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
+                    className="group flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
                   >
                     <Mail className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="flex-1 truncate">
+                    <Link
+                      to="/profile?tab=workbench&section=drafts"
+                      className="flex-1 truncate"
+                    >
                       {draft.subject || "Untitled"}
-                    </span>
-                  </Link>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteEmailDraft.mutate(draft.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </div>
                 ))
               )}
             </CollapsibleContent>
