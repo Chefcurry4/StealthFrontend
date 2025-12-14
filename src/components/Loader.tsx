@@ -1,5 +1,3 @@
-import graduationCapIcon from "@/assets/graduation-cap-loader.png";
-
 interface LoaderProps {
   size?: "sm" | "md" | "lg";
   fullScreen?: boolean;
@@ -7,33 +5,25 @@ interface LoaderProps {
 
 export const Loader = ({ size = "md", fullScreen = false }: LoaderProps) => {
   const sizeClasses = {
-    sm: "w-8 h-8",
-    md: "w-16 h-16",
-    lg: "w-24 h-24",
+    sm: "w-6 h-6 border-2",
+    md: "w-10 h-10 border-3",
+    lg: "w-16 h-16 border-4",
   };
 
   const content = (
     <div className="flex items-center justify-center">
-      <div className="relative">
-        <img
-          src={graduationCapIcon}
-          alt="Loading"
-          className={`${sizeClasses[size]} animate-[bounce_1s_ease-in-out_infinite]`}
-        />
-        <div className="absolute inset-0 animate-[ping_1.5s_ease-in-out_infinite] opacity-30">
-          <img
-            src={graduationCapIcon}
-            alt=""
-            className={sizeClasses[size]}
-          />
-        </div>
-      </div>
+      <div
+        className={`${sizeClasses[size]} rounded-full border-foreground/30 border-t-foreground animate-spin`}
+        style={{
+          animation: "spin 1s linear infinite, pulse 2s ease-in-out infinite",
+        }}
+      />
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
         {content}
       </div>
     );
