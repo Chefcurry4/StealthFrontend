@@ -142,12 +142,13 @@ export const GlobalSearch = ({
       {isOpen && query.length >= 2 && (
         <div
           className={cn(
-            "absolute top-full left-0 right-0 mt-2 rounded-xl border border-gray-200 shadow-xl overflow-hidden z-50 bg-white",
+            "absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50",
+            "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
             variant === "hero" ? "max-h-[400px]" : "max-h-[320px]"
           )}
         >
           {results.length === 0 && !isLoading ? (
-            <div className="p-4 text-center text-sm text-gray-500">
+            <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
               No results found for "{query}"
             </div>
           ) : (
@@ -158,22 +159,22 @@ export const GlobalSearch = ({
 
                 return (
                   <div key={type}>
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 sticky top-0 bg-white">
+                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 sticky top-0 bg-white dark:bg-gray-800">
                       {typeLabels[type]}s
                     </div>
                     {typeResults.map((result) => (
                       <button
                         key={`${result.type}-${result.id}`}
                         onClick={() => handleResultClick(result)}
-                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-100 transition-colors text-left text-gray-700"
+                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left text-gray-700 dark:text-gray-200"
                       >
-                        <span className="shrink-0 text-gray-400">
+                        <span className="shrink-0 text-gray-400 dark:text-gray-500">
                           {typeIcons[result.type]}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate text-gray-800">{result.title}</div>
+                          <div className="font-medium truncate text-gray-800 dark:text-white">{result.title}</div>
                           {result.subtitle && (
-                            <div className="text-xs text-gray-500 truncate">{result.subtitle}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </button>
