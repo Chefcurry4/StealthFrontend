@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark, Star, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark, Star, Pencil, Trash2, ThumbsUp } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,7 +14,7 @@ import { useCourse } from "@/hooks/useCourses";
 import { useTeacherIdByCourse } from "@/hooks/useTeachers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
-import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview } from "@/hooks/useCourseReviews";
+import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote } from "@/hooks/useCourseReviews";
 import { TeacherLink } from "@/components/TeacherLink";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -31,6 +31,7 @@ const CourseDetail = () => {
   const createReview = useCreateCourseReview();
   const updateReview = useUpdateCourseReview();
   const deleteReview = useDeleteCourseReview();
+  const toggleUpvote = useToggleReviewUpvote();
 
   const [rating, setRating] = useState(5);
   const [difficulty, setDifficulty] = useState("");
@@ -115,6 +116,14 @@ const CourseDetail = () => {
 
   const handleDeleteReview = (reviewId: string) => {
     deleteReview.mutate(reviewId);
+  };
+
+  const handleUpvote = (reviewId: string, hasUpvoted: boolean) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    toggleUpvote.mutate({ reviewId, hasUpvoted });
   };
 
   if (isLoading) {
@@ -471,7 +480,22 @@ const CourseDetail = () => {
                               {review.workload && <Badge variant="outline">{review.workload}</Badge>}
                               {review.organization && <Badge variant="outline">{review.organization}</Badge>}
                             </div>
-                            {review.comment && <p className="text-sm">{review.comment}</p>}
+                            {review.comment && <p className="text-sm mb-3">{review.comment}</p>}
+                            
+                            {/* Upvote Button */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Button
+                                variant={review.hasUpvoted ? "default" : "outline"}
+                                size="sm"
+                                className="gap-1.5"
+                                onClick={() => handleUpvote(review.id, review.hasUpvoted)}
+                                disabled={toggleUpvote.isPending}
+                              >
+                                <ThumbsUp className={`h-4 w-4 ${review.hasUpvoted ? "fill-current" : ""}`} />
+                                <span>{review.upvote_count || 0}</span>
+                              </Button>
+                              <span className="text-xs text-muted-foreground">Helpful</span>
+                            </div>
                           </>
                         )}
                       </div>
