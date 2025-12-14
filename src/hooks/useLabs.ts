@@ -26,6 +26,8 @@ export const useLabs = (filters?: LabFilters) => {
       let query = supabase
         .from("Labs(L)")
         .select("*")
+        .neq("name", "")
+        .not("name", "is", null)
         .order("name");
 
       if (filters?.search) {
