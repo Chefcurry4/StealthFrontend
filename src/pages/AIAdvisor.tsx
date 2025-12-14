@@ -4,6 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAIStudyAdvisor } from "@/hooks/useAI";
 import { useSavedCourses } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
+import { 
+  useAIMessages, 
+  useCreateConversation, 
+  useSaveMessage, 
+  useUpdateConversation 
+} from "@/hooks/useAIConversations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -85,6 +91,24 @@ const AIAdvisor = () => {
   const advisor = useAIStudyAdvisor();
   const { data: savedCourses } = useSavedCourses();
   const { data: agreements } = useLearningAgreements();
+  
+  // Conversation persistence hooks
+  const createConversation = useCreateConversation();
+  const saveMessage = useSaveMessage();
+  const updateConversation = useUpdateConversation();
+  const { data: loadedMessages } = useAIMessages(currentConversationId || null);
+
+  // Load messages when switching conversations
+  useEffect(() => {
+    if (loadedMessages && loadedMessages.length > 0) {
+      setMessages(loadedMessages.map(m => ({
+        id: m.id,
+        role: m.role as "user" | "assistant",
+        content: m.content,
+        timestamp: new Date(m.created_at)
+      })));
+    }
+  }, [loadedMessages]);
 
   const handleNewChat = () => {
     setMessages([]);
@@ -94,12 +118,17 @@ const AIAdvisor = () => {
   };
 
   const handleSelectConversation = (id: string) => {
-    // For now, just set the ID - conversation loading would be implemented with persistence
     setCurrentConversationId(id);
-    // Close sidebar on mobile after selection
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+    setInput("");
+    setAttachments([]);
+  };
+
+  const handleReferenceCourse = (courseName: string, courseId: string) => {
+    setInput(prev => prev + (prev ? " " : "") + `Tell me about the course "${courseName}"`);
+  };
+
+  const handleReferenceLab = (labName: string, labSlug: string) => {
+    setInput(prev => prev + (prev ? " " : "") + `Tell me about the lab "${labName}"`);
   };
 
   // Auto-scroll to bottom when new messages arrive
@@ -199,10 +228,11 @@ const AIAdvisor = () => {
   const handleSend = async () => {
     if ((!input.trim() && attachments.length === 0) || advisor.isPending) return;
 
+    const userMessageContent = input;
     const userMessage: Message = { 
       id: generateId(),
       role: "user", 
-      content: input, 
+      content: userMessageContent, 
       attachments: attachments.length > 0 ? [...attachments] : undefined,
       timestamp: new Date()
     };
@@ -213,6 +243,22 @@ const AIAdvisor = () => {
     setAttachments([]);
 
     try {
+      // Create conversation on first message if none exists
+      let conversationId = currentConversationId;
+      if (!conversationId) {
+        const title = userMessageContent.slice(0, 50) + (userMessageContent.length > 50 ? "..." : "");
+        const conv = await createConversation.mutateAsync(title);
+        conversationId = conv.id;
+        setCurrentConversationId(conversationId);
+      }
+
+      // Save user message to database
+      await saveMessage.mutateAsync({
+        conversationId,
+        role: "user",
+        content: userMessageContent
+      });
+
       const userContext = {
         savedCoursesCount: savedCourses?.length || 0,
         learningAgreementsCount: agreements?.length || 0,
@@ -236,10 +282,19 @@ const AIAdvisor = () => {
         userContext,
       });
 
+      const assistantMessage = response.message;
+
+      // Save assistant message to database
+      await saveMessage.mutateAsync({
+        conversationId,
+        role: "assistant",
+        content: assistantMessage
+      });
+
       setMessages([...newMessages, { 
         id: generateId(),
         role: "assistant", 
-        content: response.message,
+        content: assistantMessage,
         timestamp: new Date()
       }]);
     } catch {
@@ -258,6 +313,8 @@ const AIAdvisor = () => {
         onNewChat={handleNewChat}
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
+        onReferenceCourse={handleReferenceCourse}
+        onReferenceLab={handleReferenceLab}
       />
 
       {/* Main Chat Area */}

@@ -7,6 +7,7 @@ import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,10 +25,10 @@ import {
   FileText,
   ChevronRight,
   Trash2,
-  ExternalLink,
+  MessageCirclePlus,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AIAdvisorSidebarProps {
   isOpen: boolean;
@@ -35,6 +36,8 @@ interface AIAdvisorSidebarProps {
   onNewChat: () => void;
   currentConversationId?: string;
   onSelectConversation?: (id: string) => void;
+  onReferenceCourse?: (courseName: string, courseId: string) => void;
+  onReferenceLab?: (labName: string, labSlug: string) => void;
 }
 
 export const AIAdvisorSidebar = ({
@@ -43,8 +46,11 @@ export const AIAdvisorSidebar = ({
   onNewChat,
   currentConversationId,
   onSelectConversation,
+  onReferenceCourse,
+  onReferenceLab,
 }: AIAdvisorSidebarProps) => {
   const [openSections, setOpenSections] = useState<string[]>(["chats"]);
+  const isMobile = useIsMobile();
 
   const { data: conversations } = useAIConversations();
   const { data: savedCourses } = useSavedCourses();
@@ -62,56 +68,37 @@ export const AIAdvisorSidebar = ({
     );
   };
 
-  if (!isOpen) {
-    return (
-      <div className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className="mb-4"
-        >
-          <PanelLeft className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onNewChat}
-          className="mb-4"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-        <div className="flex flex-col gap-2 mt-4">
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <BookOpen className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <Mail className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <FileText className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleCourseClick = (item: any) => {
+    const course = item["Courses(C)"];
+    if (course && onReferenceCourse) {
+      onReferenceCourse(course.name_course, course.id_course);
+      if (isMobile) onToggle();
+    }
+  };
 
-  return (
-    <div className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm">
+  const handleLabClick = (item: any) => {
+    const lab = item["Labs(L)"];
+    if (lab && onReferenceLab) {
+      onReferenceLab(lab.name, lab.slug);
+      if (isMobile) onToggle();
+    }
+  };
+
+  const SidebarContent = () => (
+    <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h2 className="font-semibold text-foreground">Workbench</h2>
-        <Button variant="ghost" size="icon" onClick={onToggle}>
-          <PanelLeftClose className="h-5 w-5" />
-        </Button>
+        {!isMobile && (
+          <Button variant="ghost" size="icon" onClick={onToggle}>
+            <PanelLeftClose className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       {/* New Chat Button */}
       <div className="p-3">
-        <Button onClick={onNewChat} className="w-full gap-2" variant="outline">
+        <Button onClick={() => { onNewChat(); if (isMobile) onToggle(); }} className="w-full gap-2" variant="outline">
           <Plus className="h-4 w-4" />
           New Chat
         </Button>
@@ -156,7 +143,7 @@ export const AIAdvisorSidebar = ({
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-accent/50"
                     )}
-                    onClick={() => onSelectConversation?.(conv.id)}
+                    onClick={() => { onSelectConversation?.(conv.id); if (isMobile) onToggle(); }}
                   >
                     <MessageSquare className="h-3 w-3 shrink-0" />
                     <span className="flex-1 truncate">{conv.title}</span>
@@ -177,7 +164,7 @@ export const AIAdvisorSidebar = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Saved Courses Section */}
+          {/* Saved Courses Section - Click to reference in chat */}
           <Collapsible
             open={openSections.includes("courses")}
             onOpenChange={() => toggleSection("courses")}
@@ -206,17 +193,17 @@ export const AIAdvisorSidebar = ({
                 </p>
               ) : (
                 savedCourses?.slice(0, 5).map((item) => (
-                  <Link
+                  <button
                     key={item.id}
-                    to={`/courses/${item["Courses(C)"]?.id_course}`}
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
+                    onClick={() => handleCourseClick(item)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                   >
                     <BookOpen className="h-3 w-3 shrink-0 text-muted-foreground" />
                     <span className="flex-1 truncate">
                       {item["Courses(C)"]?.name_course}
                     </span>
-                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  </Link>
+                    <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
                 ))
               )}
               {(savedCourses?.length || 0) > 5 && (
@@ -230,7 +217,7 @@ export const AIAdvisorSidebar = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Saved Labs Section */}
+          {/* Saved Labs Section - Click to reference in chat */}
           <Collapsible
             open={openSections.includes("labs")}
             onOpenChange={() => toggleSection("labs")}
@@ -259,17 +246,17 @@ export const AIAdvisorSidebar = ({
                 </p>
               ) : (
                 savedLabs?.slice(0, 5).map((item) => (
-                  <Link
+                  <button
                     key={item.id}
-                    to={`/labs/${item["Labs(L)"]?.slug}`}
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
+                    onClick={() => handleLabClick(item)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                   >
                     <Beaker className="h-3 w-3 shrink-0 text-muted-foreground" />
                     <span className="flex-1 truncate">
                       {item["Labs(L)"]?.name}
                     </span>
-                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  </Link>
+                    <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
                 ))
               )}
             </CollapsibleContent>
@@ -384,6 +371,62 @@ export const AIAdvisorSidebar = ({
           </Button>
         </Link>
       </div>
+    </div>
+  );
+
+  // Collapsed state (desktop only)
+  if (!isOpen && !isMobile) {
+    return (
+      <div className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggle}
+          className="mb-4"
+        >
+          <PanelLeft className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onNewChat}
+          className="mb-4"
+        >
+          <Plus className="h-5 w-5" />
+        </Button>
+        <div className="flex flex-col gap-2 mt-4">
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <MessageSquare className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <BookOpen className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <Mail className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <FileText className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile drawer
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={onToggle}>
+        <SheetContent side="left" className="w-80 p-0 bg-card/95 backdrop-blur-md">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop expanded sidebar
+  return (
+    <div className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm">
+      <SidebarContent />
     </div>
   );
 };
