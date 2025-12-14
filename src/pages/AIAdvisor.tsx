@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAIStudyAdvisor } from "@/hooks/useAI";
+import { streamAIStudyAdvisor } from "@/hooks/useAI";
 import { useSavedCourses } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { 
@@ -85,10 +85,10 @@ const AIAdvisor = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
+  const [isStreaming, setIsStreaming] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const advisor = useAIStudyAdvisor();
   const { data: savedCourses } = useSavedCourses();
   const { data: agreements } = useLearningAgreements();
   
@@ -136,7 +136,7 @@ const AIAdvisor = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, advisor.isPending]);
+  }, [messages, isStreaming]);
 
   if (!user) {
     navigate("/auth");
@@ -194,12 +194,16 @@ const AIAdvisor = () => {
   };
 
   const handleRegenerate = async (messageIndex: number) => {
+    if (isStreaming) return;
+    
     const messagesUpToIndex = messages.slice(0, messageIndex);
     const lastUserMessageIndex = messagesUpToIndex.map(m => m.role).lastIndexOf("user");
     
     if (lastUserMessageIndex === -1) return;
 
     const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
+    setMessages(messagesToSend);
+    setIsStreaming(true);
     
     try {
       const userContext = {
@@ -208,25 +212,38 @@ const AIAdvisor = () => {
         model: selectedModel,
       };
 
-      const response = await advisor.mutateAsync({
+      const assistantMessageId = generateId();
+      let assistantContent = "";
+
+      // Add empty assistant message for streaming
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        role: "assistant" as const,
+        content: "",
+        timestamp: new Date()
+      }]);
+
+      await streamAIStudyAdvisor({
         messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
         userContext,
+        onDelta: (delta) => {
+          assistantContent += delta;
+          setMessages(prev => prev.map(m => 
+            m.id === assistantMessageId ? { ...m, content: assistantContent } : m
+          ));
+        },
+        onDone: () => {
+          setIsStreaming(false);
+        }
       });
-
-      const newMessages = [...messagesToSend, {
-        id: generateId(),
-        role: "assistant" as const,
-        content: response.message,
-        timestamp: new Date()
-      }];
-      setMessages(newMessages);
     } catch {
+      setIsStreaming(false);
       toast.error("Failed to regenerate response");
     }
   };
 
   const handleSend = async () => {
-    if ((!input.trim() && attachments.length === 0) || advisor.isPending) return;
+    if ((!input.trim() && attachments.length === 0) || isStreaming) return;
 
     const userMessageContent = input;
     const userMessage: Message = { 
@@ -241,6 +258,7 @@ const AIAdvisor = () => {
     setMessages(newMessages);
     setInput("");
     setAttachments([]);
+    setIsStreaming(true);
 
     try {
       // Create conversation on first message if none exists
@@ -277,28 +295,41 @@ const AIAdvisor = () => {
         return { role: m.role, content: m.content };
       });
 
-      const response = await advisor.mutateAsync({
-        messages: messagesForAI,
-        userContext,
-      });
+      const assistantMessageId = generateId();
+      let assistantContent = "";
 
-      const assistantMessage = response.message;
-
-      // Save assistant message to database
-      await saveMessage.mutateAsync({
-        conversationId,
-        role: "assistant",
-        content: assistantMessage
-      });
-
-      setMessages([...newMessages, { 
-        id: generateId(),
-        role: "assistant", 
-        content: assistantMessage,
+      // Add empty assistant message for streaming
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        role: "assistant" as const,
+        content: "",
         timestamp: new Date()
       }]);
-    } catch {
-      toast.error("Failed to get response from studentAI");
+
+      await streamAIStudyAdvisor({
+        messages: messagesForAI,
+        userContext,
+        onDelta: (delta) => {
+          assistantContent += delta;
+          setMessages(prev => prev.map(m => 
+            m.id === assistantMessageId ? { ...m, content: assistantContent } : m
+          ));
+        },
+        onDone: async () => {
+          setIsStreaming(false);
+          // Save assistant message to database after streaming is done
+          if (conversationId && assistantContent) {
+            await saveMessage.mutateAsync({
+              conversationId,
+              role: "assistant",
+              content: assistantContent
+            });
+          }
+        }
+      });
+    } catch (err) {
+      setIsStreaming(false);
+      toast.error("Failed to get response from hubAI");
     }
   };
 
@@ -491,7 +522,7 @@ const AIAdvisor = () => {
                             size="icon"
                             className="h-8 w-8 rounded-lg hover:bg-accent/50"
                             onClick={() => handleRegenerate(idx)}
-                            disabled={advisor.isPending}
+                            disabled={isStreaming}
                           >
                             <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
@@ -507,27 +538,6 @@ const AIAdvisor = () => {
                   </div>
                 </div>
               ))}
-
-              {/* Loading state */}
-              {advisor.isPending && (
-                <div className="flex gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      <Sparkles className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="bg-card border border-border/50 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
-                      <span className="text-sm text-muted-foreground ml-1">studentAI is thinking...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -571,7 +581,7 @@ const AIAdvisor = () => {
             size="icon"
             className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
             onClick={() => fileInputRef.current?.click()}
-            disabled={advisor.isPending}
+            disabled={isStreaming}
           >
             <Paperclip className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
           </Button>
@@ -583,16 +593,16 @@ const AIAdvisor = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              disabled={advisor.isPending}
+              disabled={isStreaming}
               className="pr-14 py-6 rounded-xl border border-foreground/20 dark:border-border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground"
             />
             <Button
               size="icon"
               className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
               onClick={handleSend}
-              disabled={advisor.isPending || (!input.trim() && attachments.length === 0)}
+              disabled={isStreaming || (!input.trim() && attachments.length === 0)}
             >
-              {advisor.isPending ? (
+              {isStreaming ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
