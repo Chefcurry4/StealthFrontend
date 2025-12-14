@@ -31,6 +31,7 @@ export const useCreateCourseReview = () => {
       rating: number;
       difficulty?: string;
       workload?: string;
+      organization?: string;
       comment?: string;
     }) => {
       if (!user) throw new Error("Must be logged in");
@@ -72,6 +73,7 @@ export const useUpdateCourseReview = () => {
       rating?: number;
       difficulty?: string;
       workload?: string;
+      organization?: string;
       comment?: string;
     }) => {
       const { error } = await supabase
