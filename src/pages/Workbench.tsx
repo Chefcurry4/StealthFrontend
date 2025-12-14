@@ -2,13 +2,17 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
-import { useSavedCourses } from "@/hooks/useSavedItems";
+import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
+import { useEmailDrafts } from "@/hooks/useEmailDrafts";
+import { useUserDocuments } from "@/hooks/useUserDocuments";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { 
   useAIMessages, 
   useCreateConversation, 
   useSaveMessage, 
-  useUpdateConversation 
+  useUpdateConversation,
+  useAIConversations 
 } from "@/hooks/useAIConversations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,8 +93,15 @@ const Workbench = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
+  // Data hooks for comprehensive AI context
   const { data: savedCourses } = useSavedCourses();
+  const { data: savedLabs } = useSavedLabs();
+  const { data: savedPrograms } = useSavedPrograms();
   const { data: agreements } = useLearningAgreements();
+  const { data: emailDrafts } = useEmailDrafts();
+  const { data: documents } = useUserDocuments();
+  const { data: userProfile } = useUserProfile();
+  const { data: recentConversations } = useAIConversations();
   
   // Conversation persistence hooks
   const createConversation = useCreateConversation();
@@ -227,9 +238,38 @@ const Workbench = () => {
     setIsStreaming(true);
     
     try {
+      // Build comprehensive user context for AI
       const userContext = {
-        savedCoursesCount: savedCourses?.length || 0,
-        learningAgreementsCount: agreements?.length || 0,
+        savedCourses: savedCourses?.map(c => ({
+          name: c.Courses?.name_course,
+          code: c.Courses?.code,
+          ects: c.Courses?.ects,
+          level: c.Courses?.ba_ma
+        })).filter(c => c.name) || [],
+        savedLabs: savedLabs?.map(l => ({
+          name: l.Labs?.name,
+          topics: l.Labs?.topics
+        })).filter(l => l.name) || [],
+        savedPrograms: savedPrograms?.map(p => ({
+          name: p.Programs?.name
+        })).filter(p => p.name) || [],
+        learningAgreements: agreements?.map(a => ({
+          title: a.title,
+          status: a.status,
+          type: a.agreement_type
+        })) || [],
+        emailDrafts: emailDrafts?.map(d => ({
+          subject: d.subject,
+          recipient: d.recipient
+        })) || [],
+        documents: documents?.map(d => d.name) || [],
+        recentConversations: recentConversations?.slice(0, 5).map(c => ({
+          title: c.title
+        })) || [],
+        profile: userProfile ? {
+          country: userProfile.country,
+          language: userProfile.language_preference,
+        } : null,
         model: selectedModel,
       };
 
@@ -298,9 +338,38 @@ const Workbench = () => {
         content: userMessageContent
       });
 
+      // Build comprehensive user context for AI
       const userContext = {
-        savedCoursesCount: savedCourses?.length || 0,
-        learningAgreementsCount: agreements?.length || 0,
+        savedCourses: savedCourses?.map(c => ({
+          name: c.Courses?.name_course,
+          code: c.Courses?.code,
+          ects: c.Courses?.ects,
+          level: c.Courses?.ba_ma
+        })).filter(c => c.name) || [],
+        savedLabs: savedLabs?.map(l => ({
+          name: l.Labs?.name,
+          topics: l.Labs?.topics
+        })).filter(l => l.name) || [],
+        savedPrograms: savedPrograms?.map(p => ({
+          name: p.Programs?.name
+        })).filter(p => p.name) || [],
+        learningAgreements: agreements?.map(a => ({
+          title: a.title,
+          status: a.status,
+          type: a.agreement_type
+        })) || [],
+        emailDrafts: emailDrafts?.map(d => ({
+          subject: d.subject,
+          recipient: d.recipient
+        })) || [],
+        documents: documents?.map(d => d.name) || [],
+        recentConversations: recentConversations?.slice(0, 5).map(c => ({
+          title: c.title
+        })) || [],
+        profile: userProfile ? {
+          country: userProfile.country,
+          language: userProfile.language_preference,
+        } : null,
         model: selectedModel,
       };
 
