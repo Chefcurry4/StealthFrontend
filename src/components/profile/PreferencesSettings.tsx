@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Globe, LayoutGrid, Mail, Star, FileText, Palette, Sun, Moon } from "lucide-react";
+import { Bell, Globe, LayoutGrid, Mail, Star, FileText, Palette, Sun, Moon, Lock } from "lucide-react";
 import { Loader } from "@/components/Loader";
 import { ThemePreviewCard } from "./ThemePreviewCard";
 import { ThemeId, ThemeMode } from "@/themes/types";
@@ -25,6 +25,7 @@ export const PreferencesSettings = () => {
     language_preference: "en",
     display_compact: false,
     display_items_per_page: 20,
+    email_public: false,
   });
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export const PreferencesSettings = () => {
         language_preference: profile.language_preference ?? "en",
         display_compact: profile.display_compact ?? false,
         display_items_per_page: profile.display_items_per_page ?? 20,
+        email_public: (profile as any).email_public ?? false,
       });
     }
   }, [profile]);
@@ -150,6 +152,35 @@ export const PreferencesSettings = () => {
                 />
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Privacy */}
+      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            <CardTitle>Privacy</CardTitle>
+          </div>
+          <CardDescription>Control what others can see on your profile</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Mail className="h-4 w-4 opacity-70" />
+              <div>
+                <Label className="text-base">Make Email Public</Label>
+                <p className="text-sm opacity-70">
+                  Allow other users to see your email on your profile
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={preferences.email_public}
+              onCheckedChange={(checked) => handleToggle("email_public", checked)}
+              disabled={updatePreferences.isPending}
+            />
           </div>
         </CardContent>
       </Card>

@@ -870,6 +870,7 @@ export type Database = {
           display_compact: boolean | null
           display_items_per_page: number | null
           email: string
+          email_public: boolean | null
           id: string
           language_preference: string | null
           notification_agreements: boolean | null
@@ -889,6 +890,7 @@ export type Database = {
           display_compact?: boolean | null
           display_items_per_page?: number | null
           email: string
+          email_public?: boolean | null
           id?: string
           language_preference?: string | null
           notification_agreements?: boolean | null
@@ -908,6 +910,7 @@ export type Database = {
           display_compact?: boolean | null
           display_items_per_page?: number | null
           email?: string
+          email_public?: boolean | null
           id?: string
           language_preference?: string | null
           notification_agreements?: boolean | null
