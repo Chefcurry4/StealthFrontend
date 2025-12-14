@@ -88,11 +88,11 @@ export const useCourses = (filters?: CourseFilters) => {
         query = query.eq("term", filters.term);
       }
 
-      if (filters?.ectsMin) {
+      if (filters?.ectsMin && filters.ectsMin > 0) {
         query = query.gte("ects", filters.ectsMin);
       }
 
-      if (filters?.ectsMax) {
+      if (filters?.ectsMax && filters.ectsMax < 30) {
         query = query.lte("ects", filters.ectsMax);
       }
 

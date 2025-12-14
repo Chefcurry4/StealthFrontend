@@ -176,7 +176,7 @@ const Courses = () => {
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="Written">Written</SelectItem>
                   <SelectItem value="Oral">Oral</SelectItem>
-                  <SelectItem value="During semester">During semester</SelectItem>
+                  <SelectItem value="During the semester">During the semester</SelectItem>
                 </SelectContent>
               </Select>
 
