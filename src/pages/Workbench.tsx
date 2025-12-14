@@ -380,7 +380,7 @@ const Workbench = () => {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setSidebarOpen(true)}
-                className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
+                className="hover:bg-accent/50 transition-colors"
               >
                 <PanelLeft className="h-5 w-5" />
               </Button>
@@ -389,10 +389,10 @@ const Workbench = () => {
               variant="ghost" 
               size="icon" 
               onClick={() => navigate(-1)}
-            className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -401,7 +401,7 @@ const Workbench = () => {
               </div>
             </div>
             <div>
-              <h1 className="font-bold text-xl text-foreground/80 dark:text-foreground leading-none">hubAI</h1>
+              <h1 className="font-bold text-xl leading-none">hubAI</h1>
             </div>
           </div>
         </div>
@@ -411,7 +411,7 @@ const Workbench = () => {
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
-              className="gap-2 border-border bg-transparent hover:bg-accent/30 transition-all text-foreground/70 dark:text-foreground"
+              className="gap-2"
             >
               <span className="text-primary">{selectedModelData.icon}</span>
               <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
@@ -451,7 +451,7 @@ const Workbench = () => {
                 </div>
               </div>
 
-              <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-10 leading-relaxed">
+              <p className="text-muted-foreground max-w-md mb-10 leading-relaxed">
                 Ask me about course selection, 
                 finding research labs, study planning, answering any 
                 questions about your academic journey...
@@ -467,11 +467,11 @@ const Workbench = () => {
                 ].map((suggestion, idx) => (
                   <button
                     key={idx}
-                    className="group flex items-start gap-3 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 hover:shadow-md transition-all duration-200 text-left"
+                    className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-md transition-all duration-200 text-left"
                     onClick={() => setInput(suggestion.text)}
                   >
                     <span className="text-xl">{suggestion.icon}</span>
-                    <span className="text-sm text-foreground/70 dark:text-foreground/80 group-hover:text-foreground transition-colors">
+                    <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                       {suggestion.text}
                     </span>
                   </button>

@@ -14,9 +14,9 @@ export const Footer = () => {
       { name: "Workbench", href: "/workbench" },
     ],
     resources: [
-      { name: "Help Center", href: "#" },
-      { name: "Documentation", href: "#" },
-      { name: "API", href: "#" },
+      { name: "Help Center", href: "/help-center" },
+      { name: "Documentation", href: "/help-center" },
+      { name: "Statistics", href: "/statistics" },
     ],
     legal: [
       { name: "Privacy Policy", href: "/privacy-policy" },

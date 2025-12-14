@@ -119,9 +119,9 @@ const Profile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Header */}
-      <div className="border-b bg-card">
+      <div className="border-b backdrop-blur-md bg-card/50">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-6">
             <div className="relative group">
@@ -143,7 +143,7 @@ const Profile = () => {
               </label>
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">{profile?.username || "User"}</h1>
+              <h1 className="text-3xl font-bold text-pink-400">{profile?.username || "User"}</h1>
               <p className="text-muted-foreground">{user.email}</p>
               {createdDate && (
                 <p className="text-sm text-muted-foreground mt-1">

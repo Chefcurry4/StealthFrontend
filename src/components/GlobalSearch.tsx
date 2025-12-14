@@ -146,15 +146,12 @@ export const GlobalSearch = ({
             variant === "hero" ? "max-h-[400px]" : "max-h-[320px]"
           )}
           style={{
-            background: modeConfig.ui.cardBackground,
-            borderColor: modeConfig.ui.cardBorder,
+            background: 'hsl(var(--card))',
+            borderColor: 'hsl(var(--border))',
           }}
         >
           {results.length === 0 && !isLoading ? (
-            <div 
-              className="p-4 text-center text-sm opacity-60"
-              style={{ color: modeConfig.textColor }}
-            >
+            <div className="p-4 text-center text-sm text-muted-foreground">
               No results found for "{query}"
             </div>
           ) : (
@@ -163,15 +160,11 @@ export const GlobalSearch = ({
                 const typeResults = groupedResults[type];
                 if (!typeResults || typeResults.length === 0) return null;
 
-                return (
-                  <div key={type}>
-                    <div 
-                      className="px-3 py-2 text-xs font-semibold uppercase tracking-wider opacity-60 sticky top-0"
-                      style={{ 
-                        color: modeConfig.textColor,
-                        background: modeConfig.ui.cardBackground 
-                      }}
-                    >
+                  return (
+                    <div key={type}>
+                      <div 
+                        className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card"
+                      >
                       {typeLabels[type]}s
                     </div>
                     {typeResults.map((result) => (

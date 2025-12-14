@@ -12,6 +12,7 @@ import { useLabs, LabFilters } from "@/hooks/useLabs";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
+import { useLabSaveCounts } from "@/hooks/useLabSaveCounts";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
@@ -26,6 +27,7 @@ const Labs = () => {
   const { data: universities } = useUniversities();
   const { user } = useAuth();
   const { data: savedLabs } = useSavedLabs();
+  const { data: labSaveCounts } = useLabSaveCounts();
   const toggleSave = useToggleSaveLab();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -79,12 +81,9 @@ const Labs = () => {
     return pattern ? pattern.test(combined) : true;
   });
 
-  // Get save counts for each lab
+  // Get aggregate save counts for each lab from all users
   const getLabSaveCount = (labId: string) => {
-    // Count how many times this lab appears in all users' saved labs
-    // For now, we use savedLabs from current user context
-    // In a real implementation, you'd query aggregate counts from the database
-    return savedLabs?.filter((s: any) => s.lab_id === labId).length || 0;
+    return labSaveCounts?.[labId] || 0;
   };
 
   // Sort labs
