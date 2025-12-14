@@ -20,6 +20,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const ensureUserProfile = async (authUser: User) => {
+    const { data: existingProfile } = await supabase
+      .from('Users(US)')
+      .select('id')
+      .eq('id', authUser.id)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      const { error } = await supabase.from('Users(US)').insert({
+        id: authUser.id,
+        email: authUser.email || '',
+        username: authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'user',
+      });
+      if (error) {
+        console.error('Failed to create user profile:', error);
+      }
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -27,6 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Ensure profile exists on any auth event with a user
+        if (session?.user) {
+          setTimeout(() => {
+            ensureUserProfile(session.user);
+          }, 0);
+        }
       }
     );
 
@@ -35,6 +61,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session?.user) {
+        ensureUserProfile(session.user);
+      }
     });
 
     return () => subscription.unsubscribe();
