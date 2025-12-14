@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAIConversations, useDeleteConversation } from "@/hooks/useAIConversations";
+import { useAIConversations, useDeleteConversation, useUpdateConversation } from "@/hooks/useAIConversations";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useEmailDrafts } from "@/hooks/useEmailDrafts";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Collapsible,
@@ -26,6 +27,9 @@ import {
   ChevronRight,
   Trash2,
   MessageCirclePlus,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -50,6 +54,9 @@ export const AIAdvisorSidebar = ({
   onReferenceLab,
 }: AIAdvisorSidebarProps) => {
   const [openSections, setOpenSections] = useState<string[]>(["chats"]);
+  const [editingConvId, setEditingConvId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
   const { data: conversations } = useAIConversations();
@@ -59,6 +66,15 @@ export const AIAdvisorSidebar = ({
   const { data: emailDrafts } = useEmailDrafts();
   const { data: agreements } = useLearningAgreements();
   const deleteConversation = useDeleteConversation();
+  const updateConversation = useUpdateConversation();
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingConvId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingConvId]);
 
   const toggleSection = (section: string) => {
     setOpenSections((prev) =>
@@ -66,6 +82,23 @@ export const AIAdvisorSidebar = ({
         ? prev.filter((s) => s !== section)
         : [...prev, section]
     );
+  };
+
+  const startEditing = (convId: string, currentTitle: string) => {
+    setEditingConvId(convId);
+    setEditingTitle(currentTitle || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingConvId(null);
+    setEditingTitle("");
+  };
+
+  const saveTitle = async () => {
+    if (editingConvId && editingTitle.trim()) {
+      await updateConversation.mutateAsync({ id: editingConvId, title: editingTitle.trim() });
+    }
+    cancelEditing();
   };
 
   const handleCourseClick = (item: any) => {
@@ -138,26 +171,87 @@ export const AIAdvisorSidebar = ({
                   <div
                     key={conv.id}
                     className={cn(
-                      "group flex items-center gap-2 p-2 rounded-lg text-sm cursor-pointer transition-colors",
+                      "group flex items-center gap-2 p-2 rounded-lg text-sm transition-colors",
+                      editingConvId === conv.id ? "" : "cursor-pointer",
                       currentConversationId === conv.id
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-accent/50"
                     )}
-                    onClick={() => { onSelectConversation?.(conv.id); if (isMobile) onToggle(); }}
+                    onClick={() => {
+                      if (editingConvId !== conv.id) {
+                        onSelectConversation?.(conv.id);
+                        if (isMobile) onToggle();
+                      }
+                    }}
                   >
                     <MessageSquare className="h-3 w-3 shrink-0" />
-                    <span className="flex-1 truncate">{conv.title}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteConversation.mutate(conv.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </Button>
+                    
+                    {editingConvId === conv.id ? (
+                      <div className="flex-1 flex items-center gap-1">
+                        <Input
+                          ref={editInputRef}
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveTitle();
+                            if (e.key === "Escape") cancelEditing();
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-6 text-xs px-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={(e) => { e.stopPropagation(); saveTitle(); }}
+                        >
+                          <Check className="h-3 w-3 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span 
+                          className="flex-1 truncate cursor-text"
+                          onDoubleClick={(e) => { 
+                            e.stopPropagation(); 
+                            startEditing(conv.id, conv.title); 
+                          }}
+                          title="Double-click to rename"
+                        >
+                          {conv.title}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(conv.id, conv.title);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConversation.mutate(conv.id);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 ))
               )}
