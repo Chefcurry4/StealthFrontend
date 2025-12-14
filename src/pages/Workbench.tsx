@@ -74,7 +74,7 @@ const models: { id: ModelType; name: string; description: string; icon: React.Re
   },
 ];
 
-const AIAdvisor = () => {
+const Workbench = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -642,4 +642,4 @@ const AIAdvisor = () => {
   );
 };
 
-export default AIAdvisor;
+export default Workbench;
