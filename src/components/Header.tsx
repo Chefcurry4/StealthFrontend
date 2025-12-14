@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon } from "lucide-react";
+import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,7 @@ import {
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { mode, modeConfig, toggleMode } = useBackgroundTheme();
   const { data: profile } = useUserProfile();
@@ -76,6 +78,9 @@ export const Header = () => {
               {item.name}
             </Link>
           ))}
+          
+          {/* Global Search */}
+          <GlobalSearch className="w-48 lg:w-64" />
           
           {/* Day/Night Toggle */}
           <Button 
@@ -141,6 +146,20 @@ export const Header = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-2">
+          {/* Mobile Search Toggle */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="rounded-full"
+            style={{ 
+              background: modeConfig.ui.buttonSecondary,
+              color: modeConfig.ui.buttonSecondaryText
+            }}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+
           {/* Day/Night Toggle */}
           <Button 
             variant="ghost" 
@@ -172,6 +191,27 @@ export const Header = () => {
           </button>
         </div>
       </nav>
+
+      {/* Mobile Search Bar */}
+      <div
+        className={cn(
+          "md:hidden overflow-hidden transition-all duration-300 ease-in-out",
+        )}
+        style={{
+          maxHeight: mobileSearchOpen ? '80px' : '0',
+          opacity: mobileSearchOpen ? 1 : 0,
+        }}
+      >
+        <div 
+          className="container mx-auto px-4 py-3"
+          style={{ background: modeConfig.ui.cardBackground }}
+        >
+          <GlobalSearch 
+            className="w-full" 
+            placeholder="Search..."
+          />
+        </div>
+      </div>
 
       {/* Mobile Menu */}
       <div
