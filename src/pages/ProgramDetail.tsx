@@ -107,12 +107,10 @@ const ProgramDetail = () => {
     return (
       <div className="min-h-screen py-12">
         <div className="container mx-auto px-4">
-          <Link to="/programs">
-            <Button variant="ghost" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Programs
-            </Button>
-          </Link>
+          <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
           <p className="text-muted-foreground">Program not found</p>
         </div>
       </div>
@@ -122,12 +120,10 @@ const ProgramDetail = () => {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
-        <Link to="/programs">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Programs
-          </Button>
-        </Link>
+        <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go Back
+        </Button>
 
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">

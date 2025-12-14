@@ -18,7 +18,6 @@ import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import Universities from "./pages/Universities";
 import UniversityDetail from "./pages/UniversityDetail";
-import Programs from "./pages/Programs";
 import ProgramDetail from "./pages/ProgramDetail";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
@@ -53,7 +52,6 @@ const AppContent = () => {
                 <Route path="/statistics" element={<Statistics />} />
                 <Route path="/universities" element={<Universities />} />
                 <Route path="/universities/:slug" element={<UniversityDetail />} />
-                <Route path="/programs" element={<Programs />} />
                 <Route path="/programs/:slug" element={<ProgramDetail />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetail />} />

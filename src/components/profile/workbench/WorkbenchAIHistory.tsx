@@ -34,7 +34,7 @@ export const WorkbenchAIHistory = () => {
       </div>
 
       <Button asChild className="w-full">
-        <Link to="/ai-advisor">
+        <Link to="/workbench">
           <MessageSquare className="h-4 w-4 mr-2" />
           Start New Conversation
         </Link>
@@ -58,7 +58,7 @@ export const WorkbenchAIHistory = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" asChild>
-                    <Link to={`/ai-advisor?conversation=${conv.id}`}>
+                    <Link to={`/workbench?conversation=${conv.id}`}>
                       <ExternalLink className="h-4 w-4" />
                     </Link>
                   </Button>
