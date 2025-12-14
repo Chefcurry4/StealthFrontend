@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useUserDocuments, useUploadDocument, useDeleteDocument } from "@/hooks/useUserDocuments";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ const formatFileSize = (bytes: number | null) => {
 
 export const WorkbenchDocuments = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const { data: documents, isLoading } = useUserDocuments();
   const uploadDocument = useUploadDocument();
   const deleteDocument = useDeleteDocument();
@@ -56,6 +57,34 @@ export const WorkbenchDocuments = () => {
     }
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      await uploadDocument.mutateAsync(files[0]);
+    }
+  };
+
   if (isLoading) {
     return <Loader />;
   }
@@ -67,8 +96,18 @@ export const WorkbenchDocuments = () => {
         <Badge variant="secondary">{documents?.length || 0} files</Badge>
       </div>
 
-      {/* Upload Area */}
-      <Card className="border-dashed border-2 bg-card/30 hover:bg-card/50 transition-colors">
+      {/* Upload Area with Drag & Drop */}
+      <Card 
+        className={`border-dashed border-2 transition-all duration-200 ${
+          isDragging 
+            ? "border-primary bg-primary/10 scale-[1.02]" 
+            : "bg-card/30 hover:bg-card/50"
+        }`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         <CardContent className="p-6">
           <input
             ref={fileInputRef}
@@ -83,8 +122,14 @@ export const WorkbenchDocuments = () => {
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadDocument.isPending}
           >
-            <Upload className="h-6 w-6" />
-            <span>{uploadDocument.isPending ? "Uploading..." : "Click to upload a document"}</span>
+            <Upload className={`h-6 w-6 ${isDragging ? "animate-bounce" : ""}`} />
+            <span>
+              {uploadDocument.isPending 
+                ? "Uploading..." 
+                : isDragging 
+                  ? "Drop file here" 
+                  : "Drag & drop or click to upload"}
+            </span>
             <span className="text-xs text-muted-foreground">PDF, DOC, XLS, PNG, JPG, TXT (max 50MB)</span>
           </Button>
         </CardContent>
