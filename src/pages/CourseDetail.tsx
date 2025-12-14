@@ -3,6 +3,7 @@ import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrenc
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ const CourseDetail = () => {
   const [rating, setRating] = useState(5);
   const [difficulty, setDifficulty] = useState("");
   const [workload, setWorkload] = useState("");
+  const [organization, setOrganization] = useState("");
   const [comment, setComment] = useState("");
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
@@ -56,6 +58,7 @@ const CourseDetail = () => {
         rating,
         difficulty,
         workload,
+        organization,
         comment,
       },
       {
@@ -63,6 +66,7 @@ const CourseDetail = () => {
           setRating(5);
           setDifficulty("");
           setWorkload("");
+          setOrganization("");
           setComment("");
         },
       }
@@ -193,24 +197,37 @@ const CourseDetail = () => {
                 {user && (
                   <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold">Write a Review</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div>
-                        <Label>Rating (1-5)</Label>
-                        <Select value={rating.toString()} onValueChange={(v) => setRating(Number(v))}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[1, 2, 3, 4, 5].map((n) => (
-                              <SelectItem key={n} value={n.toString()}>
-                                {n} Star{n !== 1 && "s"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label className="mb-3 block">Rating: {rating} Star{rating !== 1 && "s"}</Label>
+                        <div className="flex items-center gap-3">
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, i) => {
+                              const starValue = i + 1;
+                              const isFull = rating >= starValue;
+                              const isHalf = !isFull && rating >= starValue - 0.5;
+                              return (
+                                <Star
+                                  key={i}
+                                  className={`h-5 w-5 ${
+                                    isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
+                                  }`}
+                                />
+                              );
+                            })}
+                          </div>
+                          <Slider
+                            value={[rating]}
+                            onValueChange={(v) => setRating(v[0])}
+                            min={1}
+                            max={5}
+                            step={0.5}
+                            className="flex-1"
+                          />
+                        </div>
                       </div>
                       <div>
-                        <Label>Difficulty</Label>
+                        <Label>Exam/Projects Difficulty</Label>
                         <Select value={difficulty} onValueChange={setDifficulty}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select difficulty" />
@@ -218,7 +235,8 @@ const CourseDetail = () => {
                           <SelectContent>
                             <SelectItem value="Easy">Easy</SelectItem>
                             <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Hard">Hard</SelectItem>
+                            <SelectItem value="Difficult">Difficult</SelectItem>
+                            <SelectItem value="Very Difficult">Very Difficult</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -231,7 +249,22 @@ const CourseDetail = () => {
                           <SelectContent>
                             <SelectItem value="Light">Light</SelectItem>
                             <SelectItem value="Moderate">Moderate</SelectItem>
+                            <SelectItem value="Balanced">Balanced</SelectItem>
                             <SelectItem value="Heavy">Heavy</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Course Structure & Organization</Label>
+                        <Select value={organization} onValueChange={setOrganization}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select organization" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Poor">Poor</SelectItem>
+                            <SelectItem value="Fair">Fair</SelectItem>
+                            <SelectItem value="Good">Good</SelectItem>
+                            <SelectItem value="Great">Great</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -257,19 +290,25 @@ const CourseDetail = () => {
                   ) : (
                     reviews?.map((review: any) => (
                       <div key={review.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <div className="flex">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating ? "fill-primary text-primary" : "text-muted"
-                                }`}
-                              />
-                            ))}
+                            {Array.from({ length: 5 }).map((_, i) => {
+                              const starValue = i + 1;
+                              const isFull = review.rating >= starValue;
+                              const isHalf = !isFull && review.rating >= starValue - 0.5;
+                              return (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
+                                  }`}
+                                />
+                              );
+                            })}
                           </div>
                           {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
                           {review.workload && <Badge variant="outline">{review.workload}</Badge>}
+                          {review.organization && <Badge variant="outline">{review.organization}</Badge>}
                         </div>
                         {review.comment && <p className="text-sm">{review.comment}</p>}
                       </div>

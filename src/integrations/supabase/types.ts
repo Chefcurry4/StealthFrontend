@@ -266,6 +266,7 @@ export type Database = {
           created_at: string
           difficulty: string | null
           id: string
+          organization: string | null
           rating: number
           updated_at: string
           user_id: string
@@ -277,6 +278,7 @@ export type Database = {
           created_at?: string
           difficulty?: string | null
           id?: string
+          organization?: string | null
           rating: number
           updated_at?: string
           user_id: string
@@ -288,6 +290,7 @@ export type Database = {
           created_at?: string
           difficulty?: string | null
           id?: string
+          organization?: string | null
           rating?: number
           updated_at?: string
           user_id?: string
