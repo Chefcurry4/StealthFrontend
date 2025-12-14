@@ -259,6 +259,42 @@ export type Database = {
         }
         Relationships: []
       }
+      course_review_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_review_upvotes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "course_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_review_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "Users(US)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_reviews: {
         Row: {
           comment: string | null
@@ -269,6 +305,7 @@ export type Database = {
           organization: string | null
           rating: number
           updated_at: string
+          upvote_count: number | null
           user_id: string
           workload: string | null
         }
@@ -281,6 +318,7 @@ export type Database = {
           organization?: string | null
           rating: number
           updated_at?: string
+          upvote_count?: number | null
           user_id: string
           workload?: string | null
         }
@@ -293,6 +331,7 @@ export type Database = {
           organization?: string | null
           rating?: number
           updated_at?: string
+          upvote_count?: number | null
           user_id?: string
           workload?: string | null
         }
@@ -303,6 +342,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "Courses(C)"
             referencedColumns: ["id_course"]
+          },
+          {
+            foreignKeyName: "course_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "Users(US)"
+            referencedColumns: ["id"]
           },
         ]
       }
