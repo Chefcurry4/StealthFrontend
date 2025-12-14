@@ -27,12 +27,10 @@ const TeacherDetail = () => {
     return (
       <div className="min-h-screen py-12">
         <div className="container mx-auto px-4">
-          <Link to="/teachers">
-            <Button variant="ghost" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Teachers
-            </Button>
-          </Link>
+          <Button variant="ghost" className="mb-6" onClick={() => window.history.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
           <p className="text-muted-foreground">Teacher not found</p>
         </div>
       </div>
@@ -42,12 +40,10 @@ const TeacherDetail = () => {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
-        <Link to="/teachers">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Teachers
-          </Button>
-        </Link>
+        <Button variant="ghost" className="mb-6" onClick={() => window.history.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go Back
+        </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">

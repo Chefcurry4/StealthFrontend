@@ -27,9 +27,9 @@ export const WorkbenchSavedItems = () => {
           <Badge variant="secondary">{totalSaved} total</Badge>
         </div>
         <Button asChild variant="outline" size="sm" className="gap-2">
-          <Link to="/ai-advisor">
+          <Link to="/workbench">
             <Bot className="h-4 w-4" />
-            Open AI Advisor
+            Open Workbench
           </Link>
         </Button>
       </div>

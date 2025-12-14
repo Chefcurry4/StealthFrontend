@@ -13,12 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UniversityCampusGallery } from "@/components/UniversityCampusGallery";
+import { TeacherPopup } from "@/components/TeacherPopup";
 
 const UniversityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [programSearch, setProgramSearch] = useState("");
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const [teacherPopupOpen, setTeacherPopupOpen] = useState(false);
   
   const { data: university, isLoading, error } = useUniversity(slug || "");
   const { data: programs } = useProgramsByUniversity(university?.uuid || "");
@@ -277,31 +280,33 @@ const UniversityDetail = () => {
           <CardContent>
             {teachers && teachers.length > 0 ? (
               <div className="space-y-2">
-                {teachers.slice(0, 5).map((teacher: any) => (
-                  <Link
+                {teachers.slice(0, 10).map((teacher: any) => (
+                  <button
                     key={teacher.id_teacher}
-                    to={`/teachers/${teacher.id_teacher}`}
-                    className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                    onClick={() => {
+                      setSelectedTeacherId(teacher.id_teacher);
+                      setTeacherPopupOpen(true);
+                    }}
+                    className="block w-full text-left p-3 border rounded-lg hover:bg-accent transition-colors"
                   >
                     <h3 className="font-semibold">{teacher.full_name || teacher.name}</h3>
                     {teacher["h-index"] && (
                       <p className="text-sm text-muted-foreground">h-index: {teacher["h-index"]}</p>
                     )}
-                  </Link>
+                  </button>
                 ))}
-                {teachers.length > 5 && (
-                  <Link to="/teachers">
-                    <Button variant="outline" size="sm" className="w-full mt-2">
-                      View All Faculty
-                    </Button>
-                  </Link>
-                )}
               </div>
             ) : (
               <p className="text-muted-foreground">No faculty information available</p>
             )}
           </CardContent>
         </Card>
+
+        <TeacherPopup
+          teacherId={selectedTeacherId}
+          open={teacherPopupOpen}
+          onOpenChange={setTeacherPopupOpen}
+        />
 
         <Card>
           <CardHeader>

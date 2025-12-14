@@ -3,10 +3,8 @@ import { cn } from '@/lib/utils';
 
 const NAV_ROUTES = [
   { path: '/universities', label: 'Unis' },
-  { path: '/programs', label: 'Programs' },
   { path: '/courses', label: 'Courses' },
   { path: '/labs', label: 'Labs' },
-  { path: '/teachers', label: 'Teachers' },
 ];
 
 export const SwipeIndicator = () => {

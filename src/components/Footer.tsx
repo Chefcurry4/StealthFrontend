@@ -11,7 +11,7 @@ export const Footer = () => {
       { name: "Universities", href: "/universities" },
       { name: "Courses", href: "/courses" },
       { name: "Labs", href: "/labs" },
-      { name: "AI Advisor", href: "/ai-advisor" },
+      { name: "Workbench", href: "/workbench" },
     ],
     resources: [
       { name: "Help Center", href: "#" },

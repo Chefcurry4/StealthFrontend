@@ -1,172 +1,129 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, FileText, ArrowRight, UserPlus, BarChart3 } from "lucide-react";
-import heroImage from "@/assets/hero-image.jpg";
+import { Card, CardContent } from "@/components/ui/card";
+import { GraduationCap, BookOpen, Microscope, Bot, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useCourses } from "@/hooks/useCourses";
-import { usePrograms } from "@/hooks/usePrograms";
 import { useLabs } from "@/hooks/useLabs";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 const Index = () => {
   const { user } = useAuth();
   const { data: universities } = useUniversities();
   const { data: courses } = useCourses({});
-  const { data: programs } = usePrograms();
   const { data: labs } = useLabs();
-  
-  const features = [
+
+  const hubs = [
     {
       icon: GraduationCap,
-      title: "Global University Network",
-      description: "Access 100+ partner universities across Europe and worldwide",
+      title: "Universities",
+      description: `${universities?.length || 12} partner universities`,
+      href: "/universities",
+      color: "text-blue-500",
     },
     {
       icon: BookOpen,
-      title: `${courses?.length || 1420}+ Courses`,
-      description: "Comprehensive course catalog with detailed information and reviews",
+      title: "Courses",
+      description: `${courses?.length || 1420}+ courses available`,
+      href: "/courses",
+      color: "text-green-500",
     },
     {
       icon: Microscope,
-      title: "Research Labs",
-      description: `Explore ${labs?.length || 424} cutting-edge research facilities and opportunities`,
-    },
-    {
-      icon: BarChart3,
-      title: "Data & Statistics",
-      description: "View comprehensive statistics and insights about all academic resources",
+      title: "Labs",
+      description: `${labs?.length || 424} research labs`,
+      href: "/labs",
+      color: "text-purple-500",
     },
     {
       icon: Bot,
-      title: "AI Study Advisor",
-      description: "Get personalized course recommendations and planning guidance",
-    },
-    {
-      icon: FileText,
-      title: "Learning Agreement Builder",
-      description: "Create and manage your study abroad agreements effortlessly",
+      title: "Workbench",
+      description: "AI advisor & saved items",
+      href: "/workbench",
+      color: "text-orange-500",
     },
   ];
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 md:py-32">
-        <div className="absolute inset-0 opacity-10">
-          <img 
-            src={heroImage} 
-            alt="Students collaborating" 
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="relative container mx-auto px-4">
+      {/* Hero Section with Central Search */}
+      <section className="relative flex-1 flex items-center justify-center py-16 md:py-24">
+        <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Plan Your International Study Semester
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              Students Hub
             </h1>
             <p className="text-lg md:text-xl opacity-80 mb-8">
-              Discover universities, explore courses, and build your learning agreement with AI-powered guidance
+              Plan your international study semester with AI-powered guidance
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {!user && (
-                <Button size="lg" asChild className="theme-btn-primary backdrop-blur">
-                  <Link to="/auth">
-                    <UserPlus className="mr-2 h-5 w-5" />
-                    Get Started Free
-                  </Link>
-                </Button>
-              )}
-              <Button size="lg" variant={user ? "default" : "outline"} asChild className="backdrop-blur theme-btn-secondary">
-                <Link to="/universities">
-                  Browse Universities
-                  <ArrowRight className="ml-2 h-5 w-5" />
+
+            {/* Central Search */}
+            <div className="max-w-2xl mx-auto mb-12">
+              <GlobalSearch 
+                variant="hero" 
+                placeholder="Search universities, courses, labs, teachers..."
+              />
+            </div>
+
+            {/* Auth Button for non-logged users */}
+            {!user && (
+              <Button size="lg" asChild className="theme-btn-primary backdrop-blur mb-12">
+                <Link to="/auth">
+                  <UserPlus className="mr-2 h-5 w-5" />
+                  Get Started Free
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="backdrop-blur theme-btn-secondary">
-                <Link to="/courses">Explore Courses</Link>
-              </Button>
+            )}
+
+            {/* Navigation Hubs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {hubs.map((hub) => {
+                const Icon = hub.icon;
+                return (
+                  <Link key={hub.title} to={hub.href}>
+                    <Card className="backdrop-blur-md transition-all hover:scale-[1.02] hover:shadow-lg h-full">
+                      <CardContent className="p-4 md:p-6 flex flex-col items-center text-center">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 bg-primary/10 ${hub.color}`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <h3 className="font-semibold mb-1">{hub.title}</h3>
+                        <p className="text-xs opacity-70">{hub.description}</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 backdrop-blur-sm theme-section">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Everything You Need for Study Planning
-            </h2>
-            <p className="text-lg opacity-80 max-w-2xl mx-auto">
-              Browse {universities?.length || 12} universities, {courses?.length || 1420} courses, {programs?.length || 33} programs, and {labs?.length || 424} research labs
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={feature.title} className="backdrop-blur-md transition-all hover:scale-[1.02]">
-                  <CardHeader>
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 theme-badge">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="opacity-80">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* How It Works Section */}
-      <section className="py-20 backdrop-blur-sm theme-section">
+      <section className="py-16 backdrop-blur-sm theme-section">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">
               How It Works
             </h2>
-            <p className="text-lg opacity-80 max-w-2xl mx-auto">
-              Simple steps to plan your perfect exchange semester
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
-              { step: "1", title: "Browse Universities", description: "Explore partner universities and their programs" },
-              { step: "2", title: "Find Courses", description: "Search and filter courses that match your interests" },
-              { step: "3", title: "Build Agreement", description: "Create your learning agreement with selected courses" },
-              { step: "4", title: "Get AI Guidance", description: "Consult our AI advisor for personalized recommendations" },
+              { step: "1", title: "Browse", description: "Explore universities & programs" },
+              { step: "2", title: "Discover", description: "Find courses & labs" },
+              { step: "3", title: "Build", description: "Create learning agreements" },
+              { step: "4", title: "Get Guidance", description: "AI-powered recommendations" },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="w-16 h-16 backdrop-blur rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 theme-badge">
+                <div className="w-12 h-12 backdrop-blur rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3 theme-badge">
                   {item.step}
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-sm opacity-80">{item.description}</p>
+                <h3 className="font-semibold mb-1">{item.title}</h3>
+                <p className="text-xs opacity-80">{item.description}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 backdrop-blur-md theme-section">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Start Planning?
-          </h2>
-          <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-            Join thousands of students who have successfully planned their exchange semesters with Students Hub
-          </p>
-          <Button size="lg" className="theme-btn-primary backdrop-blur">
-            Create Free Account
-          </Button>
         </div>
       </section>
     </div>

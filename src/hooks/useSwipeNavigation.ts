@@ -3,10 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const NAV_ROUTES = [
   '/universities',
-  '/programs', 
   '/courses',
   '/labs',
-  '/teachers',
 ];
 
 export const useSwipeNavigation = () => {
