@@ -119,9 +119,9 @@ const Profile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Header */}
-      <div className="border-b bg-card">
+      <div className="border-b border-border/50 backdrop-blur-md bg-background/30">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-6">
             <div className="relative group">
@@ -143,10 +143,10 @@ const Profile = () => {
               </label>
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">{profile?.username || "User"}</h1>
-              <p className="text-muted-foreground">{user.email}</p>
+              <h1 className="text-3xl font-bold text-purple-500">{profile?.username || "User"}</h1>
+              <p className="text-foreground/80">{user.email}</p>
               {createdDate && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-foreground/60 mt-1">
                   Joined on {createdDate}
                 </p>
               )}
@@ -158,7 +158,7 @@ const Profile = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 gap-1">
+          <TabsList className="grid w-full grid-cols-3 gap-1 bg-background/50 backdrop-blur-sm">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span>Profile & Settings</span>
@@ -176,7 +176,7 @@ const Profile = () => {
           {/* Profile & Settings Tab */}
           <TabsContent value="profile" className="space-y-6">
             {/* Personal Information */}
-            <Card>
+            <Card className="bg-background/50 backdrop-blur-sm border-border/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -283,7 +283,7 @@ const Profile = () => {
             </div>
 
             {/* Workbench Content */}
-            <Card>
+            <Card className="bg-background/50 backdrop-blur-sm border-border/50">
               <CardContent className="p-6">
                 {workbenchSection === "saved" && <WorkbenchSavedItems />}
                 {workbenchSection === "documents" && <WorkbenchDocuments />}
@@ -297,7 +297,7 @@ const Profile = () => {
 
           {/* Account Tab */}
           <TabsContent value="account" className="space-y-6">
-            <Card className="border-destructive/50">
+            <Card className="bg-background/50 backdrop-blur-sm border-destructive/50">
               <CardHeader>
                 <CardTitle className="text-destructive flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
