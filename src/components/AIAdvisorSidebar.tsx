@@ -4,6 +4,7 @@ import { useAIConversations, useDeleteConversation, useUpdateConversation } from
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useEmailDrafts } from "@/hooks/useEmailDrafts";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
+import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ import {
   GraduationCap,
   Mail,
   FileText,
+  FolderOpen,
   ChevronRight,
   Trash2,
   MessageCirclePlus,
@@ -42,6 +44,7 @@ interface AIAdvisorSidebarProps {
   onSelectConversation?: (id: string) => void;
   onReferenceCourse?: (courseName: string, courseId: string) => void;
   onReferenceLab?: (labName: string, labSlug: string) => void;
+  onReferenceDocument?: (docName: string, docUrl: string) => void;
 }
 
 export const AIAdvisorSidebar = ({
@@ -52,6 +55,7 @@ export const AIAdvisorSidebar = ({
   onSelectConversation,
   onReferenceCourse,
   onReferenceLab,
+  onReferenceDocument,
 }: AIAdvisorSidebarProps) => {
   const [openSections, setOpenSections] = useState<string[]>(["chats"]);
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
@@ -65,6 +69,7 @@ export const AIAdvisorSidebar = ({
   const { data: savedPrograms } = useSavedPrograms();
   const { data: emailDrafts } = useEmailDrafts();
   const { data: agreements } = useLearningAgreements();
+  const { data: userDocuments } = useUserDocuments();
   const deleteConversation = useDeleteConversation();
   const updateConversation = useUpdateConversation();
 
@@ -113,6 +118,13 @@ export const AIAdvisorSidebar = ({
     const lab = item["Labs(L)"];
     if (lab && onReferenceLab) {
       onReferenceLab(lab.name, lab.slug);
+      if (isMobile) onToggle();
+    }
+  };
+
+  const handleDocumentClick = (doc: any) => {
+    if (onReferenceDocument) {
+      onReferenceDocument(doc.name, doc.file_url);
       if (isMobile) onToggle();
     }
   };
@@ -396,6 +408,59 @@ export const AIAdvisorSidebar = ({
                     </span>
                   </Link>
                 ))
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* My Documents Section - Click to add to AI context */}
+          <Collapsible
+            open={openSections.includes("documents")}
+            onOpenChange={() => toggleSection("documents")}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-accent/50 transition-colors">
+              <div className="flex items-center gap-2">
+                <FolderOpen className="h-4 w-4 text-cyan-500" />
+                <span className="text-sm font-medium">My Documents</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  {userDocuments?.length || 0}
+                </Badge>
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    openSections.includes("documents") && "rotate-90"
+                  )}
+                />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-1 space-y-1">
+              {userDocuments?.length === 0 ? (
+                <p className="text-xs text-muted-foreground px-2 py-1">
+                  No documents uploaded
+                </p>
+              ) : (
+                userDocuments?.slice(0, 5).map((doc) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => handleDocumentClick(doc)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                  >
+                    <FolderOpen className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate">
+                      {doc.name}
+                    </span>
+                    <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))
+              )}
+              {(userDocuments?.length || 0) > 5 && (
+                <Link
+                  to="/profile?tab=workbench&section=documents"
+                  className="block text-xs text-primary px-2 py-1 hover:underline"
+                >
+                  View all {userDocuments?.length} documents →
+                </Link>
               )}
             </CollapsibleContent>
           </Collapsible>

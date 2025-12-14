@@ -111,6 +111,7 @@ serve(async (req) => {
 - Research opportunities and lab recommendations
 - Career path advice based on their interests
 - University comparisons and recommendations
+- Analyzing user documents (like CVs, transcripts, cover letters) to provide personalized recommendations
 
 **IMPORTANT: You have access to the following real data from our database:**
 ${databaseContext}
@@ -124,7 +125,9 @@ ${userContext ? JSON.stringify(userContext, null, 2) : "No additional context"}
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing options
 - When users ask about specific courses or programs, try to match them with what's in the database
-- If you don't have specific information, acknowledge it and offer to help find alternatives`;
+- If you don't have specific information, acknowledge it and offer to help find alternatives
+- When users share documents (CVs, transcripts, etc.), analyze them carefully and use the information to provide personalized course and program recommendations from the database
+- Make connections between user skills/interests from their documents and relevant courses/labs/programs`;
 
     console.log("Calling Lovable AI Gateway...", stream ? "(streaming)" : "(non-streaming)");
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
