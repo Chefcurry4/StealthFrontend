@@ -12,10 +12,9 @@ interface TeacherLinkProps {
 
 export const TeacherLink = ({ teacherName, teacherId, className }: TeacherLinkProps) => {
   const [popupOpen, setPopupOpen] = useState(false);
-  const [resolvedTeacherId, setResolvedTeacherId] = useState<string | null>(teacherId || null);
 
   // If we don't have a teacherId, try to find it by name
-  const { isLoading: searchingTeacher } = useQuery({
+  const { data: teacherData, isLoading: searchingTeacher } = useQuery({
     queryKey: ["teacher-by-name", teacherName],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,13 +25,12 @@ export const TeacherLink = ({ teacherName, teacherId, className }: TeacherLinkPr
         .maybeSingle();
 
       if (error) throw error;
-      if (data) {
-        setResolvedTeacherId(data.id_teacher);
-      }
       return data;
     },
     enabled: !teacherId && !!teacherName,
   });
+
+  const resolvedTeacherId = teacherId || teacherData?.id_teacher || null;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
