@@ -12,6 +12,7 @@ import { useTeacherIdByCourse } from "@/hooks/useTeachers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { useCourseReviews, useCreateCourseReview } from "@/hooks/useCourseReviews";
+import { TeacherLink } from "@/components/TeacherLink";
 import { useState } from "react";
 
 const CourseDetail = () => {
@@ -168,19 +169,13 @@ const CourseDetail = () => {
                   <CardTitle>Teaching Staff</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {teacherId ? (
-                    <Link to={`/teachers/${teacherId}`}>
-                      <div className="flex items-center gap-2 hover:text-primary transition-colors">
-                        <User className="h-4 w-4" />
-                        <span className="hover:underline">{course.professor_name}</span>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{course.professor_name}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <TeacherLink 
+                      teacherName={course.professor_name} 
+                      teacherId={teacherId || undefined}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )}

@@ -4,10 +4,10 @@ import { Search, GraduationCap, BookOpen, FlaskConical, Users, Layers, Loader2, 
 import { Input } from "@/components/ui/input";
 import { useGlobalSearch, SearchResult } from "@/hooks/useGlobalSearch";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { TeacherPopup } from "@/components/TeacherPopup";
 import { cn } from "@/lib/utils";
 
 interface GlobalSearchProps {
-  onTeacherClick?: (teacherId: string) => void;
   className?: string;
   placeholder?: string;
   variant?: "default" | "hero";
@@ -30,13 +30,14 @@ const typeLabels: Record<SearchResult["type"], string> = {
 };
 
 export const GlobalSearch = ({ 
-  onTeacherClick, 
   className, 
   placeholder = "Search universities, courses, labs...",
   variant = "default"
 }: GlobalSearchProps) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [teacherPopupOpen, setTeacherPopupOpen] = useState(false);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const { results, isLoading } = useGlobalSearch(query);
   const { modeConfig } = useBackgroundTheme();
   const navigate = useNavigate();
@@ -56,8 +57,9 @@ export const GlobalSearch = ({
   }, []);
 
   const handleResultClick = (result: SearchResult) => {
-    if (result.type === "teacher" && onTeacherClick) {
-      onTeacherClick(result.id);
+    if (result.type === "teacher") {
+      setSelectedTeacherId(result.id);
+      setTeacherPopupOpen(true);
     } else {
       navigate(result.href);
     }
@@ -82,7 +84,8 @@ export const GlobalSearch = ({
   const typeOrder: SearchResult["type"][] = ["university", "course", "lab", "program", "teacher"];
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <>
+      <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
         <Search 
           className={cn(
@@ -199,6 +202,13 @@ export const GlobalSearch = ({
           )}
         </div>
       )}
-    </div>
+      </div>
+
+      <TeacherPopup
+        teacherId={selectedTeacherId}
+        open={teacherPopupOpen}
+        onOpenChange={setTeacherPopupOpen}
+      />
+    </>
   );
 };

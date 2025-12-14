@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLab, useUniversitiesByLab, useLabs } from "@/hooks/useLabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
+import { TeacherLink } from "@/components/TeacherLink";
 
 const LabDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -173,14 +174,13 @@ const LabDetail = () => {
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {professors.map((prof, idx) => (
-                        <Link 
+                        <div
                           key={idx}
-                          to={`/teachers?search=${encodeURIComponent(prof)}`}
-                          className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                          className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg"
                         >
                           <Users className="h-4 w-4" />
-                          <span>{prof}</span>
-                        </Link>
+                          <TeacherLink teacherName={prof} />
+                        </div>
                       ))}
                     </div>
                   </CardContent>
