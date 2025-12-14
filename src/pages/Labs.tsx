@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Filter, Bookmark } from "lucide-react";
+import { Search, Filter, Bookmark, ArrowUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
+import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
+
+type SortOption = 'name-asc' | 'name-desc';
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
+  const [researchDomain, setResearchDomain] = useState<string>('');
+  const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const { data: labs, isLoading, error, refetch } = useLabs(filters);
   const { data: universities } = useUniversities();
   const { user } = useAuth();
@@ -40,6 +45,51 @@ const Labs = () => {
   const uniqueFacultyAreas = Array.from(
     new Set(labs?.map(l => l.faculty_match).filter(Boolean))
   ) as string[];
+
+  // Filter labs by research domain (client-side filtering based on category detection)
+  const filteredLabs = labs?.filter(lab => {
+    if (!researchDomain) return true;
+    
+    const combined = `${lab.topics || ''} ${lab.faculty_match || ''}`.toLowerCase();
+    const domainCategory = CATEGORY_FILTER_OPTIONS.find(opt => opt.value === researchDomain);
+    
+    if (!domainCategory || !researchDomain) return true;
+    
+    // Match based on the category keywords
+    const keywordPatterns: Record<string, RegExp> = {
+      'ai-ml': /artificial intelligence|machine learning|neural|deep learning|nlp|natural language|computer vision|ai\b|ml\b|data science|big data|analytics/i,
+      'robotics': /robot|automation|mechatronics|motion control|autonomous|drone|uav|manipulator/i,
+      'architecture': /architect|urban|building design|heritage|typology|construction|spatial|housing|landscape/i,
+      'biomedical': /biomedical|cancer|medical|imaging|therapy|diagnostics|biology|genetic|cell|tissue|pharma|drug/i,
+      'chemistry': /chemistry|catalysis|synthesis|molecular|polymer|material|composite|nano|crystal/i,
+      'physics': /physics|astrophysics|cosmology|photonics|optics|laser|plasma|particle|spectroscopy/i,
+      'quantum': /quantum|qubits|quantum computing|superconducting|quantum mechanics/i,
+      'environment': /environmental|climate|atmospheric|ecology|sustainability|hydrology|water|pollution|ecosystem/i,
+      'mathematics': /mathematics|statistics|algorithm|numerical|optimization|probability|stochastic|geometry/i,
+      'cs-security': /computer science|cybersecurity|formal methods|verification|cryptography|network|software|distributed/i,
+      'energy': /energy|solar|fuel cell|battery|power system|renewable|electric|grid|thermal/i,
+      'mechanical': /mechanical|structural|fluid dynamics|thermodynamics|civil|geotechnical|bridge|infrastructure/i,
+      'neuroscience': /neuro|brain|cognition|neural systems|cognitive|psychology|perception/i,
+      'electronics': /electronics|semiconductor|mems|microelectronics|integrated circuit|chip|sensor|signal/i,
+      'telecommunications': /telecom|wireless|communication|antenna|radio|5g|signal processing|network/i,
+      'transportation': /transport|mobility|traffic|vehicle|rail|automotive|logistics|aviation/i,
+    };
+    
+    const pattern = keywordPatterns[researchDomain];
+    return pattern ? pattern.test(combined) : true;
+  });
+
+  // Sort labs
+  const sortedLabs = filteredLabs?.slice().sort((a, b) => {
+    switch (sortBy) {
+      case 'name-asc':
+        return a.name.localeCompare(b.name);
+      case 'name-desc':
+        return b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -93,7 +143,7 @@ const Labs = () => {
               </Select>
 
               <Select onValueChange={(value) => updateFilter("facultyArea", value)}>
-                <SelectTrigger className="w-[250px]">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Faculty Area" />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,6 +153,30 @@ const Labs = () => {
                       {area}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={researchDomain} onValueChange={setResearchDomain}>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Research Domain" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_FILTER_OPTIONS.map((option) => (
+                    <SelectItem key={option.value || 'all'} value={option.value || 'all'}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="w-[160px]">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -122,57 +196,66 @@ const Labs = () => {
               <p className="text-center opacity-70">
                 Error loading labs. Please try again.
               </p>
-            ) : labs?.length === 0 ? (
+            ) : sortedLabs?.length === 0 ? (
               <p className="text-center opacity-70">
                 No labs found matching your search.
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
-                {labs?.map((lab) => {
-                  const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3) || [];
-                  
-                  return (
-                    <Card key={lab.id_lab} className="overflow-hidden flex flex-col backdrop-blur-md">
-                      <LabCardImage labName={lab.name} labId={lab.id_lab} className="h-20 sm:h-24 lg:h-28" />
-                      <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
-                        <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 sm:mb-3 line-clamp-2">{lab.name}</h3>
-                        
-                        {topics.length > 0 && (
-                          <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-4 flex-1">
-                            {topics.map((topic, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs theme-badge">
-                                {topic}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        
-                        <div className="flex gap-2 mt-auto">
-                          <Link to={`/labs/${lab.slug || lab.id_lab}`} className="flex-1">
-                            <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
-                              View Details
+              <>
+                <p className="text-sm opacity-60 mb-4">{sortedLabs?.length} labs found</p>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+                  {sortedLabs?.map((lab) => {
+                    const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3) || [];
+                    
+                    return (
+                      <Card key={lab.id_lab} className="overflow-hidden flex flex-col backdrop-blur-md">
+                        <LabCardImage 
+                          labName={lab.name} 
+                          labId={lab.id_lab} 
+                          topics={lab.topics}
+                          facultyMatch={lab.faculty_match}
+                          className="h-20 sm:h-24 lg:h-28" 
+                        />
+                        <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
+                          <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 sm:mb-3 line-clamp-2">{lab.name}</h3>
+                          
+                          {topics.length > 0 && (
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-4 flex-1">
+                              {topics.map((topic, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs theme-badge">
+                                  {topic}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2 mt-auto">
+                            <Link to={`/labs/${lab.slug || lab.id_lab}`} className="flex-1">
+                              <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
+                                View Details
+                              </Button>
+                            </Link>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="theme-btn-secondary"
+                              onClick={() => {
+                                if (!user) {
+                                  navigate("/auth");
+                                  return;
+                                }
+                                toggleSave.mutate(lab.id_lab);
+                              }}
+                            >
+                              <Bookmark className={`h-4 w-4 ${savedLabs?.some((s: any) => s.lab_id === lab.id_lab) ? 'fill-current' : ''}`} />
                             </Button>
-                          </Link>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="theme-btn-secondary"
-                            onClick={() => {
-                              if (!user) {
-                                navigate("/auth");
-                                return;
-                              }
-                              toggleSave.mutate(lab.id_lab);
-                            }}
-                          >
-                            <Bookmark className={`h-4 w-4 ${savedLabs?.some((s: any) => s.lab_id === lab.id_lab) ? 'fill-current' : ''}`} />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </section>
