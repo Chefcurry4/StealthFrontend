@@ -169,12 +169,14 @@ const CourseDetail = () => {
                   <CardTitle>Teaching Staff</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <TeacherLink 
-                      teacherName={course.professor_name} 
-                      teacherId={teacherId || undefined}
-                    />
+                    {course.professor_name.split(';').map((name, index, arr) => (
+                      <span key={index} className="inline-flex items-center">
+                        <TeacherLink teacherName={name.trim()} />
+                        {index < arr.length - 1 && <span className="text-muted-foreground">;</span>}
+                      </span>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
