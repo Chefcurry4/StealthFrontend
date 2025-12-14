@@ -83,12 +83,12 @@ const LabDetail = () => {
             </Button>
           </Link>
 
-          <div className="flex items-start gap-6">
-            <div className="p-4 backdrop-blur bg-white/20 rounded-xl">
-              <Microscope className="h-12 w-12" />
+          <div className="flex items-start gap-4 md:gap-6">
+            <div className="p-3 md:p-4 backdrop-blur bg-white/20 rounded-xl shrink-0">
+              <Microscope className="h-8 w-8 md:h-12 md:w-12" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-5xl font-bold mb-3">{lab.name}</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 break-words">{lab.name}</h1>
               {lab.faculty_match && (
                 <Button 
                   variant="secondary" 
