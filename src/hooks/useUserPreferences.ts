@@ -13,6 +13,7 @@ interface UserPreferences {
   display_items_per_page?: number;
   background_theme?: ThemeId;
   background_theme_mode?: ThemeMode;
+  email_public?: boolean;
 }
 
 export const useUpdatePreferences = () => {

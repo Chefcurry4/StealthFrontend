@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark, Star } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark, Star, Pencil, Trash2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useCourse } from "@/hooks/useCourses";
 import { useTeacherIdByCourse } from "@/hooks/useTeachers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
-import { useCourseReviews, useCreateCourseReview } from "@/hooks/useCourseReviews";
+import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview } from "@/hooks/useCourseReviews";
 import { TeacherLink } from "@/components/TeacherLink";
 import { useState } from "react";
+import { format } from "date-fns";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,12 +29,21 @@ const CourseDetail = () => {
   const toggleSave = useToggleSaveCourse();
   const { data: reviews } = useCourseReviews(id!);
   const createReview = useCreateCourseReview();
+  const updateReview = useUpdateCourseReview();
+  const deleteReview = useDeleteCourseReview();
 
   const [rating, setRating] = useState(5);
   const [difficulty, setDifficulty] = useState("");
   const [workload, setWorkload] = useState("");
   const [organization, setOrganization] = useState("");
   const [comment, setComment] = useState("");
+  
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState(5);
+  const [editDifficulty, setEditDifficulty] = useState("");
+  const [editWorkload, setEditWorkload] = useState("");
+  const [editOrganization, setEditOrganization] = useState("");
+  const [editComment, setEditComment] = useState("");
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
 
@@ -73,6 +85,38 @@ const CourseDetail = () => {
     );
   };
 
+  const handleEditReview = (review: any) => {
+    setEditingReviewId(review.id);
+    setEditRating(review.rating);
+    setEditDifficulty(review.difficulty || "");
+    setEditWorkload(review.workload || "");
+    setEditOrganization(review.organization || "");
+    setEditComment(review.comment || "");
+  };
+
+  const handleUpdateReview = () => {
+    if (!editingReviewId) return;
+    updateReview.mutate(
+      {
+        id: editingReviewId,
+        rating: editRating,
+        difficulty: editDifficulty,
+        workload: editWorkload,
+        organization: editOrganization,
+        comment: editComment,
+      },
+      {
+        onSuccess: () => {
+          setEditingReviewId(null);
+        },
+      }
+    );
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    deleteReview.mutate(reviewId);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen py-12">
@@ -102,6 +146,122 @@ const CourseDetail = () => {
   }
 
   const topics = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
+
+  const renderStars = (ratingValue: number, size: "sm" | "md" = "sm") => {
+    const sizeClass = size === "sm" ? "h-4 w-4" : "h-5 w-5";
+    return (
+      <div className="flex">
+        {Array.from({ length: 5 }).map((_, i) => {
+          const starValue = i + 1;
+          const isFull = ratingValue >= starValue;
+          const isHalf = !isFull && ratingValue >= starValue - 0.5;
+          return (
+            <Star
+              key={i}
+              className={`${sizeClass} ${
+                isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
+              }`}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderReviewForm = (
+    formRating: number,
+    setFormRating: (v: number) => void,
+    formDifficulty: string,
+    setFormDifficulty: (v: string) => void,
+    formWorkload: string,
+    setFormWorkload: (v: string) => void,
+    formOrganization: string,
+    setFormOrganization: (v: string) => void,
+    formComment: string,
+    setFormComment: (v: string) => void,
+    onSubmit: () => void,
+    isPending: boolean,
+    submitText: string,
+    onCancel?: () => void
+  ) => (
+    <div className="space-y-4">
+      <div>
+        <Label className="mb-3 block">Rating: {formRating} Star{formRating !== 1 && "s"}</Label>
+        <div className="flex items-center gap-3">
+          {renderStars(formRating, "md")}
+          <Slider
+            value={[formRating]}
+            onValueChange={(v) => setFormRating(v[0])}
+            min={1}
+            max={5}
+            step={0.5}
+            className="flex-1"
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Exam/Projects Difficulty</Label>
+        <Select value={formDifficulty} onValueChange={setFormDifficulty}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Easy">Easy</SelectItem>
+            <SelectItem value="Medium">Medium</SelectItem>
+            <SelectItem value="Difficult">Difficult</SelectItem>
+            <SelectItem value="Very Difficult">Very Difficult</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Workload</Label>
+        <Select value={formWorkload} onValueChange={setFormWorkload}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select workload" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Light">Light</SelectItem>
+            <SelectItem value="Moderate">Moderate</SelectItem>
+            <SelectItem value="Balanced">Balanced</SelectItem>
+            <SelectItem value="Heavy">Heavy</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Course Structure & Organization</Label>
+        <Select value={formOrganization} onValueChange={setFormOrganization}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select organization" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Poor">Poor</SelectItem>
+            <SelectItem value="Fair">Fair</SelectItem>
+            <SelectItem value="Good">Good</SelectItem>
+            <SelectItem value="Great">Great</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Comment</Label>
+        <Textarea
+          value={formComment}
+          onChange={(e) => setFormComment(e.target.value)}
+          placeholder="Share your experience..."
+          rows={4}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={onSubmit} disabled={isPending}>
+          {submitText}
+        </Button>
+        {onCancel && (
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen py-12">
@@ -197,90 +357,21 @@ const CourseDetail = () => {
                 {user && (
                   <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold">Write a Review</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="mb-3 block">Rating: {rating} Star{rating !== 1 && "s"}</Label>
-                        <div className="flex items-center gap-3">
-                          <div className="flex">
-                            {Array.from({ length: 5 }).map((_, i) => {
-                              const starValue = i + 1;
-                              const isFull = rating >= starValue;
-                              const isHalf = !isFull && rating >= starValue - 0.5;
-                              return (
-                                <Star
-                                  key={i}
-                                  className={`h-5 w-5 ${
-                                    isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
-                                  }`}
-                                />
-                              );
-                            })}
-                          </div>
-                          <Slider
-                            value={[rating]}
-                            onValueChange={(v) => setRating(v[0])}
-                            min={1}
-                            max={5}
-                            step={0.5}
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Exam/Projects Difficulty</Label>
-                        <Select value={difficulty} onValueChange={setDifficulty}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select difficulty" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Easy">Easy</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Difficult">Difficult</SelectItem>
-                            <SelectItem value="Very Difficult">Very Difficult</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Workload</Label>
-                        <Select value={workload} onValueChange={setWorkload}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select workload" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Light">Light</SelectItem>
-                            <SelectItem value="Moderate">Moderate</SelectItem>
-                            <SelectItem value="Balanced">Balanced</SelectItem>
-                            <SelectItem value="Heavy">Heavy</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Course Structure & Organization</Label>
-                        <Select value={organization} onValueChange={setOrganization}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select organization" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Poor">Poor</SelectItem>
-                            <SelectItem value="Fair">Fair</SelectItem>
-                            <SelectItem value="Good">Good</SelectItem>
-                            <SelectItem value="Great">Great</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Comment</Label>
-                        <Textarea
-                          value={comment}
-                          onChange={(e) => setComment(e.target.value)}
-                          placeholder="Share your experience..."
-                          rows={4}
-                        />
-                      </div>
-                      <Button onClick={handleSubmitReview} disabled={createReview.isPending}>
-                        Submit Review
-                      </Button>
-                    </div>
+                    {renderReviewForm(
+                      rating,
+                      setRating,
+                      difficulty,
+                      setDifficulty,
+                      workload,
+                      setWorkload,
+                      organization,
+                      setOrganization,
+                      comment,
+                      setComment,
+                      handleSubmitReview,
+                      createReview.isPending,
+                      "Submit Review"
+                    )}
                   </div>
                 )}
 
@@ -290,27 +381,99 @@ const CourseDetail = () => {
                   ) : (
                     reviews?.map((review: any) => (
                       <div key={review.id} className="p-4 border rounded-lg">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <div className="flex">
-                            {Array.from({ length: 5 }).map((_, i) => {
-                              const starValue = i + 1;
-                              const isFull = review.rating >= starValue;
-                              const isHalf = !isFull && review.rating >= starValue - 0.5;
-                              return (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
-                                  }`}
-                                />
-                              );
-                            })}
+                        {editingReviewId === review.id ? (
+                          <div>
+                            <h4 className="font-semibold mb-4">Edit Review</h4>
+                            {renderReviewForm(
+                              editRating,
+                              setEditRating,
+                              editDifficulty,
+                              setEditDifficulty,
+                              editWorkload,
+                              setEditWorkload,
+                              editOrganization,
+                              setEditOrganization,
+                              editComment,
+                              setEditComment,
+                              handleUpdateReview,
+                              updateReview.isPending,
+                              "Update Review",
+                              () => setEditingReviewId(null)
+                            )}
                           </div>
-                          {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
-                          {review.workload && <Badge variant="outline">{review.workload}</Badge>}
-                          {review.organization && <Badge variant="outline">{review.organization}</Badge>}
-                        </div>
-                        {review.comment && <p className="text-sm">{review.comment}</p>}
+                        ) : (
+                          <>
+                            {/* Reviewer Info */}
+                            <div className="flex items-center justify-between mb-3">
+                              <Link 
+                                to={`/user/${review.user_id}`}
+                                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                              >
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={review.user?.profile_photo_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {review.user?.username?.charAt(0).toUpperCase() || "U"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <span className="font-medium text-sm hover:underline">
+                                    {review.user?.username || "Anonymous"}
+                                  </span>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(review.created_at), "MMM d, yyyy")}
+                                  </p>
+                                </div>
+                              </Link>
+                              
+                              {/* Edit/Delete buttons for own reviews */}
+                              {user && review.user_id === user.id && (
+                                <div className="flex gap-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    onClick={() => handleEditReview(review)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Review</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete this review? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteReview(review.id)}>
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              {renderStars(review.rating)}
+                              {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
+                              {review.workload && <Badge variant="outline">{review.workload}</Badge>}
+                              {review.organization && <Badge variant="outline">{review.organization}</Badge>}
+                            </div>
+                            {review.comment && <p className="text-sm">{review.comment}</p>}
+                          </>
+                        )}
                       </div>
                     ))
                   )}

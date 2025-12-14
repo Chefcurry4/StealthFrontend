@@ -9,7 +9,16 @@ export const useCourseReviews = (courseId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("course_reviews")
-        .select("*")
+        .select(`
+          *,
+          user:user_id (
+            id,
+            username,
+            profile_photo_url,
+            email,
+            email_public
+          )
+        `)
         .eq("course_id", courseId)
         .order("created_at", { ascending: false });
 
