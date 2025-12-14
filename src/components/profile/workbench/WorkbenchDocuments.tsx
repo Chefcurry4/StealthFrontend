@@ -99,25 +99,25 @@ export const WorkbenchDocuments = () => {
             const IconComponent = getFileIcon(doc.file_type);
             return (
               <Card key={doc.id} className="bg-card/50">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <IconComponent className="h-6 w-6 text-primary" />
+                <CardContent className="p-3 sm:p-4 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate">{doc.name}</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="font-medium text-sm sm:text-base truncate">{doc.name}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {formatFileSize(doc.file_size)} • {new Date(doc.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" asChild>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                       <a href={doc.file_url} target="_blank" rel="noopener noreferrer" download>
                         <Download className="h-4 w-4" />
                       </a>
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
