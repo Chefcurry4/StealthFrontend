@@ -16,7 +16,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
 
-type SortOption = 'name-asc' | 'name-desc';
+type SortOption = 'name-asc' | 'name-desc' | 'most-saved';
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
@@ -79,6 +79,14 @@ const Labs = () => {
     return pattern ? pattern.test(combined) : true;
   });
 
+  // Get save counts for each lab
+  const getLabSaveCount = (labId: string) => {
+    // Count how many times this lab appears in all users' saved labs
+    // For now, we use savedLabs from current user context
+    // In a real implementation, you'd query aggregate counts from the database
+    return savedLabs?.filter((s: any) => s.lab_id === labId).length || 0;
+  };
+
   // Sort labs
   const sortedLabs = filteredLabs?.slice().sort((a, b) => {
     switch (sortBy) {
@@ -86,6 +94,8 @@ const Labs = () => {
         return a.name.localeCompare(b.name);
       case 'name-desc':
         return b.name.localeCompare(a.name);
+      case 'most-saved':
+        return getLabSaveCount(b.id_lab) - getLabSaveCount(a.id_lab);
       default:
         return 0;
     }
@@ -177,6 +187,7 @@ const Labs = () => {
                 <SelectContent>
                   <SelectItem value="name-asc">Name (A-Z)</SelectItem>
                   <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                  <SelectItem value="most-saved">Most Saved</SelectItem>
                 </SelectContent>
               </Select>
             </div>

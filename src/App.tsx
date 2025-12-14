@@ -28,6 +28,9 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import LearningAgreementDetail from "./pages/LearningAgreementDetail";
 import Workbench from "./pages/Workbench";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import CookiePolicy from "./pages/CookiePolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +64,9 @@ const AppContent = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learning-agreements/:id" element={<LearningAgreementDetail />} />
                 <Route path="/workbench" element={<Workbench />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/cookie-policy" element={<CookiePolicy />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
