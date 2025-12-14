@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AIAdvisorSidebar } from "@/components/AIAdvisorSidebar";
+import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
 import { 
   Send, 
   Loader2, 
@@ -359,7 +359,7 @@ const Workbench = () => {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Sidebar */}
-      <AIAdvisorSidebar
+      <WorkbenchSidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onNewChat={handleNewChat}

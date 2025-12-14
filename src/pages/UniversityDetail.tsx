@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useUniversity } from "@/hooks/useUniversities";
 import { useProgramsByUniversity } from "@/hooks/usePrograms";
@@ -6,7 +7,8 @@ import { useCoursesByUniversity } from "@/hooks/useCourses";
 import { useTeachersByUniversity } from "@/hooks/useTeachers";
 import { useUniversityMedia, useToggleLikeMedia } from "@/hooks/useUniversityMedia";
 import { useAuth } from "@/contexts/AuthContext";
-import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users, Image as ImageIcon, Heart, TrendingUp } from "lucide-react";
+import { ExternalLink, MapPin, Loader2, ArrowLeft, GraduationCap, Microscope, BookOpen, Users, Image as ImageIcon, Heart, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +18,8 @@ const UniversityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [programSearch, setProgramSearch] = useState("");
+  
   const { data: university, isLoading, error } = useUniversity(slug || "");
   const { data: programs } = useProgramsByUniversity(university?.uuid || "");
   const { data: labs } = useLabsByUniversity(university?.uuid || "");
@@ -23,6 +27,13 @@ const UniversityDetail = () => {
   const { data: teachers } = useTeachersByUniversity(university?.uuid || "");
   const { data: media } = useUniversityMedia(university?.uuid || "");
   const toggleLike = useToggleLikeMedia();
+  
+  const filteredPrograms = useMemo(() => {
+    if (!programs) return [];
+    if (!programSearch.trim()) return programs;
+    const search = programSearch.toLowerCase();
+    return programs.filter(p => p.name.toLowerCase().includes(search));
+  }, [programs, programSearch]);
 
   const handleLike = (mediaId: string) => {
     if (!user) {
@@ -166,29 +177,46 @@ const UniversityDetail = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
-              Programs Offered ({programs?.length || 0})
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                Programs Offered ({programs?.length || 0})
+              </CardTitle>
+              {programs && programs.length > 3 && (
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search programs..."
+                    value={programSearch}
+                    onChange={(e) => setProgramSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {programs && programs.length > 0 ? (
-              <div className="space-y-2">
-                {programs.slice(0, 5).map((program: any) => (
-                  <Link
-                    key={program.id}
-                    to={`/programs/${program.slug || program.id}`}
-                    className="block p-3 border rounded-lg hover:bg-accent transition-colors"
-                  >
-                    <h3 className="font-semibold">{program.name}</h3>
-                  </Link>
-                ))}
-                {programs.length > 5 && (
-                  <Link to="/programs">
-                    <Button variant="outline" size="sm" className="w-full mt-2">
-                      View All Programs
-                    </Button>
-                  </Link>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredPrograms.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">
+                    No programs match "{programSearch}"
+                  </p>
+                ) : (
+                  filteredPrograms.map((program: any) => (
+                    <Link
+                      key={program.id}
+                      to={`/programs/${program.slug || program.id}`}
+                      className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <h3 className="font-semibold">{program.name}</h3>
+                      {program.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          {program.description}
+                        </p>
+                      )}
+                    </Link>
+                  ))
                 )}
               </div>
             ) : (
