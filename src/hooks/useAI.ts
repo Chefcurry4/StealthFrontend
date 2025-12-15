@@ -40,11 +40,13 @@ export const streamAIStudyAdvisor = async ({
   userContext,
   onDelta,
   onDone,
+  onSearchingDatabase,
 }: {
   messages: { role: string; content: string }[];
   userContext?: any;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
+  onSearchingDatabase?: (searching: boolean) => void;
 }) => {
   const CHAT_URL = `https://zbgcvuocupxfugtfjids.supabase.co/functions/v1/ai-study-advisor`;
 
@@ -63,6 +65,9 @@ export const streamAIStudyAdvisor = async ({
   }
 
   if (!resp.body) throw new Error("No response body");
+
+  // Notify that database search might be starting
+  onSearchingDatabase?.(true);
 
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
@@ -93,7 +98,11 @@ export const streamAIStudyAdvisor = async ({
       try {
         const parsed = JSON.parse(jsonStr);
         const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-        if (content) onDelta(content);
+        if (content) {
+          // First content received means search is done, now streaming
+          onSearchingDatabase?.(false);
+          onDelta(content);
+        }
       } catch {
         // Incomplete JSON split across chunks: put it back and wait for more data
         textBuffer = line + "\n" + textBuffer;

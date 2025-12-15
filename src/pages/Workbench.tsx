@@ -41,7 +41,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   GraduationCap,
-  PanelLeft
+  PanelLeft,
+  Database
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -90,6 +91,7 @@ const Workbench = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -295,7 +297,9 @@ const Workbench = () => {
         },
         onDone: () => {
           setIsStreaming(false);
-        }
+          setIsSearchingDatabase(false);
+        },
+        onSearchingDatabase: setIsSearchingDatabase
       });
     } catch {
       setIsStreaming(false);
@@ -407,6 +411,7 @@ const Workbench = () => {
         },
         onDone: async () => {
           setIsStreaming(false);
+          setIsSearchingDatabase(false);
           // Save assistant message to database after streaming is done
           if (conversationId && assistantContent) {
             await saveMessage.mutateAsync({
@@ -415,7 +420,8 @@ const Workbench = () => {
               content: assistantContent
             });
           }
-        }
+        },
+        onSearchingDatabase: setIsSearchingDatabase
       });
     } catch (err) {
       setIsStreaming(false);
@@ -629,6 +635,22 @@ const Workbench = () => {
                   </div>
                 </div>
               ))}
+              
+              {/* Database Searching Indicator */}
+              {isSearchingDatabase && (
+                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
+                    <Database className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Searching database...</span>
+                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

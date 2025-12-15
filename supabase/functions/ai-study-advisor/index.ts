@@ -12,7 +12,7 @@ const databaseTools = [
     type: "function",
     function: {
       name: "search_courses",
-      description: "Search for courses in the database by various criteria. Use this when the user asks about courses taught by a specific professor, courses on a topic, or courses at a university.",
+      description: "Search for courses in the database by various criteria. Use this when the user asks about courses taught by a specific professor, courses on a topic, courses requiring specific software/tools, or courses at a university.",
       parameters: {
         type: "object",
         properties: {
@@ -21,7 +21,8 @@ const databaseTools = [
           university_slug: { type: "string", description: "University slug to filter by (e.g., 'epfl', 'eth-zurich')" },
           language: { type: "string", description: "Course language (English, French, German, etc.)" },
           level: { type: "string", description: "Ba for Bachelor, Ma for Master" },
-          topic: { type: "string", description: "Topic or keyword to search in course topics/description" },
+          topic: { type: "string", description: "Topic or keyword to search in course topics/description/name (e.g., 'machine learning', 'thermodynamics', 'robotics')" },
+          software_equipment: { type: "string", description: "Software, programming language, or equipment required (e.g., 'C++', 'Python', 'MATLAB', 'CAD')" },
           limit: { type: "number", description: "Maximum results to return (default 20, max 50)" }
         }
       }
@@ -126,7 +127,7 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
   
   switch (toolName) {
     case "search_courses": {
-      let query = supabase.from("Courses(C)").select("id_course, name_course, code, ects, ba_ma, professor_name, language, topics, description");
+      let query = supabase.from("Courses(C)").select("id_course, name_course, code, ects, ba_ma, professor_name, language, topics, description, software_equipment");
       
       if (args.professor_name) {
         query = query.ilike("professor_name", `%${args.professor_name}%`);
@@ -142,6 +143,9 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       }
       if (args.topic) {
         query = query.or(`topics.ilike.%${args.topic}%,description.ilike.%${args.topic}%,name_course.ilike.%${args.topic}%`);
+      }
+      if (args.software_equipment) {
+        query = query.ilike("software_equipment", `%${args.software_equipment}%`);
       }
       
       // Handle university filter via bridge table
