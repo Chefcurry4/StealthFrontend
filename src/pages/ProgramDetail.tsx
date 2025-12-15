@@ -1,24 +1,25 @@
+import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, GraduationCap, BookOpen, Bookmark, Clock } from "lucide-react";
+import { ArrowLeft, GraduationCap, Clock, BookOpen, Filter, ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProgram, useProgramCourses } from "@/hooks/usePrograms";
-import { useAuth } from "@/contexts/AuthContext";
-import { useSavedPrograms, useToggleSaveProgram } from "@/hooks/useSavedItems";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { TeacherLink } from "@/components/TeacherLink";
 
 const ProgramDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { data: program, isLoading, error } = useProgram(slug!);
   const { data: courses, isLoading: coursesLoading } = useProgramCourses(program?.id || "");
-  const { user } = useAuth();
-  const { data: savedPrograms } = useSavedPrograms();
-  const toggleSave = useToggleSaveProgram();
+
+  const [levelFilter, setLevelFilter] = useState<"all" | "Ba" | "Ma">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "Mandatory" | "Optional">("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch course details with bridge table info
   const { data: coursesWithInfo } = useQuery({
@@ -63,41 +64,60 @@ const ProgramDetail = () => {
     enabled: !!program?.id,
   });
 
-  const isSaved = savedPrograms?.some((saved: any) => saved.id_program === program?.id);
+  // Filter and search courses
+  const filteredCourses = useMemo(() => {
+    if (!coursesWithInfo) return [];
+    
+    return coursesWithInfo.filter((course: any) => {
+      // Level filter
+      if (levelFilter !== "all" && course.level !== levelFilter) return false;
+      
+      // Type filter
+      if (typeFilter !== "all" && course.mandatoryOptional !== typeFilter) return false;
+      
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = course.name_course?.toLowerCase().includes(query);
+        const matchesCode = course.code?.toLowerCase().includes(query);
+        const matchesProf = course.professor_name?.toLowerCase().includes(query);
+        if (!matchesName && !matchesCode && !matchesProf) return false;
+      }
+      
+      return true;
+    });
+  }, [coursesWithInfo, levelFilter, typeFilter, searchQuery]);
 
-  // Group courses by year and type
-  const groupedCourses = coursesWithInfo?.reduce((acc: any, course: any) => {
-    const year = course.year || 'Other';
-    if (!acc[year]) acc[year] = { mandatory: [], optional: [] };
-    if (course.mandatoryOptional === 'Mandatory') {
-      acc[year].mandatory.push(course);
-    } else if (course.mandatoryOptional === 'Optional') {
-      acc[year].optional.push(course);
-    } else {
-      acc[year].optional.push(course);
-    }
-    return acc;
-  }, {});
+  // Stats
+  const stats = useMemo(() => {
+    if (!coursesWithInfo) return { total: 0, bachelor: 0, master: 0, mandatory: 0, optional: 0, totalEcts: 0 };
+    
+    return {
+      total: coursesWithInfo.length,
+      bachelor: coursesWithInfo.filter((c: any) => c.level === "Ba").length,
+      master: coursesWithInfo.filter((c: any) => c.level === "Ma").length,
+      mandatory: coursesWithInfo.filter((c: any) => c.mandatoryOptional === "Mandatory").length,
+      optional: coursesWithInfo.filter((c: any) => c.mandatoryOptional === "Optional").length,
+      totalEcts: coursesWithInfo.reduce((sum: number, c: any) => sum + (c.ects || 0), 0),
+    };
+  }, [coursesWithInfo]);
 
-  const years = Object.keys(groupedCourses || {}).sort();
-
-  const handleSave = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    if (program) {
-      toggleSave.mutate(program.id);
-    }
-  };
+  const filteredEcts = useMemo(() => {
+    return filteredCourses.reduce((sum: number, c: any) => sum + (c.ects || 0), 0);
+  }, [filteredCourses]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
-          <Skeleton className="h-10 w-32 mb-6" />
+          <Skeleton className="h-8 w-32 mb-6" />
           <Skeleton className="h-12 w-3/4 mb-4" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-24 w-full mb-6" />
+          <div className="grid gap-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-20" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -105,7 +125,7 @@ const ProgramDetail = () => {
 
   if (error || !program) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
           <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -118,171 +138,228 @@ const ProgramDetail = () => {
   }
 
   return (
-    <div className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
-        <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+    <div className="min-h-screen py-6 md:py-8">
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Header */}
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Go Back
         </Button>
 
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-primary/10 rounded-lg">
+        {/* Program Info */}
+        <div className="mb-6">
+          <div className="flex items-start gap-4 mb-3">
+            <div className="p-3 bg-primary/10 rounded-xl shrink-0">
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-4xl font-bold">{program.name}</h1>
-              {programInfo && (
-                <div className="flex gap-3 mt-2 text-sm text-muted-foreground">
-                  {programInfo.level && <Badge variant="outline">{programInfo.level}</Badge>}
-                  {programInfo.duration && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {programInfo.duration}
-                    </span>
-                  )}
-                </div>
-              )}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">{program.name}</h1>
+              <div className="flex flex-wrap gap-2 items-center">
+                {programInfo?.level && (
+                  <Badge variant="secondary" className="text-xs">
+                    {programInfo.level}
+                  </Badge>
+                )}
+                {programInfo?.duration && (
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    {programInfo.duration}
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {stats.total} courses
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {stats.totalEcts} ECTS
+                </span>
+              </div>
             </div>
           </div>
+          
           {program.description && (
-            <p className="text-lg text-muted-foreground max-w-3xl">
-              {program.description}
-            </p>
+            <p className="text-muted-foreground mb-3">{program.description}</p>
           )}
+          
           {programInfo?.website && (
             <a
               href={programInfo.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline mt-2 inline-block"
+              className="text-primary hover:underline text-sm inline-flex items-center gap-1"
             >
-              Visit Program Website →
+              Visit Program Website
+              <ChevronRight className="h-3.5 w-3.5" />
             </a>
           )}
         </div>
 
-        <div className="space-y-6">
-          {years.length > 0 ? (
-            <Accordion type="single" collapsible defaultValue="1" className="w-full">
-              {years.map((year) => {
-                const mandatory = groupedCourses[year].mandatory;
-                const optional = groupedCourses[year].optional;
-                const totalEcts = [...mandatory, ...optional].reduce((sum, c) => sum + (c.ects || 0), 0);
+        {/* Filters */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Level Filter - Primary */}
+            <div className="flex-1">
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Level</label>
+              <Tabs value={levelFilter} onValueChange={(v) => setLevelFilter(v as any)} className="w-full">
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="all" className="text-xs">
+                    All ({stats.total})
+                  </TabsTrigger>
+                  <TabsTrigger value="Ba" className="text-xs">
+                    Bachelor ({stats.bachelor})
+                  </TabsTrigger>
+                  <TabsTrigger value="Ma" className="text-xs">
+                    Master ({stats.master})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
 
-                return (
-                  <AccordionItem key={year} value={year}>
-                    <AccordionTrigger className="text-lg font-semibold">
-                      Year {year} ({mandatory.length + optional.length} courses, {totalEcts} ECTS)
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      {mandatory.length > 0 && (
-                        <div className="mb-4">
-                          <h3 className="font-semibold mb-2 flex items-center gap-2">
-                            <Badge>Mandatory</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              ({mandatory.reduce((sum, c) => sum + (c.ects || 0), 0)} ECTS)
-                            </span>
-                          </h3>
-                          <div className="space-y-2">
-                            {mandatory.map((course: any) => (
-                              <Link
-                                key={course.id_course}
-                                to={`/courses/${course.id_course}`}
-                                className="block p-3 border rounded-lg hover:bg-accent transition-colors"
-                              >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      {course.code && <Badge variant="secondary">{course.code}</Badge>}
-                                      {course.ects && (
-                                        <span className="text-sm text-muted-foreground">
-                                          {course.ects} ECTS
-                                        </span>
-                                      )}
-                                      {course.level && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {course.level === 'Ba' ? 'Bachelor' : 'Master'}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <h3 className="font-semibold">{course.name_course}</h3>
-                                  </div>
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+            {/* Type Filter */}
+            <div className="flex-1">
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Type</label>
+              <Tabs value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)} className="w-full">
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                  <TabsTrigger value="Mandatory" className="text-xs">
+                    Mandatory ({stats.mandatory})
+                  </TabsTrigger>
+                  <TabsTrigger value="Optional" className="text-xs">
+                    Optional ({stats.optional})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
 
-                      {optional.length > 0 && (
-                        <div>
-                          <h3 className="font-semibold mb-2 flex items-center gap-2">
-                            <Badge variant="outline">Optional</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              ({optional.reduce((sum, c) => sum + (c.ects || 0), 0)} ECTS)
-                            </span>
-                          </h3>
-                          <div className="space-y-2">
-                            {optional.map((course: any) => (
-                              <Link
-                                key={course.id_course}
-                                to={`/courses/${course.id_course}`}
-                                className="block p-3 border rounded-lg hover:bg-accent transition-colors"
-                              >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      {course.code && <Badge variant="secondary">{course.code}</Badge>}
-                                      {course.ects && (
-                                        <span className="text-sm text-muted-foreground">
-                                          {course.ects} ECTS
-                                        </span>
-                                      )}
-                                      {course.level && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {course.level === 'Ba' ? 'Bachelor' : 'Master'}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <h3 className="font-semibold">{course.name_course}</h3>
-                                  </div>
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          ) : (
-            <Card>
-              <CardContent className="py-8">
-                {coursesLoading ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-16" />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center">No courses found for this program.</p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="flex gap-3">
-            <Button className="flex-1" onClick={handleSave} disabled={toggleSave.isPending}>
-              <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
-              {isSaved ? 'Saved' : 'Save Program'}
-            </Button>
-            <Button variant="outline" className="flex-1">
-              Add to Learning Agreement
-            </Button>
+            {/* Search */}
+            <div className="flex-1">
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Search</label>
+              <Input
+                placeholder="Search courses, codes, professors..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10"
+              />
+            </div>
           </div>
+
+          {/* Results count */}
+          <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              Showing <span className="font-medium text-foreground">{filteredCourses.length}</span> courses
+            </span>
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{filteredEcts}</span> ECTS
+            </span>
+          </div>
+        </div>
+
+        {/* Course List */}
+        <div className="space-y-2">
+          {coursesLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-20" />
+              ))}
+            </div>
+          ) : filteredCourses.length > 0 ? (
+            filteredCourses.map((course: any) => (
+              <Link
+                key={course.id_course}
+                to={`/courses/${course.id_course}`}
+                className="block bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-4 hover:bg-card/80 hover:border-border transition-all group"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {/* Top row: badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {course.code && (
+                        <Badge variant="secondary" className="text-xs font-mono">
+                          {course.code}
+                        </Badge>
+                      )}
+                      {course.level && (
+                        <Badge 
+                          variant={course.level === "Ba" ? "default" : "outline"} 
+                          className="text-xs"
+                        >
+                          {course.level === "Ba" ? "Bachelor" : "Master"}
+                        </Badge>
+                      )}
+                      {course.mandatoryOptional && (
+                        <Badge 
+                          variant={course.mandatoryOptional === "Mandatory" ? "destructive" : "secondary"}
+                          className="text-xs"
+                        >
+                          {course.mandatoryOptional}
+                        </Badge>
+                      )}
+                      {course.year && (
+                        <span className="text-xs text-muted-foreground">
+                          Year {course.year}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Course name */}
+                    <h3 className="font-semibold text-base group-hover:text-primary transition-colors line-clamp-1">
+                      {course.name_course}
+                    </h3>
+
+                    {/* Bottom row: details */}
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                      {course.ects && (
+                        <span className="font-medium">{course.ects} ECTS</span>
+                      )}
+                      {course.term && (
+                        <span>{course.term}</span>
+                      )}
+                      {course.language && (
+                        <span>{course.language}</span>
+                      )}
+                      {course.professor_name && (
+                        <span 
+                          className="flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Users className="h-3.5 w-3.5" />
+                          {course.professor_name.split(';').slice(0, 2).map((name: string, idx: number) => (
+                            <span key={idx}>
+                              <TeacherLink teacherName={name.trim()} />
+                              {idx < Math.min(course.professor_name.split(';').length - 1, 1) && ", "}
+                            </span>
+                          ))}
+                          {course.professor_name.split(';').length > 2 && (
+                            <span className="text-muted-foreground">
+                              +{course.professor_name.split(';').length - 2}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-1" />
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No courses found matching your filters.</p>
+              <Button
+                variant="link"
+                onClick={() => {
+                  setLevelFilter("all");
+                  setTypeFilter("all");
+                  setSearchQuery("");
+                }}
+              >
+                Clear filters
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
