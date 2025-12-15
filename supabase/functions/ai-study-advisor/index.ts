@@ -12,17 +12,22 @@ const databaseTools = [
     type: "function",
     function: {
       name: "search_courses",
-      description: "Search for courses in the database by various criteria. Use this when the user asks about courses taught by a specific professor, courses on a topic, courses requiring specific software/tools, or courses at a university.",
+      description: "Search for courses in the database by various criteria. Use this when the user asks about courses taught by a specific professor, courses on a topic, courses requiring specific software/tools, courses with a specific exam type, or courses at a university.",
       parameters: {
         type: "object",
         properties: {
           professor_name: { type: "string", description: "Professor/teacher name to filter by (partial match)" },
           course_name: { type: "string", description: "Course name to search for (partial match)" },
+          course_code: { type: "string", description: "Course code to search for (e.g., 'CS-101', 'MATH', partial match)" },
           university_slug: { type: "string", description: "University slug to filter by (e.g., 'epfl', 'eth-zurich')" },
           language: { type: "string", description: "Course language (English, French, German, etc.)" },
           level: { type: "string", description: "Ba for Bachelor, Ma for Master" },
           topic: { type: "string", description: "Topic or keyword to search in course topics/description/name (e.g., 'machine learning', 'thermodynamics', 'robotics')" },
           software_equipment: { type: "string", description: "Software, programming language, or equipment required (e.g., 'C++', 'Python', 'MATLAB', 'CAD')" },
+          exam_type: { type: "string", description: "Type of examination (e.g., 'oral', 'written', 'project', 'presentation')" },
+          term: { type: "string", description: "Semester/term when course is offered (e.g., 'Fall', 'Spring', 'Winter', 'Summer')" },
+          ects_min: { type: "number", description: "Minimum ECTS credits" },
+          ects_max: { type: "number", description: "Maximum ECTS credits" },
           limit: { type: "number", description: "Maximum results to return (default 20, max 50)" }
         }
       }
@@ -127,13 +132,16 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
   
   switch (toolName) {
     case "search_courses": {
-      let query = supabase.from("Courses(C)").select("id_course, name_course, code, ects, ba_ma, professor_name, language, topics, description, software_equipment");
+      let query = supabase.from("Courses(C)").select("id_course, name_course, code, ects, ba_ma, professor_name, language, topics, description, software_equipment, type_exam, term");
       
       if (args.professor_name) {
         query = query.ilike("professor_name", `%${args.professor_name}%`);
       }
       if (args.course_name) {
         query = query.ilike("name_course", `%${args.course_name}%`);
+      }
+      if (args.course_code) {
+        query = query.ilike("code", `%${args.course_code}%`);
       }
       if (args.language) {
         query = query.ilike("language", `%${args.language}%`);
@@ -146,6 +154,18 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       }
       if (args.software_equipment) {
         query = query.ilike("software_equipment", `%${args.software_equipment}%`);
+      }
+      if (args.exam_type) {
+        query = query.ilike("type_exam", `%${args.exam_type}%`);
+      }
+      if (args.term) {
+        query = query.ilike("term", `%${args.term}%`);
+      }
+      if (args.ects_min) {
+        query = query.gte("ects", args.ects_min);
+      }
+      if (args.ects_max) {
+        query = query.lte("ects", args.ects_max);
       }
       
       // Handle university filter via bridge table
@@ -604,6 +624,9 @@ ${userSpecificContext || "No user-specific data available"}
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
       console.log(`AI requested ${assistantMessage.tool_calls.length} tool call(s)`);
       
+      // Get tool names for status update
+      const toolNames = assistantMessage.tool_calls.map((tc: any) => tc.function.name);
+      
       const toolResults = [];
       
       for (const toolCall of assistantMessage.tool_calls) {
@@ -650,14 +673,37 @@ ${userSpecificContext || "No user-specific data available"}
       // Return streaming or non-streaming response
       if (stream) {
         console.log("Returning streaming response after tool execution");
-        return new Response(finalResponse.body, {
+        // Create a custom stream that prepends tool info
+        const encoder = new TextEncoder();
+        const toolInfoEvent = `data: ${JSON.stringify({ tools_used: toolNames })}\n\n`;
+        
+        const originalStream = finalResponse.body!;
+        const reader = originalStream.getReader();
+        
+        const customStream = new ReadableStream({
+          async start(controller) {
+            // First, send tool info
+            controller.enqueue(encoder.encode(toolInfoEvent));
+            
+            // Then pipe through the rest
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              controller.enqueue(value);
+            }
+            controller.close();
+          }
+        });
+        
+        return new Response(customStream, {
           headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
         });
       }
 
       const finalData = await finalResponse.json();
       return new Response(JSON.stringify({ 
-        message: finalData.choices[0].message.content 
+        message: finalData.choices[0].message.content,
+        tools_used: toolNames
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

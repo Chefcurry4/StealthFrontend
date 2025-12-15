@@ -41,12 +41,14 @@ export const streamAIStudyAdvisor = async ({
   onDelta,
   onDone,
   onSearchingDatabase,
+  onToolsUsed,
 }: {
   messages: { role: string; content: string }[];
   userContext?: any;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onSearchingDatabase?: (searching: boolean) => void;
+  onToolsUsed?: (tools: string[]) => void;
 }) => {
   const CHAT_URL = `https://zbgcvuocupxfugtfjids.supabase.co/functions/v1/ai-study-advisor`;
 
@@ -97,6 +99,13 @@ export const streamAIStudyAdvisor = async ({
 
       try {
         const parsed = JSON.parse(jsonStr);
+        
+        // Check for tools_used event (sent before streaming content)
+        if (parsed.tools_used) {
+          onToolsUsed?.(parsed.tools_used);
+          continue;
+        }
+        
         const content = parsed.choices?.[0]?.delta?.content as string | undefined;
         if (content) {
           // First content received means search is done, now streaming
