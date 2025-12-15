@@ -79,6 +79,20 @@ const models: { id: ModelType; name: string; description: string; icon: React.Re
   },
 ];
 
+// Helper to format tool names for display
+const formatToolName = (toolName: string): string => {
+  const toolLabels: Record<string, string> = {
+    'search_courses': 'courses',
+    'search_labs': 'labs',
+    'search_teachers': 'teachers',
+    'search_universities': 'universities',
+    'get_courses_by_teacher': 'teacher courses',
+    'get_labs_by_university': 'university labs',
+    'get_programs_by_university': 'programs',
+  };
+  return toolLabels[toolName] || toolName.replace(/_/g, ' ');
+};
+
 const Workbench = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -92,6 +106,7 @@ const Workbench = () => {
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
+  const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -298,8 +313,10 @@ const Workbench = () => {
         onDone: () => {
           setIsStreaming(false);
           setIsSearchingDatabase(false);
+          setActiveSearchTools([]);
         },
-        onSearchingDatabase: setIsSearchingDatabase
+        onSearchingDatabase: setIsSearchingDatabase,
+        onToolsUsed: setActiveSearchTools
       });
     } catch {
       setIsStreaming(false);
@@ -412,6 +429,7 @@ const Workbench = () => {
         onDone: async () => {
           setIsStreaming(false);
           setIsSearchingDatabase(false);
+          setActiveSearchTools([]);
           // Save assistant message to database after streaming is done
           if (conversationId && assistantContent) {
             await saveMessage.mutateAsync({
@@ -421,7 +439,8 @@ const Workbench = () => {
             });
           }
         },
-        onSearchingDatabase: setIsSearchingDatabase
+        onSearchingDatabase: setIsSearchingDatabase,
+        onToolsUsed: setActiveSearchTools
       });
     } catch (err) {
       setIsStreaming(false);
@@ -646,7 +665,11 @@ const Workbench = () => {
                   </Avatar>
                   <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
                     <Database className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-sm text-muted-foreground">Searching database...</span>
+                    <span className="text-sm text-muted-foreground">
+                      {activeSearchTools.length > 0 
+                        ? `Searching ${activeSearchTools.map(formatToolName).join(', ')}...`
+                        : 'Searching database...'}
+                    </span>
                     <Loader2 className="h-3 w-3 animate-spin text-primary" />
                   </div>
                 </div>
