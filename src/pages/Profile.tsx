@@ -98,11 +98,60 @@ const Profile = () => {
 
   const handleDeleteAccount = async () => {
     try {
+      const userId = user.id;
+      
+      // Delete all user data from related tables
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      // Delete saved courses
+      await supabase.from("user_saved_courses(US-C)").delete().eq("user_id", userId);
+      
+      // Delete saved labs
+      await supabase.from("user_saved_labs(US-L)").delete().eq("user_id", userId);
+      
+      // Delete saved programs
+      await supabase.from("user_saved_programs(US-P)").delete().eq("user_id", userId);
+      
+      // Delete course reviews
+      await supabase.from("course_reviews").delete().eq("user_id", userId);
+      
+      // Delete course review upvotes
+      await supabase.from("course_review_upvotes").delete().eq("user_id", userId);
+      
+      // Delete email drafts
+      await supabase.from("email_drafts").delete().eq("user_id", userId);
+      
+      // Delete AI messages (via conversations cascade)
+      await supabase.from("ai_conversations").delete().eq("user_id", userId);
+      
+      // Delete user documents
+      await supabase.from("user_documents").delete().eq("user_id", userId);
+      
+      // Delete learning agreement courses first (foreign key dependency)
+      const { data: agreements } = await supabase
+        .from("Learning_agreements(LA)")
+        .select("id")
+        .eq("user_id", userId);
+      
+      if (agreements && agreements.length > 0) {
+        const agreementIds = agreements.map(a => a.id);
+        await supabase.from("learning_agreement_courses").delete().in("agreement_id", agreementIds);
+      }
+      
+      // Delete learning agreements
+      await supabase.from("Learning_agreements(LA)").delete().eq("user_id", userId);
+      
+      // Delete user profile
+      await supabase.from("Users(US)").delete().eq("id", userId);
+      
+      // Sign out the user
       await signOut();
-      toast.success("Account deleted");
+      
+      toast.success("Account and all data deleted successfully");
       navigate("/");
     } catch (error) {
-      toast.error("Failed to delete account");
+      console.error("Delete account error:", error);
+      toast.error("Failed to delete account. Please try again.");
     }
   };
 
