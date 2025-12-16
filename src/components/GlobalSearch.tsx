@@ -38,7 +38,7 @@ export const GlobalSearch = ({
   const [isOpen, setIsOpen] = useState(false);
   const [teacherPopupOpen, setTeacherPopupOpen] = useState(false);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
-  const { results, isLoading } = useGlobalSearch(query);
+  const { results, isLoading, isTyping } = useGlobalSearch(query);
   const { modeConfig } = useBackgroundTheme();
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +115,7 @@ export const GlobalSearch = ({
             color: modeConfig.textColor,
           }}
         />
-        {query && (
+        {query && !isLoading && !isTyping && (
           <button
             onClick={handleClear}
             className={cn(
@@ -127,13 +127,14 @@ export const GlobalSearch = ({
             <X className={cn("h-4 w-4", variant === "hero" ? "h-5 w-5" : "")} />
           </button>
         )}
-        {isLoading && (
+        {(isLoading || isTyping) && (
           <Loader2 
             className={cn(
               "absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
-              variant === "hero" ? "right-4 h-5 w-5" : ""
+              variant === "hero" ? "right-4 h-5 w-5" : "",
+              isTyping && !isLoading ? "opacity-40" : "opacity-70"
             )} 
-            style={{ color: modeConfig.textColor, opacity: 0.5 }}
+            style={{ color: modeConfig.textColor }}
           />
         )}
       </div>
@@ -150,7 +151,12 @@ export const GlobalSearch = ({
             borderColor: 'hsl(var(--border))',
           }}
         >
-          {results.length === 0 && !isLoading ? (
+          {isTyping ? (
+            <div className="p-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Searching...
+            </div>
+          ) : results.length === 0 && !isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               No results found for "{query}"
             </div>
