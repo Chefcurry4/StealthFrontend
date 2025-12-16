@@ -14,6 +14,7 @@ import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { SwipeIndicator } from "@/components/SwipeIndicator";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
 import Universities from "./pages/Universities";
@@ -85,21 +86,25 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <BackgroundThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </TooltipProvider>
-        </BackgroundThemeProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <BackgroundThemeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ErrorBoundary>
+                  <AppContent />
+                </ErrorBoundary>
+              </BrowserRouter>
+            </TooltipProvider>
+          </BackgroundThemeProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
