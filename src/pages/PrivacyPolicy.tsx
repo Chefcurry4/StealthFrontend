@@ -1,10 +1,17 @@
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { SEO } from "@/components/SEO";
 
 const PrivacyPolicy = () => {
   const { modeConfig } = useBackgroundTheme();
 
   return (
-    <div className="flex-1">
+    <>
+      <SEO 
+        title="Privacy Policy"
+        description="Learn how Students Hub collects, uses, and protects your personal information. Read our privacy policy for details on data security and your rights."
+        keywords={["privacy policy", "data protection", "student data", "personal information"]}
+      />
+      <div className="flex-1">
       <section className="py-16">
         <div className="container mx-auto px-4 max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-8">Privacy Policy</h1>
@@ -96,6 +103,7 @@ const PrivacyPolicy = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

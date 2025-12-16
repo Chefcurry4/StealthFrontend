@@ -1,10 +1,17 @@
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { SEO } from "@/components/SEO";
 
 const TermsOfService = () => {
   const { modeConfig } = useBackgroundTheme();
 
   return (
-    <div className="flex-1">
+    <>
+      <SEO 
+        title="Terms of Service"
+        description="Read the Terms of Service for Students Hub. Understand your rights and responsibilities when using our academic planning platform."
+        keywords={["terms of service", "user agreement", "legal terms"]}
+      />
+      <div className="flex-1">
       <section className="py-16">
         <div className="container mx-auto px-4 max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-8">Terms of Service</h1>
@@ -133,6 +140,7 @@ const TermsOfService = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

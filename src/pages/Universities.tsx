@@ -12,6 +12,7 @@ import UniversityMap from "@/components/UniversityMap";
 import { UniversityCardSkeleton } from "@/components/skeletons/UniversityCardSkeleton";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
+import { SEO } from "@/components/SEO";
 
 const Universities = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,7 +32,13 @@ const Universities = () => {
   const uniqueCountries = Array.from(new Set(universities?.map(u => u.country).filter(Boolean))) as string[];
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
+    <>
+      <SEO 
+        title="Universities"
+        description={`Explore ${filteredUniversities?.length || 12} partner universities worldwide. Find the perfect destination for your exchange semester and discover available programs.`}
+        keywords={["partner universities", "exchange universities", "study abroad destinations", "university programs"]}
+      />
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         {/* Hero Section */}
         <section className="py-16">
@@ -168,7 +175,8 @@ const Universities = () => {
           </div>
         </section>
       </div>
-    </PullToRefresh>
+      </PullToRefresh>
+    </>
   );
 };
 
