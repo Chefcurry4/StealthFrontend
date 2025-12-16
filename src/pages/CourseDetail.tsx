@@ -18,6 +18,7 @@ import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDele
 import { TeacherLink } from "@/components/TeacherLink";
 import { useState } from "react";
 import { format } from "date-fns";
+import { SEO, generateCourseSchema, generateBreadcrumbSchema } from "@/components/SEO";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -272,8 +273,29 @@ const CourseDetail = () => {
     </div>
   );
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: typeof window !== "undefined" ? window.location.origin : "" },
+    { name: "Courses", url: `${typeof window !== "undefined" ? window.location.origin : ""}/courses` },
+    { name: course.name_course, url: typeof window !== "undefined" ? window.location.href : "" },
+  ]);
+
+  const courseSchema = generateCourseSchema({
+    name: course.name_course,
+    description: course.description || undefined,
+    code: course.code || undefined,
+    ects: course.ects || undefined,
+    professor: course.professor_name || undefined,
+  });
+
   return (
-    <div className="min-h-screen py-12">
+    <>
+      <SEO 
+        title={course.name_course}
+        description={course.description || `${course.name_course} - ${course.ects || 0} ECTS course. ${course.ba_ma === "Ma" ? "Master" : "Bachelor"} level.`}
+        keywords={[course.name_course, course.code || "", course.ba_ma === "Ma" ? "master course" : "bachelor course", "university course", "ECTS"]}
+        structuredData={{ "@graph": [breadcrumbSchema, courseSchema] }}
+      />
+      <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
         <Link to="/courses">
           <Button variant="ghost" className="mb-6">
@@ -576,6 +598,7 @@ const CourseDetail = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

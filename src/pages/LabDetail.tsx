@@ -9,6 +9,7 @@ import { useLab, useUniversitiesByLab, useLabs } from "@/hooks/useLabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { TeacherLink } from "@/components/TeacherLink";
+import { SEO, generateLabSchema, generateBreadcrumbSchema } from "@/components/SEO";
 
 const LabDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -71,8 +72,29 @@ const LabDetail = () => {
   const professors = lab.professors?.split(',').map(p => p.trim()).filter(Boolean) || [];
   const filteredRelatedLabs = relatedLabs?.filter(l => l.id_lab !== lab.id_lab).slice(0, 4);
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: typeof window !== "undefined" ? window.location.origin : "" },
+    { name: "Labs", url: `${typeof window !== "undefined" ? window.location.origin : ""}/labs` },
+    { name: lab.name, url: typeof window !== "undefined" ? window.location.href : "" },
+  ]);
+
+  const labSchema = generateLabSchema({
+    name: lab.name,
+    description: lab.description || undefined,
+    topics: lab.topics || undefined,
+    link: lab.link || undefined,
+    university: universities?.[0]?.name,
+  });
+
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title={lab.name}
+        description={lab.description || `${lab.name} - Research laboratory. ${topics.length > 0 ? `Research areas: ${topics.slice(0, 3).join(", ")}` : ""}`}
+        keywords={[lab.name, ...topics.slice(0, 5), "research lab", "university research"]}
+        structuredData={{ "@graph": [breadcrumbSchema, labSchema] }}
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-12">
         <div className="container mx-auto px-4">
@@ -287,6 +309,7 @@ const LabDetail = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO, generateFAQSchema } from "@/components/SEO";
 
 const faqs = [
   {
@@ -139,8 +140,19 @@ const HelpCenter = () => {
     )
   })).filter(category => category.questions.length > 0);
 
+  // Generate FAQ schema for structured data
+  const allQuestions = faqs.flatMap(cat => cat.questions);
+  const faqSchema = generateFAQSchema(allQuestions);
+
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title="Help Center"
+        description="Find answers to common questions about Students Hub. Learn how to browse universities, save courses, use the AI advisor, and create learning agreements."
+        keywords={["help", "FAQ", "support", "how to", "student help", "learning agreement help"]}
+        structuredData={faqSchema}
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-16 border-b">
         <div className="container mx-auto px-4 text-center">
@@ -243,6 +255,7 @@ const HelpCenter = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

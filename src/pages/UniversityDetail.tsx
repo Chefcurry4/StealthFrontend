@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UniversityCampusGallery } from "@/components/UniversityCampusGallery";
 import { TeacherPopup } from "@/components/TeacherPopup";
+import { SEO, generateUniversitySchema, generateBreadcrumbSchema } from "@/components/SEO";
 
 const UniversityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -70,8 +71,29 @@ const UniversityDetail = () => {
     );
   }
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: typeof window !== "undefined" ? window.location.origin : "" },
+    { name: "Universities", url: `${typeof window !== "undefined" ? window.location.origin : ""}/universities` },
+    { name: university.name, url: typeof window !== "undefined" ? window.location.href : "" },
+  ]);
+
+  const universitySchema = generateUniversitySchema({
+    name: university.name,
+    description: `${university.name} - Partner university in ${university.country}. Offering ${programs?.length || 0} programs and ${courses?.length || 0} courses.`,
+    country: university.country || undefined,
+    website: university.website || undefined,
+    logo: university.logo_url || undefined,
+  });
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      <SEO 
+        title={university.name}
+        description={`Explore ${university.name} in ${university.country}. ${programs?.length || 0} programs, ${courses?.length || 0} courses, and ${labs?.length || 0} research labs available for exchange students.`}
+        keywords={[university.name, university.country || "", "exchange university", "study abroad", "university programs"]}
+        structuredData={{ "@graph": [breadcrumbSchema, universitySchema] }}
+      />
+      <div className="container mx-auto px-4 py-8">
       <Link to="/universities">
         <Button variant="ghost" className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -391,6 +413,7 @@ const UniversityDetail = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

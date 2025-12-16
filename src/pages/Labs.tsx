@@ -16,6 +16,7 @@ import { useLabSaveCounts } from "@/hooks/useLabSaveCounts";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
+import { SEO } from "@/components/SEO";
 
 type SortOption = 'name-asc' | 'name-desc' | 'most-saved';
 
@@ -101,7 +102,13 @@ const Labs = () => {
   });
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
+    <>
+      <SEO 
+        title="Research Labs"
+        description={`Explore ${sortedLabs?.length || 424} cutting-edge research laboratories. Discover opportunities in AI, robotics, biomedical, energy, and more research domains.`}
+        keywords={["research labs", "academic research", "university labs", "research opportunities", "scientific research"]}
+      />
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         {/* Hero Section */}
         <section className="py-16">
@@ -270,7 +277,8 @@ const Labs = () => {
           </div>
         </section>
       </div>
-    </PullToRefresh>
+      </PullToRefresh>
+    </>
   );
 };
 

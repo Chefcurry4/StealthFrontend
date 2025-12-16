@@ -7,6 +7,7 @@ import { useUniversities } from "@/hooks/useUniversities";
 import { useCourses } from "@/hooks/useCourses";
 import { useLabs } from "@/hooks/useLabs";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { SEO } from "@/components/SEO";
 
 const Index = () => {
   const { user } = useAuth();
@@ -46,7 +47,12 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
+      <SEO 
+        description="Plan your international study semester with AI-powered course recommendations. Explore universities, discover courses, find research labs, and build learning agreements."
+        keywords={["study abroad", "exchange semester", "university courses", "learning agreement", "AI advisor"]}
+      />
+      <div className="min-h-screen flex flex-col">
       {/* Hero Section with Central Search */}
       <section className="relative flex-1 flex items-center justify-center py-16 md:py-24">
         <div className="container mx-auto px-4">
@@ -127,6 +133,7 @@ const Index = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
+import { SEO } from "@/components/SEO";
 
 const Courses = () => {
   const [filters, setFilters] = useState<CourseFilters>({});
@@ -65,7 +66,13 @@ const Courses = () => {
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
+    <>
+      <SEO 
+        title="Courses"
+        description={`Browse ${allCourses?.length || 1000}+ university courses across partner institutions. Filter by language, level, ECTS credits, and more to build your perfect learning agreement.`}
+        keywords={["university courses", "ECTS credits", "bachelor courses", "master courses", "course catalog"]}
+      />
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="flex-1">
         {/* Hero Section */}
         <section className="py-16">
@@ -348,7 +355,8 @@ const Courses = () => {
           </div>
         </section>
       </div>
-    </PullToRefresh>
+      </PullToRefresh>
+    </>
   );
 };
 
