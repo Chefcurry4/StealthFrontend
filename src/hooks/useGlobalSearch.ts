@@ -12,17 +12,23 @@ export interface SearchResult {
 export const useGlobalSearch = (query: string) => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     const trimmedQuery = query.trim();
     
     if (trimmedQuery.length < 2) {
       setResults([]);
+      setIsTyping(false);
       return;
     }
 
+    // Show typing indicator immediately
+    setIsTyping(true);
+
     const debounceTimer = setTimeout(async () => {
       setIsLoading(true);
+      setIsTyping(false);
       
       try {
         const searchPattern = `%${trimmedQuery}%`;
@@ -131,8 +137,11 @@ export const useGlobalSearch = (query: string) => {
       }
     }, 300);
 
-    return () => clearTimeout(debounceTimer);
+    return () => {
+      clearTimeout(debounceTimer);
+      setIsTyping(false);
+    };
   }, [query]);
 
-  return { results, isLoading };
+  return { results, isLoading, isTyping };
 };
