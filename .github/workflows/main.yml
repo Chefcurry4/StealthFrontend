@@ -1,0 +1,50 @@
+name: Update LOC in README
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-loc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute LOC
+        id: loc
+        run: |
+          LOC=$(git ls-files -z | xargs -0 wc -l | tail -n 1 | awk '{print $1}')
+          echo "loc=$LOC" >> "$GITHUB_OUTPUT"
+
+      - name: Update README block
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          readme = Path("README.md")
+          s = readme.read_text(encoding="utf-8")
+
+          loc = "${{ steps.loc.outputs.loc }}"
+          repl = f"<!-- LOC_START -->\n**Total lines of code (tracked files):** {loc}\n<!-- LOC_END -->"
+
+          new = re.sub(r"<!-- LOC_START -->.*?<!-- LOC_END -->", repl, s, flags=re.S)
+          if new != s:
+            readme.write_text(new, encoding="utf-8")
+          PY
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update LOC in README"
+          git push
