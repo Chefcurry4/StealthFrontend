@@ -17,7 +17,10 @@ jobs:
       - name: Compute LOC
         id: loc
         run: |
-          LOC=$(git ls-files -z | xargs -0 wc -l | tail -n 1 | awk '{print $1}')
+          LOC=$(git ls-files -z \
+            | grep -zvE '\.(png|jpg|jpeg|gif|webp|svg|pdf|ico)$' \
+            | xargs -0 wc -l \
+            | tail -n 1 | awk '{print $1}')
           echo "loc=$LOC" >> "$GITHUB_OUTPUT"
 
       - name: Update README block
