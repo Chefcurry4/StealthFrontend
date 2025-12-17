@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Building, Camera, User, Sparkles } from "lucide-react";
 
+export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest';
+
 interface UserFlashcardProps {
   username?: string;
   profilePhotoUrl?: string | null;
@@ -14,7 +16,35 @@ interface UserFlashcardProps {
   onAvatarClick?: () => void;
   className?: string;
   isPreview?: boolean;
+  colorStyle?: FlashcardColorStyle;
+  isPulsating?: boolean;
 }
+
+const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to: string }[]> = {
+  gradient: [
+    { from: "from-violet-500", via: "via-purple-500", to: "to-fuchsia-500" },
+    { from: "from-blue-500", via: "via-cyan-500", to: "to-teal-500" },
+    { from: "from-rose-500", via: "via-pink-500", to: "to-purple-500" },
+    { from: "from-orange-500", via: "via-amber-500", to: "to-yellow-500" },
+    { from: "from-emerald-500", via: "via-green-500", to: "to-lime-500" },
+    { from: "from-indigo-500", via: "via-blue-500", to: "to-cyan-500" },
+  ],
+  ocean: [
+    { from: "from-blue-600", via: "via-cyan-500", to: "to-teal-400" },
+    { from: "from-sky-500", via: "via-blue-500", to: "to-indigo-500" },
+    { from: "from-teal-500", via: "via-cyan-400", to: "to-blue-500" },
+  ],
+  sunset: [
+    { from: "from-orange-500", via: "via-rose-500", to: "to-pink-500" },
+    { from: "from-amber-500", via: "via-orange-500", to: "to-red-500" },
+    { from: "from-rose-500", via: "via-pink-500", to: "to-orange-400" },
+  ],
+  forest: [
+    { from: "from-emerald-600", via: "via-green-500", to: "to-teal-500" },
+    { from: "from-green-500", via: "via-emerald-500", to: "to-cyan-500" },
+    { from: "from-teal-600", via: "via-emerald-500", to: "to-green-400" },
+  ],
+};
 
 const UserFlashcard = ({
   username,
@@ -27,27 +57,22 @@ const UserFlashcard = ({
   onAvatarClick,
   className = "",
   isPreview = false,
+  colorStyle = 'gradient',
+  isPulsating = false,
 }: UserFlashcardProps) => {
-  // Generate unique gradient based on username
+  // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
-    const colors = [
-      { from: "from-violet-500", via: "via-purple-500", to: "to-fuchsia-500" },
-      { from: "from-blue-500", via: "via-cyan-500", to: "to-teal-500" },
-      { from: "from-rose-500", via: "via-pink-500", to: "to-purple-500" },
-      { from: "from-orange-500", via: "via-amber-500", to: "to-yellow-500" },
-      { from: "from-emerald-500", via: "via-green-500", to: "to-lime-500" },
-      { from: "from-indigo-500", via: "via-blue-500", to: "to-cyan-500" },
-    ];
+    const colors = COLOR_STYLES[colorStyle] || COLOR_STYLES.gradient;
     
     if (!username) return colors[0];
     const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
-  }, [username]);
+  }, [username, colorStyle]);
 
   const userInitial = username?.[0]?.toUpperCase() || "?";
 
   return (
-    <div className={`relative w-full max-w-[280px] aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${className}`}>
+    <div className={`relative w-full max-w-[280px] aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${isPulsating ? 'animate-pulse' : ''} ${className}`}>
       {/* Background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientColors.from} ${gradientColors.via} ${gradientColors.to} opacity-90`} />
       

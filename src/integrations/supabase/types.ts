@@ -917,6 +917,7 @@ export type Database = {
           display_items_per_page: number | null
           email: string
           email_public: boolean | null
+          flashcard_color_style: string | null
           id: string
           language_preference: string | null
           notification_agreements: boolean | null
@@ -938,6 +939,7 @@ export type Database = {
           display_items_per_page?: number | null
           email: string
           email_public?: boolean | null
+          flashcard_color_style?: string | null
           id?: string
           language_preference?: string | null
           notification_agreements?: boolean | null
@@ -959,6 +961,7 @@ export type Database = {
           display_items_per_page?: number | null
           email?: string
           email_public?: boolean | null
+          flashcard_color_style?: string | null
           id?: string
           language_preference?: string | null
           notification_agreements?: boolean | null

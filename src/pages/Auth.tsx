@@ -33,6 +33,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [activeAuthTab, setActiveAuthTab] = useState("signin");
   const [signUpData, setSignUpData] = useState({ 
     email: "", 
     password: "", 
@@ -612,7 +613,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs defaultValue="signin" className="w-full" onValueChange={(v) => setActiveAuthTab(v)}>
               <TabsList className="grid w-full grid-cols-2 bg-background/50 backdrop-blur-sm">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -803,20 +804,23 @@ const Auth = () => {
         </Card>
 
         {/* User Flashcard Preview - only visible on signup tab and desktop */}
-        <div className="hidden md:flex flex-col items-center gap-4">
-          <p className="text-sm text-muted-foreground font-medium">Your Student Card Preview</p>
-          <UserFlashcard
-            username={signUpData.username || undefined}
-            profilePhotoUrl={profilePicturePreview}
-            universityName={selectedUniversity?.name}
-            universityLogo={selectedUniversity?.logo_url}
-            studentLevel={signUpData.studentLevel}
-            isPreview
-          />
-          <p className="text-xs text-muted-foreground text-center max-w-[200px]">
-            This card updates as you fill in your details
-          </p>
-        </div>
+        {activeAuthTab === 'signup' && (
+          <div className="hidden md:flex flex-col items-center gap-4">
+            <p className="text-sm text-muted-foreground font-medium">Your Student Card Preview</p>
+            <UserFlashcard
+              username={signUpData.username || undefined}
+              profilePhotoUrl={profilePicturePreview}
+              universityName={selectedUniversity?.name}
+              universityLogo={selectedUniversity?.logo_url}
+              studentLevel={signUpData.studentLevel}
+              isPreview
+              isPulsating
+            />
+            <p className="text-xs text-muted-foreground text-center max-w-[200px]">
+              This card updates as you fill in your details
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
