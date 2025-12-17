@@ -805,7 +805,7 @@ const Auth = () => {
 
         {/* User Flashcard Preview - only visible on signup tab and desktop */}
         {activeAuthTab === 'signup' && (
-          <div className="hidden md:flex flex-col items-center gap-4">
+          <div className="hidden md:flex flex-col items-center justify-center gap-4">
             <p className="text-sm text-muted-foreground font-medium">Your Student Card Preview</p>
             <UserFlashcard
               username={signUpData.username || undefined}
@@ -815,8 +815,9 @@ const Auth = () => {
               studentLevel={signUpData.studentLevel}
               isPreview
               isPulsating
+              size="large"
             />
-            <p className="text-xs text-muted-foreground text-center max-w-[200px]">
+            <p className="text-xs text-muted-foreground text-center max-w-[240px]">
               This card updates as you fill in your details
             </p>
           </div>

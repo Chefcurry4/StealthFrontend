@@ -18,6 +18,7 @@ interface UserFlashcardProps {
   isPreview?: boolean;
   colorStyle?: FlashcardColorStyle;
   isPulsating?: boolean;
+  size?: 'default' | 'large';
 }
 
 const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to: string }[]> = {
@@ -59,6 +60,7 @@ const UserFlashcard = ({
   isPreview = false,
   colorStyle = 'gradient',
   isPulsating = false,
+  size = 'default',
 }: UserFlashcardProps) => {
   // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
@@ -70,17 +72,28 @@ const UserFlashcard = ({
   }, [username, colorStyle]);
 
   const userInitial = username?.[0]?.toUpperCase() || "?";
+  
+  const sizeClasses = size === 'large' 
+    ? 'max-w-[320px]' 
+    : 'max-w-[280px]';
+    
+  const avatarSize = size === 'large' ? 'h-28 w-28' : 'h-24 w-24';
 
   return (
-    <div className={`relative w-full max-w-[280px] aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${isPulsating ? 'animate-pulse' : ''} ${className}`}>
+    <div 
+      className={`relative w-full ${sizeClasses} aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 ${className}`}
+      style={{
+        animation: isPulsating ? 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
+      }}
+    >
       {/* Background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientColors.from} ${gradientColors.via} ${gradientColors.to} opacity-90`} />
       
       {/* Animated gradient blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl animate-pulse" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/15 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/15 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
       </div>
 
       {/* Noise texture overlay */}
@@ -107,20 +120,27 @@ const UserFlashcard = ({
           )}
           
           {/* Decorative sparkle */}
-          <Sparkles className="h-5 w-5 text-white/60 animate-pulse" />
+          <Sparkles className="h-5 w-5 text-white/60 animate-pulse" style={{ animationDuration: '3s' }} />
         </div>
 
         {/* Avatar section */}
         <div className="flex-1 flex flex-col items-center justify-center">
           <div 
-            className={`relative ${isEditable ? 'cursor-pointer' : ''}`}
+            className={`relative ${isEditable ? 'cursor-pointer' : ''} transition-transform duration-300 group-hover:scale-105`}
             onClick={isEditable ? onAvatarClick : undefined}
           >
             <div className="absolute inset-0 bg-white/30 rounded-full blur-lg scale-110" />
-            <Avatar className="h-24 w-24 border-4 border-white/40 shadow-2xl relative">
+            <Avatar className={`${avatarSize} border-4 border-white/40 shadow-2xl relative`}>
               <AvatarImage src={profilePhotoUrl || undefined} />
-              <AvatarFallback className="text-3xl bg-white/20 text-white font-bold backdrop-blur-sm">
-                {userInitial}
+              <AvatarFallback className="bg-gray-300 text-gray-500">
+                {/* Default profile silhouette like Facebook/Instagram */}
+                <svg 
+                  viewBox="0 0 24 24" 
+                  fill="currentColor" 
+                  className="w-16 h-16"
+                >
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
               </AvatarFallback>
             </Avatar>
             
@@ -186,7 +206,7 @@ const UserFlashcard = ({
       {/* Hover glow */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
-          boxShadow: 'inset 0 0 30px rgba(255,255,255,0.1), 0 0 40px rgba(255,255,255,0.1)',
+          boxShadow: 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
         }}
       />
     </div>
