@@ -558,18 +558,16 @@ const Workbench = () => {
               </div>
 
               <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-10 leading-relaxed">
-                Ask me about course selection, 
-                finding research labs, study planning, answering any 
-                questions about your academic journey...
+                Answering any question about your academic journey.
               </p>
               
               {/* Suggestion Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
                 {[
-                  { text: "Help me choose courses for next semester", icon: "📚" },
-                  { text: "Find research labs in computer science", icon: "🔬" },
-                  { text: "What are the best universities for my exchange?", icon: "🌍" },
-                  { text: "How do I create a learning agreement?", icon: "📝" }
+                  { text: "Help me choose courses for next semester, my interests are...", icon: "📚" },
+                  { text: "Find EPFL labs in computer science focused on...", icon: "🔬" },
+                  { text: "Help me finding all the Mechanical Engineering EPFL requiring Python and coding", icon: "📝" },
+                  {/* text: "How do I create a learning agreement?", icon: "🌍" */}
                 ].map((suggestion, idx) => (
                   <button
                     key={idx}
