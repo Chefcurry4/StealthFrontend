@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
+import { GraduationCap, Loader2, ArrowLeft, Mail, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,8 @@ const Auth = () => {
   const [signInData, setSignInData] = useState({ email: "", password: "" });
   const [resetEmail, setResetEmail] = useState("");
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [confirmedEmail, setConfirmedEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const { signUp, signIn, user } = useAuth();
@@ -71,11 +73,9 @@ const Auth = () => {
         return;
       }
 
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
-      
+      // Show email confirmation screen instead of just a toast
+      setConfirmedEmail(validated.email);
+      setShowEmailConfirmation(true);
       setSignUpData({ email: "", password: "", username: "" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -176,6 +176,81 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  // Email confirmation screen with fluid glass aesthetic
+  if (showEmailConfirmation) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+        {/* Animated gradient background blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/40 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+
+        {/* Glass card */}
+        <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-background/60 border-border/50 shadow-2xl">
+          <CardHeader className="text-center pb-2">
+            {/* Animated mail icon with glow */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/40 rounded-full blur-xl animate-pulse" />
+                <div className="relative p-5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full border border-primary/30 backdrop-blur-sm">
+                  <Mail className="h-10 w-10 text-primary" />
+                </div>
+                {/* Floating sparkles */}
+                <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-primary/70 animate-bounce" style={{ animationDelay: '0.5s' }} />
+                <Sparkles className="absolute -bottom-1 -left-2 h-4 w-4 text-accent/70 animate-bounce" style={{ animationDelay: '1s' }} />
+              </div>
+            </div>
+            
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Check your email
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="text-center space-y-6">
+            <div className="space-y-3">
+              <p className="text-muted-foreground">
+                We've sent a verification link to
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <Mail className="h-4 w-4 text-primary" />
+                <span className="font-medium text-foreground">{confirmedEmail}</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-accent/30 border border-border/50 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="text-left text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Almost there!</p>
+                  <p>Click the link in your email to activate your account and start exploring courses, labs, and universities.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Didn't receive the email? Check your spam folder or
+              </p>
+              <Button
+                variant="outline"
+                className="w-full backdrop-blur-sm bg-background/50"
+                onClick={() => {
+                  setShowEmailConfirmation(false);
+                  setConfirmedEmail("");
+                }}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Sign Up
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (showResetPassword) {
     return (
