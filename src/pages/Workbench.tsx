@@ -549,13 +549,13 @@ const Workbench = () => {
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-8 space-y-6">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-              <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-10 leading-relaxed">
+            <div className="flex flex-col items-center justify-end min-h-[40vh] text-center px-4 pb-4">
+              <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-4 leading-relaxed">
                 Answering any question about your academic journey.
               </p>
               
-              {/* Suggestion Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full max-w-3xl">
+              {/* Suggestion Cards - hidden on mobile */}
+              <div className="hidden md:grid md:grid-cols-3 gap-3 w-full max-w-3xl">
                 {[
                   { text: "Help me choose courses for next semester, my interests are...", icon: "📚" },
                   { text: "Find EPFL labs in computer science focused on...", icon: "🔬" },
