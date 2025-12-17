@@ -550,24 +550,16 @@ const Workbench = () => {
         <div className="py-8 space-y-6">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-              {/* Hero Avatar */}
-              <div className="relative mb-8">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center ring-4 ring-primary/10 shadow-lg shadow-primary/10">
-                  <Sparkles className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-
               <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-10 leading-relaxed">
                 Answering any question about your academic journey.
               </p>
               
               {/* Suggestion Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full max-w-3xl">
                 {[
                   { text: "Help me choose courses for next semester, my interests are...", icon: "📚" },
                   { text: "Find EPFL labs in computer science focused on...", icon: "🔬" },
-                  { text: "Help me finding all the Mechanical Engineering EPFL requiring Python and coding", icon: "📝" },
-                  {/* text: "How do I create a learning agreement?", icon: "🌍" */}
+                  { text: "Help me find Mechanical Engineering courses requiring Python", icon: "📝" }
                 ].map((suggestion, idx) => (
                   <button
                     key={idx}
