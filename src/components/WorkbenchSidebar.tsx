@@ -32,6 +32,7 @@ import {
   Pencil,
   Check,
   X,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -64,6 +65,7 @@ export const WorkbenchSidebar = ({
   const [draftBody, setDraftBody] = useState("");
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
@@ -135,6 +137,31 @@ export const WorkbenchSidebar = ({
     }
   };
 
+  // Filter data based on search query
+  const query = searchQuery.toLowerCase().trim();
+  const filteredConversations = conversations?.filter(c => 
+    c.title?.toLowerCase().includes(query)
+  );
+  const filteredCourses = savedCourses?.filter(item => 
+    item["Courses(C)"]?.name_course?.toLowerCase().includes(query) ||
+    item["Courses(C)"]?.code?.toLowerCase().includes(query)
+  );
+  const filteredLabs = savedLabs?.filter(item => 
+    item["Labs(L)"]?.name?.toLowerCase().includes(query) ||
+    item["Labs(L)"]?.topics?.toLowerCase().includes(query)
+  );
+  const filteredDrafts = emailDrafts?.filter(d => 
+    d.subject?.toLowerCase().includes(query) ||
+    d.recipient?.toLowerCase().includes(query)
+  );
+  const filteredDocuments = userDocuments?.filter(d => 
+    d.name?.toLowerCase().includes(query)
+  );
+  const filteredAgreements = agreements?.filter(a => 
+    a.title?.toLowerCase().includes(query) ||
+    a.agreement_type?.toLowerCase().includes(query)
+  );
+
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -148,11 +175,22 @@ export const WorkbenchSidebar = ({
       </div>
 
       {/* New Chat Button */}
-      <div className="p-3">
+      <div className="p-3 space-y-2">
         <Button onClick={() => { onNewChat(); if (isMobile) onToggle(); }} className="w-full gap-2" variant="outline">
           <Plus className="h-4 w-4" />
           New Chat
         </Button>
+        
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..."
+            className="pl-8 h-8 text-sm"
+          />
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
@@ -169,7 +207,7 @@ export const WorkbenchSidebar = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {conversations?.length || 0}
+                  {filteredConversations?.length || 0}
                 </Badge>
                 <ChevronRight
                   className={cn(
@@ -180,12 +218,12 @@ export const WorkbenchSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {conversations?.length === 0 ? (
+              {filteredConversations?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  No conversations yet
+                  {searchQuery ? "No matching chats" : "No conversations yet"}
                 </p>
               ) : (
-                conversations?.slice(0, 10).map((conv) => (
+                filteredConversations?.slice(0, 10).map((conv) => (
                   <div
                     key={conv.id}
                     className={cn(
@@ -288,7 +326,7 @@ export const WorkbenchSidebar = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {savedCourses?.length || 0}
+                  {filteredCourses?.length || 0}
                 </Badge>
                 <ChevronRight
                   className={cn(
@@ -299,12 +337,12 @@ export const WorkbenchSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {savedCourses?.length === 0 ? (
+              {filteredCourses?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  No saved courses
+                  {searchQuery ? "No matching courses" : "No saved courses"}
                 </p>
               ) : (
-                savedCourses?.slice(0, 5).map((item) => (
+                filteredCourses?.slice(0, 5).map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleCourseClick(item)}
@@ -341,7 +379,7 @@ export const WorkbenchSidebar = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {savedLabs?.length || 0}
+                  {filteredLabs?.length || 0}
                 </Badge>
                 <ChevronRight
                   className={cn(
@@ -352,12 +390,12 @@ export const WorkbenchSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {savedLabs?.length === 0 ? (
+              {filteredLabs?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  No saved labs
+                  {searchQuery ? "No matching labs" : "No saved labs"}
                 </p>
               ) : (
-                savedLabs?.slice(0, 5).map((item) => (
+                filteredLabs?.slice(0, 5).map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleLabClick(item)}
@@ -386,7 +424,7 @@ export const WorkbenchSidebar = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {emailDrafts?.length || 0}
+                  {filteredDrafts?.length || 0}
                 </Badge>
                 <ChevronRight
                   className={cn(
@@ -466,12 +504,12 @@ export const WorkbenchSidebar = ({
                 </Button>
               )}
               
-              {emailDrafts?.length === 0 && !showDraftForm ? (
+              {filteredDrafts?.length === 0 && !showDraftForm ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  No email drafts
+                  {searchQuery ? "No matching drafts" : "No email drafts"}
                 </p>
               ) : (
-                emailDrafts?.slice(0, 5).map((draft) => (
+                filteredDrafts?.slice(0, 5).map((draft) => (
                   <div
                     key={draft.id}
                     className="group flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
@@ -512,7 +550,7 @@ export const WorkbenchSidebar = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {userDocuments?.length || 0}
+                  {filteredDocuments?.length || 0}
                 </Badge>
                 <ChevronRight
                   className={cn(
@@ -523,12 +561,12 @@ export const WorkbenchSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {userDocuments?.length === 0 ? (
+              {filteredDocuments?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  No documents uploaded
+                  {searchQuery ? "No matching documents" : "No documents uploaded"}
                 </p>
               ) : (
-                userDocuments?.slice(0, 5).map((doc) => (
+                filteredDocuments?.slice(0, 5).map((doc) => (
                   <button
                     key={doc.id}
                     onClick={() => handleDocumentClick(doc)}
@@ -565,7 +603,7 @@ export const WorkbenchSidebar = ({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {agreements?.length || 0}
+                  {filteredAgreements?.length || 0}
                 </Badge>
                 <ChevronRight
                   className={cn(
@@ -576,12 +614,12 @@ export const WorkbenchSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {agreements?.length === 0 ? (
+              {filteredAgreements?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  No learning agreements
+                  {searchQuery ? "No matching agreements" : "No learning agreements"}
                 </p>
               ) : (
-                agreements?.slice(0, 5).map((agreement) => (
+                filteredAgreements?.slice(0, 5).map((agreement) => (
                   <Link
                     key={agreement.id}
                     to={`/learning-agreements/${agreement.id}`}

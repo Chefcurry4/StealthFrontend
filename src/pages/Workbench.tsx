@@ -102,7 +102,7 @@ const Workbench = () => {
   const [selectedModel, setSelectedModel] = useState<ModelType>("fast");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
@@ -469,13 +469,14 @@ const Workbench = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            {/* Mobile toggle button - only show on mobile when sidebar closed */}
-            {isMobile && !sidebarOpen && (
+            {/* Toggle button - show when sidebar closed */}
+            {!sidebarOpen && (
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setSidebarOpen(true)}
                 className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
+                title="Open sidebar"
               >
                 <PanelLeft className="h-5 w-5" />
               </Button>
