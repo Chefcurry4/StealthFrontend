@@ -30,7 +30,7 @@ jobs:
           s = readme.read_text(encoding="utf-8")
 
           loc = "${{ steps.loc.outputs.loc }}"
-          repl = f"<!-- LOC_START -->\n**Stealth Total Lines of Code: ** {loc}\n<!-- LOC_END -->"
+          repl = f"<!-- LOC_START -->\n**Stealth Total Lines of Code:** {loc}\n<!-- LOC_END -->"
 
           new = re.sub(r"<!-- LOC_START -->.*?<!-- LOC_END -->", repl, s, flags=re.S)
           if new != s:
