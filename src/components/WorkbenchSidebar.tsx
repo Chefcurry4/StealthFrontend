@@ -646,16 +646,6 @@ export const WorkbenchSidebar = ({
           </Collapsible>
         </div>
       </ScrollArea>
-
-      {/* Footer */}
-      <div className="p-3 border-t border-border/30">
-        <Link to="/profile?tab=workbench">
-          <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
-            <GraduationCap className="h-4 w-4" />
-            Open Full Workbench
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 
@@ -753,8 +743,34 @@ export const WorkbenchSidebar = ({
 
   // Desktop expanded sidebar
   return (
-    <div className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm">
+    <div className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm relative">
       <SidebarContent />
+      {/* Resize Handle */}
+      <div 
+        className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary/30 transition-colors group"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          const startX = e.clientX;
+          const sidebar = e.currentTarget.parentElement;
+          if (!sidebar) return;
+          const startWidth = sidebar.offsetWidth;
+          
+          const onMouseMove = (moveEvent: MouseEvent) => {
+            const newWidth = Math.max(200, Math.min(400, startWidth + moveEvent.clientX - startX));
+            sidebar.style.width = `${newWidth}px`;
+          };
+          
+          const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+          
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        }}
+      >
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-border/50 group-hover:bg-primary/50 transition-colors" />
+      </div>
     </div>
   );
 };

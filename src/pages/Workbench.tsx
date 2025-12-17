@@ -533,6 +533,16 @@ const Workbench = () => {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        
+        {/* Document Context Indicator */}
+        {attachments.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+            <Paperclip className="h-3.5 w-3.5 text-cyan-500" />
+            <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">
+              {attachments.length} doc{attachments.length > 1 ? 's' : ''} attached
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Chat Area */}
