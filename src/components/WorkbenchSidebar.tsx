@@ -139,28 +139,44 @@ export const WorkbenchSidebar = ({
 
   // Filter data based on search query
   const query = searchQuery.toLowerCase().trim();
-  const filteredConversations = conversations?.filter(c => 
-    c.title?.toLowerCase().includes(query)
-  );
-  const filteredCourses = savedCourses?.filter(item => 
-    item["Courses(C)"]?.name_course?.toLowerCase().includes(query) ||
-    item["Courses(C)"]?.code?.toLowerCase().includes(query)
-  );
-  const filteredLabs = savedLabs?.filter(item => 
-    item["Labs(L)"]?.name?.toLowerCase().includes(query) ||
-    item["Labs(L)"]?.topics?.toLowerCase().includes(query)
-  );
-  const filteredDrafts = emailDrafts?.filter(d => 
-    d.subject?.toLowerCase().includes(query) ||
-    d.recipient?.toLowerCase().includes(query)
-  );
-  const filteredDocuments = userDocuments?.filter(d => 
-    d.name?.toLowerCase().includes(query)
-  );
-  const filteredAgreements = agreements?.filter(a => 
-    a.title?.toLowerCase().includes(query) ||
-    a.agreement_type?.toLowerCase().includes(query)
-  );
+  
+  const filteredConversations = query 
+    ? conversations?.filter(c => (c.title || '').toLowerCase().includes(query))
+    : conversations;
+    
+  const filteredCourses = query 
+    ? savedCourses?.filter(item => {
+        const course = item["Courses(C)"];
+        return (course?.name_course || '').toLowerCase().includes(query) ||
+               (course?.code || '').toLowerCase().includes(query);
+      })
+    : savedCourses;
+    
+  const filteredLabs = query 
+    ? savedLabs?.filter(item => {
+        const lab = item["Labs(L)"];
+        return (lab?.name || '').toLowerCase().includes(query) ||
+               (lab?.topics || '').toLowerCase().includes(query);
+      })
+    : savedLabs;
+    
+  const filteredDrafts = query 
+    ? emailDrafts?.filter(d => 
+        (d.subject || '').toLowerCase().includes(query) ||
+        (d.recipient || '').toLowerCase().includes(query)
+      )
+    : emailDrafts;
+    
+  const filteredDocuments = query 
+    ? userDocuments?.filter(d => (d.name || '').toLowerCase().includes(query))
+    : userDocuments;
+    
+  const filteredAgreements = query 
+    ? agreements?.filter(a => 
+        (a.title || '').toLowerCase().includes(query) ||
+        (a.agreement_type || '').toLowerCase().includes(query)
+      )
+    : agreements;
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
