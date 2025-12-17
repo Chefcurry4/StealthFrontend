@@ -585,7 +585,7 @@ const Auth = () => {
 
   // Main auth form with fluid glass styling
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center py-4 px-4 relative overflow-hidden">
       {/* Animated gradient background blobs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-pulse" />
@@ -595,57 +595,57 @@ const Auth = () => {
       </div>
 
       {/* Content wrapper */}
-      <div className="relative z-10 w-full max-w-4xl flex flex-col md:flex-row items-center gap-8">
+      <div className="relative z-10 w-full max-w-5xl flex flex-col md:flex-row items-center justify-center gap-6 lg:gap-12">
         {/* Auth card */}
         <Card className="w-full max-w-md backdrop-blur-xl bg-background/60 border-border/50 shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
+          <CardHeader className="text-center pb-2">
+            <div className="flex justify-center mb-2">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/40 rounded-full blur-xl animate-pulse" />
-                <div className="relative p-3 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full border border-primary/30 backdrop-blur-sm">
-                  <GraduationCap className="h-8 w-8 text-primary" />
+                <div className="relative p-2.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full border border-primary/30 backdrop-blur-sm">
+                  <GraduationCap className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </div>
-            <CardTitle className="text-2xl">Students Hub</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl">Students Hub</CardTitle>
+            <CardDescription className="text-sm">
               Join to save courses, labs, and build your learning agreement
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-2">
             <Tabs defaultValue="signin" className="w-full" onValueChange={(v) => setActiveAuthTab(v)}>
-              <TabsList className="grid w-full grid-cols-2 bg-background/50 backdrop-blur-sm">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-background/50 backdrop-blur-sm h-9">
+                <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+                <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+              <TabsContent value="signin" className="mt-3">
+                <form onSubmit={handleSignIn} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signin-email" className="text-sm">Email</Label>
                     <Input
                       id="signin-email"
                       type="email"
                       placeholder="your@email.com"
                       value={signInData.email}
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                      className={`backdrop-blur-sm bg-background/50 ${errors.email ? "border-destructive" : ""}`}
+                      className={`backdrop-blur-sm bg-background/50 h-9 ${errors.email ? "border-destructive" : ""}`}
                     />
-                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signin-password" className="text-sm">Password</Label>
                     <Input
                       id="signin-password"
                       type="password"
                       placeholder="••••••"
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                      className={`backdrop-blur-sm bg-background/50 ${errors.password ? "border-destructive" : ""}`}
+                      className={`backdrop-blur-sm bg-background/50 h-9 ${errors.password ? "border-destructive" : ""}`}
                     />
-                    {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                    {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-9" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -658,7 +658,7 @@ const Auth = () => {
                   <Button
                     type="button"
                     variant="link"
-                    className="w-full text-sm text-muted-foreground"
+                    className="w-full text-xs text-muted-foreground h-auto py-1"
                     onClick={() => setShowResetPassword(true)}
                   >
                     Forgot your password?
@@ -666,23 +666,23 @@ const Auth = () => {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  {/* Profile Picture Upload */}
-                  <div className="flex justify-center">
+              <TabsContent value="signup" className="mt-3">
+                <form onSubmit={handleSignUp} className="space-y-3">
+                  {/* Profile Picture Upload - inline with username */}
+                  <div className="flex items-center gap-4">
                     <div 
-                      className="relative cursor-pointer group"
+                      className="relative cursor-pointer group flex-shrink-0"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-dashed border-primary/40 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/60">
+                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-dashed border-primary/40 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/60">
                         {profilePicturePreview ? (
                           <img src={profilePicturePreview} alt="Preview" className="h-full w-full object-cover" />
                         ) : (
-                          <Camera className="h-8 w-8 text-primary/60 group-hover:text-primary/80 transition-colors" />
+                          <Camera className="h-5 w-5 text-primary/60 group-hover:text-primary/80 transition-colors" />
                         )}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-primary text-primary-foreground">
-                        <Upload className="h-3 w-3" />
+                      <div className="absolute -bottom-0.5 -right-0.5 p-1 rounded-full bg-primary text-primary-foreground">
+                        <Upload className="h-2.5 w-2.5" />
                       </div>
                       <input
                         ref={fileInputRef}
@@ -692,102 +692,107 @@ const Auth = () => {
                         onChange={handleProfilePictureChange}
                       />
                     </div>
-                  </div>
-                  <p className="text-xs text-center text-muted-foreground">Add a profile photo (optional)</p>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-username">Username</Label>
-                    <Input
-                      id="signup-username"
-                      type="text"
-                      placeholder="johndoe"
-                      value={signUpData.username}
-                      onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
-                      className={`backdrop-blur-sm bg-background/50 ${errors.username ? "border-destructive" : ""}`}
-                    />
-                    {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={signUpData.email}
-                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                      className={`backdrop-blur-sm bg-background/50 ${errors.email ? "border-destructive" : ""}`}
-                    />
-                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••"
-                      value={signUpData.password}
-                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                      className={`backdrop-blur-sm bg-background/50 ${errors.password ? "border-destructive" : ""}`}
-                    />
-                    {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-                  </div>
-
-                  {/* University Select */}
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Building className="h-4 w-4" />
-                      University (optional)
-                    </Label>
-                    <Select
-                      value={signUpData.universityId}
-                      onValueChange={(value) => setSignUpData({ ...signUpData, universityId: value })}
-                    >
-                      <SelectTrigger className="backdrop-blur-sm bg-background/50">
-                        <SelectValue placeholder="Select your university" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {universities?.map((uni) => (
-                          <SelectItem key={uni.uuid} value={uni.uuid}>
-                            {uni.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Student Level Toggle */}
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <GraduationCap className="h-4 w-4" />
-                      Student Level (optional)
-                    </Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={signUpData.studentLevel === 'Bachelor' ? 'default' : 'outline'}
-                        className={`flex-1 ${signUpData.studentLevel === 'Bachelor' ? '' : 'backdrop-blur-sm bg-background/50'}`}
-                        onClick={() => setSignUpData({ 
-                          ...signUpData, 
-                          studentLevel: signUpData.studentLevel === 'Bachelor' ? null : 'Bachelor' 
-                        })}
-                      >
-                        Bachelor
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={signUpData.studentLevel === 'Master' ? 'default' : 'outline'}
-                        className={`flex-1 ${signUpData.studentLevel === 'Master' ? '' : 'backdrop-blur-sm bg-background/50'}`}
-                        onClick={() => setSignUpData({ 
-                          ...signUpData, 
-                          studentLevel: signUpData.studentLevel === 'Master' ? null : 'Master' 
-                        })}
-                      >
-                        Master
-                      </Button>
+                    <div className="flex-1 space-y-1.5">
+                      <Label htmlFor="signup-username" className="text-sm">Username</Label>
+                      <Input
+                        id="signup-username"
+                        type="text"
+                        placeholder="johndoe"
+                        value={signUpData.username}
+                        onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
+                        className={`backdrop-blur-sm bg-background/50 h-9 ${errors.username ? "border-destructive" : ""}`}
+                      />
+                      {errors.username && <p className="text-xs text-destructive">{errors.username}</p>}
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  {/* Email and Password in a row on larger screens */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-email" className="text-sm">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={signUpData.email}
+                        onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                        className={`backdrop-blur-sm bg-background/50 h-9 ${errors.email ? "border-destructive" : ""}`}
+                      />
+                      {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-password" className="text-sm">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••"
+                        value={signUpData.password}
+                        onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                        className={`backdrop-blur-sm bg-background/50 h-9 ${errors.password ? "border-destructive" : ""}`}
+                      />
+                      {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+                    </div>
+                  </div>
+
+                  {/* University and Level in a row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-sm">
+                        <Building className="h-3.5 w-3.5" />
+                        University
+                      </Label>
+                      <Select
+                        value={signUpData.universityId}
+                        onValueChange={(value) => setSignUpData({ ...signUpData, universityId: value })}
+                      >
+                        <SelectTrigger className="backdrop-blur-sm bg-background/50 h-9">
+                          <SelectValue placeholder="Select university" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {universities?.map((uni) => (
+                            <SelectItem key={uni.uuid} value={uni.uuid}>
+                              {uni.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-sm">
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        Level
+                      </Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={signUpData.studentLevel === 'Bachelor' ? 'default' : 'outline'}
+                          className={`flex-1 h-9 ${signUpData.studentLevel === 'Bachelor' ? '' : 'backdrop-blur-sm bg-background/50'}`}
+                          onClick={() => setSignUpData({ 
+                            ...signUpData, 
+                            studentLevel: signUpData.studentLevel === 'Bachelor' ? null : 'Bachelor' 
+                          })}
+                        >
+                          Bachelor
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={signUpData.studentLevel === 'Master' ? 'default' : 'outline'}
+                          className={`flex-1 h-9 ${signUpData.studentLevel === 'Master' ? '' : 'backdrop-blur-sm bg-background/50'}`}
+                          onClick={() => setSignUpData({ 
+                            ...signUpData, 
+                            studentLevel: signUpData.studentLevel === 'Master' ? null : 'Master' 
+                          })}
+                        >
+                          Master
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full h-9" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -805,8 +810,8 @@ const Auth = () => {
 
         {/* User Flashcard Preview - only visible on signup tab and desktop */}
         {activeAuthTab === 'signup' && (
-          <div className="hidden md:flex flex-col items-center justify-center gap-4">
-            <p className="text-sm text-muted-foreground font-medium">Your Student Card Preview</p>
+          <div className="hidden lg:flex flex-col items-center justify-center gap-3">
+            <p className="text-sm text-muted-foreground font-medium">Your Student Card</p>
             <UserFlashcard
               username={signUpData.username || undefined}
               profilePhotoUrl={profilePicturePreview}
@@ -815,10 +820,9 @@ const Auth = () => {
               studentLevel={signUpData.studentLevel}
               isPreview
               isPulsating
-              size="large"
             />
-            <p className="text-xs text-muted-foreground text-center max-w-[240px]">
-              This card updates as you fill in your details
+            <p className="text-xs text-muted-foreground text-center max-w-[200px]">
+              Updates as you fill in details
             </p>
           </div>
         )}
