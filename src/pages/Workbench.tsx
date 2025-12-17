@@ -551,7 +551,7 @@ const Workbench = () => {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-end min-h-[40vh] text-center px-4 pb-4">
               <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-4 leading-relaxed">
-                Answering any question about your academic journey.
+                Answering any question about your academic journey, such as:
               </p>
               
               {/* Suggestion Cards - hidden on mobile */}
