@@ -923,6 +923,7 @@ export type Database = {
           notification_email: boolean | null
           notification_reviews: boolean | null
           profile_photo_url: string | null
+          student_level: string | null
           university_id: string | null
           updated_at: string
           username: string
@@ -943,6 +944,7 @@ export type Database = {
           notification_email?: boolean | null
           notification_reviews?: boolean | null
           profile_photo_url?: string | null
+          student_level?: string | null
           university_id?: string | null
           updated_at?: string
           username: string
@@ -963,6 +965,7 @@ export type Database = {
           notification_email?: boolean | null
           notification_reviews?: boolean | null
           profile_photo_url?: string | null
+          student_level?: string | null
           university_id?: string | null
           updated_at?: string
           username?: string

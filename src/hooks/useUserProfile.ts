@@ -11,14 +11,28 @@ export const useUserProfile = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      const { data, error } = await supabase
+      // Fetch user profile
+      const { data: profile, error } = await supabase
         .from("Users(US)")
         .select("*")
         .eq("id", user.id)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
-      return data;
+      if (!profile) return null;
+
+      // If user has a university_id, fetch university details separately
+      let university = null;
+      if (profile.university_id) {
+        const { data: uniData } = await supabase
+          .from("Universities(U)")
+          .select("uuid, name, logo_url, slug")
+          .eq("uuid", profile.university_id)
+          .single();
+        university = uniData;
+      }
+
+      return { ...profile, university };
     },
     enabled: !!user,
   });
@@ -33,7 +47,8 @@ export const useUpdateProfile = () => {
       username?: string;
       country?: string;
       birthday?: string;
-      university_id?: string;
+      university_id?: string | null;
+      student_level?: 'Bachelor' | 'Master' | null;
     }) => {
       if (!user) throw new Error("Must be logged in");
 

@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProfile";
 import { useProfilePictureUpload } from "@/hooks/useProfilePicture";
+import { useUniversities } from "@/hooks/useUniversities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader } from "@/components/Loader";
 import { PreferencesSettings } from "@/components/profile/PreferencesSettings";
+import UserFlashcard from "@/components/UserFlashcard";
 import {
   WorkbenchSavedItems,
   WorkbenchDocuments,
@@ -23,7 +25,6 @@ import {
 import { 
   User, 
   AlertTriangle, 
-  Upload,
   Calendar,
   MapPin,
   Edit,
@@ -34,7 +35,11 @@ import {
   MessageSquare,
   Mail,
   FileCheck,
-  Activity
+  Activity,
+  GraduationCap,
+  Building,
+  X,
+  Check
 } from "lucide-react";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -44,6 +49,7 @@ const Profile = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const { data: universities } = useUniversities();
   const updateProfile = useUpdateProfile();
   const uploadPicture = useProfilePictureUpload();
 
@@ -54,7 +60,11 @@ const Profile = () => {
     username: "",
     country: "",
     birthday: "",
+    university_id: "" as string | null,
+    student_level: null as 'Bachelor' | 'Master' | null,
   });
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (authLoading || profileLoading) {
     return <Loader fullScreen />;
@@ -70,12 +80,20 @@ const Profile = () => {
       username: profile?.username || "",
       country: profile?.country || "",
       birthday: profile?.birthday || "",
+      university_id: profile?.university_id || null,
+      student_level: profile?.student_level as 'Bachelor' | 'Master' | null || null,
     });
     setIsEditing(true);
   };
 
   const handleSave = async () => {
-    await updateProfile.mutateAsync(formData);
+    await updateProfile.mutateAsync({
+      username: formData.username,
+      country: formData.country,
+      birthday: formData.birthday,
+      university_id: formData.university_id,
+      student_level: formData.student_level,
+    });
     setIsEditing(false);
   };
 
@@ -155,8 +173,12 @@ const Profile = () => {
     }
   };
 
-  const userInitial = profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U";
-  const createdDate = profile?.created_at ? format(new Date(profile.created_at), "MMMM d, yyyy") : null;
+  const createdDate = profile?.created_at ? format(new Date(profile.created_at), "MMMM yyyy") : null;
+  
+  // Get university details for display
+  const userUniversity = profile?.university 
+    ? profile.university 
+    : universities?.find(u => u.uuid === profile?.university_id);
 
   const workbenchSections = [
     { id: "saved", label: "Saved", icon: BookOpen },
@@ -169,34 +191,57 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Header */}
+      {/* Hero Header with Flashcard */}
       <div className="border-b border-border/50 backdrop-blur-md bg-background/30">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              <Avatar className="h-24 w-24 border-4 border-primary/20">
-                <AvatarImage src={profile?.profile_photo_url || ""} />
-                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                  {userInitial}
-                </AvatarFallback>
-              </Avatar>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
-                <Upload className="h-6 w-6 text-white" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  disabled={uploadPicture.isPending}
-                />
-              </label>
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            {/* User Flashcard */}
+            <div className="flex-shrink-0">
+              <UserFlashcard
+                username={profile?.username || undefined}
+                profilePhotoUrl={profile?.profile_photo_url}
+                universityName={userUniversity?.name}
+                universityLogo={userUniversity?.logo_url}
+                studentLevel={profile?.student_level as 'Bachelor' | 'Master' | null}
+                memberSince={createdDate || undefined}
+                isEditable
+                onAvatarClick={() => fileInputRef.current?.click()}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+                disabled={uploadPicture.isPending}
+              />
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-purple-500">{profile?.username || "User"}</h1>
-              <p className="text-foreground/80">{user.email}</p>
+
+            {/* Quick Info & Actions */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                {profile?.username || "User"}
+              </h1>
+              <p className="text-foreground/70 mb-4">{user.email}</p>
+              
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {profile?.student_level && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
+                    <GraduationCap className="h-4 w-4" />
+                    {profile.student_level} Student
+                  </span>
+                )}
+                {userUniversity && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent-foreground text-sm">
+                    <Building className="h-4 w-4" />
+                    {userUniversity.name}
+                  </span>
+                )}
+              </div>
+              
               {createdDate && (
-                <p className="text-sm text-foreground/60 mt-1">
-                  Joined on {createdDate}
+                <p className="text-sm text-foreground/50 mt-4">
+                  Member since {createdDate}
                 </p>
               )}
             </div>
@@ -240,10 +285,12 @@ const Profile = () => {
                   ) : (
                     <div className="flex gap-2">
                       <Button onClick={() => setIsEditing(false)} variant="outline" size="sm">
+                        <X className="h-4 w-4 mr-2" />
                         Cancel
                       </Button>
                       <Button onClick={handleSave} size="sm" disabled={updateProfile.isPending}>
-                        Save Changes
+                        <Check className="h-4 w-4 mr-2" />
+                        Save
                       </Button>
                     </div>
                   )}
@@ -302,6 +349,77 @@ const Profile = () => {
                     ) : (
                       <p className="text-sm font-medium">
                         {profile?.birthday ? format(new Date(profile.birthday), "MMMM d, yyyy") : "Not set"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* University & Student Level */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      University
+                    </Label>
+                    {isEditing ? (
+                      <Select
+                        value={formData.university_id || "none"}
+                        onValueChange={(value) => setFormData({ 
+                          ...formData, 
+                          university_id: value === "none" ? null : value 
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select university" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          <SelectItem value="none">No university selected</SelectItem>
+                          {universities?.map((uni) => (
+                            <SelectItem key={uni.uuid} value={uni.uuid}>
+                              {uni.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-sm font-medium">{userUniversity?.name || "Not set"}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Student Level
+                    </Label>
+                    {isEditing ? (
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={formData.student_level === 'Bachelor' ? 'default' : 'outline'}
+                          className="flex-1"
+                          onClick={() => setFormData({ 
+                            ...formData, 
+                            student_level: formData.student_level === 'Bachelor' ? null : 'Bachelor' 
+                          })}
+                        >
+                          Bachelor
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={formData.student_level === 'Master' ? 'default' : 'outline'}
+                          className="flex-1"
+                          onClick={() => setFormData({ 
+                            ...formData, 
+                            student_level: formData.student_level === 'Master' ? null : 'Master' 
+                          })}
+                        >
+                          Master
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium">
+                        {profile?.student_level ? `${profile.student_level} Student` : "Not set"}
                       </p>
                     )}
                   </div>

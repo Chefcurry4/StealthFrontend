@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { GraduationCap, Loader2, ArrowLeft, Mail, CheckCircle2, Sparkles, RefreshCw, KeyRound } from "lucide-react";
+import { GraduationCap, Loader2, ArrowLeft, Mail, CheckCircle2, Sparkles, RefreshCw, KeyRound, Camera, Building, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUniversities } from "@/hooks/useUniversities";
+import UserFlashcard from "@/components/UserFlashcard";
 
 const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -29,7 +32,16 @@ const resetPasswordSchema = z.object({
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [signUpData, setSignUpData] = useState({ email: "", password: "", username: "" });
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [signUpData, setSignUpData] = useState({ 
+    email: "", 
+    password: "", 
+    username: "",
+    universityId: "",
+    studentLevel: null as 'Bachelor' | 'Master' | null,
+  });
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
   const [signInData, setSignInData] = useState({ email: "", password: "" });
   const [resetEmail, setResetEmail] = useState("");
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -39,15 +51,87 @@ const Auth = () => {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { signUp, signIn, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { data: universities } = useUniversities();
+
+  // Get selected university details for flashcard
+  const selectedUniversity = universities?.find(u => u.uuid === signUpData.universityId);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (profilePicturePreview) {
+        URL.revokeObjectURL(profilePicturePreview);
+      }
+    };
+  }, [profilePicturePreview]);
 
   // Redirect if already logged in
   if (user) {
     navigate("/");
     return null;
   }
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProfilePictureFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setProfilePicturePreview(previewUrl);
+  };
+
+  const uploadProfilePicture = async (userId: string): Promise<string | null> => {
+    if (!profilePictureFile) return null;
+
+    const fileExt = profilePictureFile.name.split('.').pop();
+    const fileName = `${userId}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('profile-pictures')
+      .upload(filePath, profilePictureFile, { upsert: true });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('profile-pictures')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +141,7 @@ const Auth = () => {
       const validated = signUpSchema.parse(signUpData);
       setIsLoading(true);
 
-      const { error } = await signUp(validated.email, validated.password, validated.username);
+      const { error, data } = await signUp(validated.email, validated.password, validated.username);
 
       if (error) {
         if (error.message.includes("already registered")) {
@@ -76,10 +160,35 @@ const Auth = () => {
         return;
       }
 
-      // Show email confirmation screen instead of just a toast
+      // If we have additional profile data, update the user profile
+      if (data?.user && (signUpData.universityId || signUpData.studentLevel || profilePictureFile)) {
+        let profilePhotoUrl: string | null = null;
+        
+        // Upload profile picture if provided
+        if (profilePictureFile) {
+          profilePhotoUrl = await uploadProfilePicture(data.user.id);
+        }
+
+        // Update user profile with additional data
+        const updateData: Record<string, unknown> = {};
+        if (signUpData.universityId) updateData.university_id = signUpData.universityId;
+        if (signUpData.studentLevel) updateData.student_level = signUpData.studentLevel;
+        if (profilePhotoUrl) updateData.profile_photo_url = profilePhotoUrl;
+
+        if (Object.keys(updateData).length > 0) {
+          await supabase
+            .from("Users(US)")
+            .update(updateData)
+            .eq("id", data.user.id);
+        }
+      }
+
+      // Show email confirmation screen
       setConfirmedEmail(validated.email);
       setShowEmailConfirmation(true);
-      setSignUpData({ email: "", password: "", username: "" });
+      setSignUpData({ email: "", password: "", username: "", universityId: "", studentLevel: null });
+      setProfilePictureFile(null);
+      setProfilePicturePreview(null);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
@@ -178,7 +287,7 @@ const Auth = () => {
   };
 
   const handleResendVerificationEmail = async () => {
-    if (!confirmedEmail) return;
+    if (!confirmedEmail || resendCountdown > 0) return;
     
     setIsResending(true);
     try {
@@ -203,6 +312,9 @@ const Auth = () => {
         title: "Email sent!",
         description: "A new verification link has been sent to your email.",
       });
+      
+      // Start countdown
+      setResendCountdown(30);
     } catch (err) {
       toast({
         title: "Error",
@@ -275,13 +387,15 @@ const Auth = () => {
                 variant="outline"
                 className="w-full backdrop-blur-sm bg-background/50"
                 onClick={handleResendVerificationEmail}
-                disabled={isResending}
+                disabled={isResending || resendCountdown > 0}
               >
                 {isResending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Sending...
                   </>
+                ) : resendCountdown > 0 ? (
+                  `Resend in ${resendCountdown}s`
                 ) : (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4" />
@@ -295,6 +409,7 @@ const Auth = () => {
                 onClick={() => {
                   setShowEmailConfirmation(false);
                   setConfirmedEmail("");
+                  setResendCountdown(0);
                 }}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -467,127 +582,242 @@ const Auth = () => {
     );
   }
 
+  // Main auth form with fluid glass styling
   return (
-    <div className="min-h-screen flex items-center justify-center bg-accent/30 py-12 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <GraduationCap className="h-8 w-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+      {/* Animated gradient background blobs */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/40 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '3s' }} />
+      </div>
+
+      {/* Content wrapper */}
+      <div className="relative z-10 w-full max-w-4xl flex flex-col md:flex-row items-center gap-8">
+        {/* Auth card */}
+        <Card className="w-full max-w-md backdrop-blur-xl bg-background/60 border-border/50 shadow-2xl">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/40 rounded-full blur-xl animate-pulse" />
+                <div className="relative p-3 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full border border-primary/30 backdrop-blur-sm">
+                  <GraduationCap className="h-8 w-8 text-primary" />
+                </div>
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl">Students Hub</CardTitle>
-          <CardDescription>
-            Join to save courses, labs, and build your learning agreement
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+            <CardTitle className="text-2xl">Students Hub</CardTitle>
+            <CardDescription>
+              Join to save courses, labs, and build your learning agreement
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-background/50 backdrop-blur-sm">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={signInData.email}
-                    onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                    className={errors.email ? "border-destructive" : ""}
-                  />
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••"
-                    value={signInData.password}
-                    onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                    className={errors.password ? "border-destructive" : ""}
-                  />
-                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="w-full text-sm text-muted-foreground"
-                  onClick={() => setShowResetPassword(true)}
-                >
-                  Forgot your password?
-                </Button>
-              </form>
-            </TabsContent>
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={signInData.email}
+                      onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                      className={`backdrop-blur-sm bg-background/50 ${errors.email ? "border-destructive" : ""}`}
+                    />
+                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      placeholder="••••••"
+                      value={signInData.password}
+                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                      className={`backdrop-blur-sm bg-background/50 ${errors.password ? "border-destructive" : ""}`}
+                    />
+                    {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-sm text-muted-foreground"
+                    onClick={() => setShowResetPassword(true)}
+                  >
+                    Forgot your password?
+                  </Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-username">Username</Label>
-                  <Input
-                    id="signup-username"
-                    type="text"
-                    placeholder="johndoe"
-                    value={signUpData.username}
-                    onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
-                    className={errors.username ? "border-destructive" : ""}
-                  />
-                  {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={signUpData.email}
-                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                    className={errors.email ? "border-destructive" : ""}
-                  />
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••"
-                    value={signUpData.password}
-                    onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                    className={errors.password ? "border-destructive" : ""}
-                  />
-                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  {/* Profile Picture Upload */}
+                  <div className="flex justify-center">
+                    <div 
+                      className="relative cursor-pointer group"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-dashed border-primary/40 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/60">
+                        {profilePicturePreview ? (
+                          <img src={profilePicturePreview} alt="Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <Camera className="h-8 w-8 text-primary/60 group-hover:text-primary/80 transition-colors" />
+                        )}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-primary text-primary-foreground">
+                        <Upload className="h-3 w-3" />
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProfilePictureChange}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground">Add a profile photo (optional)</p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-username">Username</Label>
+                    <Input
+                      id="signup-username"
+                      type="text"
+                      placeholder="johndoe"
+                      value={signUpData.username}
+                      onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
+                      className={`backdrop-blur-sm bg-background/50 ${errors.username ? "border-destructive" : ""}`}
+                    />
+                    {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={signUpData.email}
+                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                      className={`backdrop-blur-sm bg-background/50 ${errors.email ? "border-destructive" : ""}`}
+                    />
+                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••"
+                      value={signUpData.password}
+                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                      className={`backdrop-blur-sm bg-background/50 ${errors.password ? "border-destructive" : ""}`}
+                    />
+                    {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                  </div>
+
+                  {/* University Select */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      University (optional)
+                    </Label>
+                    <Select
+                      value={signUpData.universityId}
+                      onValueChange={(value) => setSignUpData({ ...signUpData, universityId: value })}
+                    >
+                      <SelectTrigger className="backdrop-blur-sm bg-background/50">
+                        <SelectValue placeholder="Select your university" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {universities?.map((uni) => (
+                          <SelectItem key={uni.uuid} value={uni.uuid}>
+                            {uni.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Student Level Toggle */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Student Level (optional)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={signUpData.studentLevel === 'Bachelor' ? 'default' : 'outline'}
+                        className={`flex-1 ${signUpData.studentLevel === 'Bachelor' ? '' : 'backdrop-blur-sm bg-background/50'}`}
+                        onClick={() => setSignUpData({ 
+                          ...signUpData, 
+                          studentLevel: signUpData.studentLevel === 'Bachelor' ? null : 'Bachelor' 
+                        })}
+                      >
+                        Bachelor
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={signUpData.studentLevel === 'Master' ? 'default' : 'outline'}
+                        className={`flex-1 ${signUpData.studentLevel === 'Master' ? '' : 'backdrop-blur-sm bg-background/50'}`}
+                        onClick={() => setSignUpData({ 
+                          ...signUpData, 
+                          studentLevel: signUpData.studentLevel === 'Master' ? null : 'Master' 
+                        })}
+                      >
+                        Master
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* User Flashcard Preview - only visible on signup tab and desktop */}
+        <div className="hidden md:flex flex-col items-center gap-4">
+          <p className="text-sm text-muted-foreground font-medium">Your Student Card Preview</p>
+          <UserFlashcard
+            username={signUpData.username || undefined}
+            profilePhotoUrl={profilePicturePreview}
+            universityName={selectedUniversity?.name}
+            universityLogo={selectedUniversity?.logo_url}
+            studentLevel={signUpData.studentLevel}
+            isPreview
+          />
+          <p className="text-xs text-muted-foreground text-center max-w-[200px]">
+            This card updates as you fill in your details
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
