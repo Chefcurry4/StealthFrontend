@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { GraduationCap, Loader2, ArrowLeft, Mail, CheckCircle2, Sparkles } from "lucide-react";
+import { GraduationCap, Loader2, ArrowLeft, Mail, CheckCircle2, Sparkles, RefreshCw, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,10 +28,13 @@ const resetPasswordSchema = z.object({
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [signUpData, setSignUpData] = useState({ email: "", password: "", username: "" });
   const [signInData, setSignInData] = useState({ email: "", password: "" });
   const [resetEmail, setResetEmail] = useState("");
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [resetConfirmedEmail, setResetConfirmedEmail] = useState("");
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -155,13 +158,10 @@ const Auth = () => {
         return;
       }
 
-      toast({
-        title: "Reset email sent",
-        description: "Check your email for a password reset link.",
-      });
-      
+      // Show reset confirmation screen
+      setResetConfirmedEmail(validated.email);
+      setShowResetConfirmation(true);
       setResetEmail("");
-      setShowResetPassword(false);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
@@ -174,6 +174,43 @@ const Auth = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerificationEmail = async () => {
+    if (!confirmedEmail) return;
+    
+    setIsResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: confirmedEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Failed to resend",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Email sent!",
+        description: "A new verification link has been sent to your email.",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -237,6 +274,24 @@ const Auth = () => {
               <Button
                 variant="outline"
                 className="w-full backdrop-blur-sm bg-background/50"
+                onClick={handleResendVerificationEmail}
+                disabled={isResending}
+              >
+                {isResending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Resend verification email
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
                 onClick={() => {
                   setShowEmailConfirmation(false);
                   setConfirmedEmail("");
@@ -252,21 +307,126 @@ const Auth = () => {
     );
   }
 
-  if (showResetPassword) {
+  // Password reset confirmation screen with fluid glass aesthetic
+  if (showResetConfirmation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-accent/30 py-12 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <GraduationCap className="h-8 w-8 text-primary" />
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+        {/* Animated gradient background blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -left-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/40 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+
+        {/* Glass card */}
+        <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-background/60 border-border/50 shadow-2xl">
+          <CardHeader className="text-center pb-2">
+            {/* Animated key icon with glow */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-accent/40 rounded-full blur-xl animate-pulse" />
+                <div className="relative p-5 bg-gradient-to-br from-accent/20 to-primary/20 rounded-full border border-accent/30 backdrop-blur-sm">
+                  <KeyRound className="h-10 w-10 text-accent" />
+                </div>
+                {/* Floating sparkles */}
+                <Sparkles className="absolute -top-2 -left-2 h-5 w-5 text-accent/70 animate-bounce" style={{ animationDelay: '0.5s' }} />
+                <Sparkles className="absolute -bottom-1 -right-2 h-4 w-4 text-primary/70 animate-bounce" style={{ animationDelay: '1s' }} />
               </div>
             </div>
-            <CardTitle className="text-2xl">Reset Password</CardTitle>
-            <CardDescription>
+            
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Reset link sent
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="text-center space-y-6">
+            <div className="space-y-3">
+              <p className="text-muted-foreground">
+                We've sent a password reset link to
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
+                <Mail className="h-4 w-4 text-accent" />
+                <span className="font-medium text-foreground">{resetConfirmedEmail}</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-primary/20 border border-border/50 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
+                <div className="text-left text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Check your inbox</p>
+                  <p>Click the link in your email to create a new password. The link will expire in 24 hours.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Didn't receive the email? Check your spam folder.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full backdrop-blur-sm bg-background/50"
+                onClick={() => {
+                  setShowResetConfirmation(false);
+                  setShowResetPassword(true);
+                  setResetEmail(resetConfirmedEmail);
+                }}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try a different email
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setShowResetConfirmation(false);
+                  setResetConfirmedEmail("");
+                }}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Sign In
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Password reset form with fluid glass aesthetic
+  if (showResetPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+        {/* Animated gradient background blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -left-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/40 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+
+        {/* Glass card */}
+        <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-background/60 border-border/50 shadow-2xl">
+          <CardHeader className="text-center pb-2">
+            {/* Animated key icon with glow */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-accent/40 rounded-full blur-xl animate-pulse" />
+                <div className="relative p-5 bg-gradient-to-br from-accent/20 to-primary/20 rounded-full border border-accent/30 backdrop-blur-sm">
+                  <KeyRound className="h-10 w-10 text-accent" />
+                </div>
+                {/* Floating sparkles */}
+                <Sparkles className="absolute -top-2 -left-2 h-5 w-5 text-accent/70 animate-bounce" style={{ animationDelay: '0.5s' }} />
+                <Sparkles className="absolute -bottom-1 -right-2 h-4 w-4 text-primary/70 animate-bounce" style={{ animationDelay: '1s' }} />
+              </div>
+            </div>
+            
+            <CardTitle className="text-2xl font-semibold">Reset Password</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Enter your email to receive a password reset link
             </CardDescription>
           </CardHeader>
+          
           <CardContent>
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
@@ -277,7 +437,7 @@ const Auth = () => {
                   placeholder="your@email.com"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className={errors.email ? "border-destructive" : ""}
+                  className={`backdrop-blur-sm bg-background/50 ${errors.email ? "border-destructive" : ""}`}
                 />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
