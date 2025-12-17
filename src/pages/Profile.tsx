@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader } from "@/components/Loader";
 import { PreferencesSettings } from "@/components/profile/PreferencesSettings";
-import UserFlashcard from "@/components/UserFlashcard";
+import UserFlashcard, { FlashcardColorStyle } from "@/components/UserFlashcard";
 import {
   WorkbenchSavedItems,
   WorkbenchDocuments,
@@ -41,6 +41,7 @@ import {
   X,
   Check
 } from "lucide-react";
+import { Palette } from "lucide-react";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -204,6 +205,7 @@ const Profile = () => {
                 universityLogo={userUniversity?.logo_url}
                 studentLevel={profile?.student_level as 'Bachelor' | 'Master' | null}
                 memberSince={createdDate || undefined}
+                colorStyle={(profile?.flashcard_color_style as FlashcardColorStyle) || 'gradient'}
                 isEditable
                 onAvatarClick={() => fileInputRef.current?.click()}
               />
@@ -422,6 +424,38 @@ const Profile = () => {
                         {profile?.student_level ? `${profile.student_level} Student` : "Not set"}
                       </p>
                     )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Flashcard Color Style */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Palette className="h-4 w-4" />
+                    Flashcard Color Style
+                  </Label>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[
+                      { id: 'gradient', label: 'Default', colors: 'from-violet-500 via-purple-500 to-fuchsia-500' },
+                      { id: 'ocean', label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400' },
+                      { id: 'sunset', label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500' },
+                      { id: 'forest', label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500' },
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        type="button"
+                        onClick={() => updateProfile.mutate({ flashcard_color_style: style.id as FlashcardColorStyle })}
+                        className={`relative p-3 rounded-xl border-2 transition-all ${
+                          profile?.flashcard_color_style === style.id || (!profile?.flashcard_color_style && style.id === 'gradient')
+                            ? 'border-primary ring-2 ring-primary/20'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className={`h-12 w-full rounded-lg bg-gradient-to-br ${style.colors}`} />
+                        <p className="text-xs text-center mt-2 font-medium">{style.label}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </CardContent>
