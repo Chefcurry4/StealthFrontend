@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   PanelLeftClose,
-  PanelLeft,
   Plus,
   MessageSquare,
   BookOpen,
@@ -622,37 +621,80 @@ export const WorkbenchSidebar = ({
     </div>
   );
 
+  // Helper to open sidebar and jump to section
+  const openToSection = (section: string) => {
+    if (!openSections.includes(section)) {
+      setOpenSections(prev => [...prev, section]);
+    }
+    onToggle();
+  };
+
   // Collapsed state (desktop only)
   if (!isOpen && !isMobile) {
     return (
-      <div className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className="mb-4"
-        >
-          <PanelLeft className="h-5 w-5" />
-        </Button>
+      <div className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm w-14">
         <Button
           variant="ghost"
           size="icon"
           onClick={onNewChat}
-          className="mb-4"
+          className="mb-2"
+          title="New Chat"
         >
           <Plus className="h-5 w-5" />
         </Button>
-        <div className="flex flex-col gap-2 mt-4">
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <div className="flex flex-col gap-1 mt-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-primary hover:bg-primary/10"
+            onClick={() => openToSection("chats")}
+            title="AI Chats"
+          >
             <MessageSquare className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-blue-500 hover:bg-blue-500/10"
+            onClick={() => openToSection("courses")}
+            title="Saved Courses"
+          >
             <BookOpen className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-green-500 hover:bg-green-500/10"
+            onClick={() => openToSection("labs")}
+            title="Saved Labs"
+          >
+            <Beaker className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-orange-500 hover:bg-orange-500/10"
+            onClick={() => openToSection("drafts")}
+            title="Email Drafts"
+          >
             <Mail className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-cyan-500 hover:bg-cyan-500/10"
+            onClick={() => openToSection("documents")}
+            title="My Documents"
+          >
+            <FolderOpen className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-purple-500 hover:bg-purple-500/10"
+            onClick={() => openToSection("agreements")}
+            title="Learning Agreements"
+          >
             <FileText className="h-4 w-4" />
           </Button>
         </div>

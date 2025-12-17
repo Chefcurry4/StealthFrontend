@@ -469,7 +469,8 @@ const Workbench = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            {!sidebarOpen && (
+            {/* Mobile toggle button - only show on mobile when sidebar closed */}
+            {isMobile && !sidebarOpen && (
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -479,7 +480,7 @@ const Workbench = () => {
                 <PanelLeft className="h-5 w-5" />
               </Button>
             )}
-            <Button 
+            <Button
               variant="ghost" 
               size="icon" 
               onClick={() => navigate(-1)}
