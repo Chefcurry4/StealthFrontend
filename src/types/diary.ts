@@ -10,7 +10,7 @@ export interface DiaryPage {
   id: string;
   notebook_id: string;
   page_number: number;
-  page_type: 'semester_planner' | 'lab_tracker' | 'notes' | 'custom';
+  page_type: 'semester_planner' | 'lab_tracker' | 'notes' | 'custom' | 'blank';
   title: string | null;
   semester: string | null;
   created_at: string;
@@ -20,7 +20,7 @@ export interface DiaryPage {
 export interface DiaryPageItem {
   id: string;
   page_id: string;
-  item_type: 'course' | 'lab' | 'note' | 'email_draft' | 'todo';
+  item_type: 'course' | 'lab' | 'note' | 'email_draft' | 'todo' | 'semester_planner' | 'lab_tracker' | 'notes_module';
   reference_id: string | null;
   content: string | null;
   position_x: number;
