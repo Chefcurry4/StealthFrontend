@@ -3,7 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,16 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { TeacherLink } from "@/components/TeacherLink";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+
+// Grid size for snapping
+const GRID_SIZE = 20;
+
+// Snap to grid helper
+const snapToGrid = (value: number): number => {
+  return Math.round(value / GRID_SIZE) * GRID_SIZE;
+};
+
 interface DiaryNotebookProps {
   pages: DiaryPage[];
   currentPageIndex: number;
@@ -28,6 +38,8 @@ interface DiaryNotebookProps {
   onDuplicateItem?: (item: DiaryPageItem) => void;
   onUpdatePage?: (pageId: string, updates: { title?: string; semester?: string }) => void;
   onReorderPages?: (activeId: string, overId: string) => void;
+  isFullView?: boolean;
+  onToggleFullView?: () => void;
 }
 
 export const DiaryNotebook = ({
@@ -41,6 +53,8 @@ export const DiaryNotebook = ({
   onDuplicateItem,
   onUpdatePage,
   onReorderPages,
+  isFullView = false,
+  onToggleFullView,
 }: DiaryNotebookProps) => {
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
@@ -108,7 +122,7 @@ export const DiaryNotebook = ({
         onPageChange(newIndex);
         setIsFlipping(false);
         setFlipDirection(null);
-      }, 400);
+      }, 300);
     }
   };
 
@@ -201,7 +215,7 @@ export const DiaryNotebook = ({
             onRemove={onRemoveItem}
             onUpdate={onUpdateItem}
             title="Semester Planner"
-            icon={<BarChart3 className="h-4 w-4" />}
+            icon={<BarChart3 className="h-3 w-3" />}
           >
             <DiarySemesterPlanner
               pageId={currentPage?.id || ''}
@@ -223,7 +237,7 @@ export const DiaryNotebook = ({
             onRemove={onRemoveItem}
             onUpdate={onUpdateItem}
             title="Lab Tracker"
-            icon={<Beaker className="h-4 w-4" />}
+            icon={<Beaker className="h-3 w-3" />}
           >
             <DiaryLabTracker 
               page={currentPage!}
@@ -244,7 +258,7 @@ export const DiaryNotebook = ({
             onRemove={onRemoveItem}
             onUpdate={onUpdateItem}
             title="Notes"
-            icon={<StickyNote className="h-4 w-4" />}
+            icon={<StickyNote className="h-3 w-3" />}
           >
             <DiaryNotesPage 
               page={currentPage!}
@@ -262,10 +276,16 @@ export const DiaryNotebook = ({
 
   return (
     <>
-      <div className="h-full flex items-center justify-center p-2 sm:p-3 md:p-4">
+      <div className={cn(
+        "h-full flex items-center justify-center p-2 sm:p-3 md:p-4",
+        isFullView && "fixed inset-0 z-50 bg-black/80 p-4"
+      )}>
         {/* Book container - fits screen */}
         <div 
-          className="relative w-full h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)] flex"
+          className={cn(
+            "relative w-full h-full flex",
+            isFullView ? "max-w-5xl max-h-[90vh]" : "max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)]"
+          )}
           style={{ perspective: "2000px" }}
         >
           {/* Black book spine */}
@@ -279,9 +299,9 @@ export const DiaryNotebook = ({
             }}
             id="diary-page-content"
             className={cn(
-              "flex-1 rounded-r-lg shadow-2xl transition-all duration-300 overflow-auto relative",
-              isFlipping && flipDirection === 'right' && "animate-[flipRight_0.4s_ease-in-out]",
-              isFlipping && flipDirection === 'left' && "animate-[flipLeft_0.4s_ease-in-out]",
+              "flex-1 rounded-r-lg shadow-2xl overflow-auto relative",
+              isFlipping && flipDirection === 'right' && "animate-[flipRight_0.3s_ease-in-out]",
+              isFlipping && flipDirection === 'left' && "animate-[flipLeft_0.3s_ease-in-out]",
               isOver && "ring-2 ring-amber-400 ring-offset-2"
             )}
             style={{ 
@@ -291,12 +311,19 @@ export const DiaryNotebook = ({
               `,
               transformStyle: 'preserve-3d',
               boxShadow: '6px 6px 30px rgba(0,0,0,0.2), -1px 0 3px rgba(0,0,0,0.1), inset 0 0 80px rgba(139,119,80,0.05)',
+              transition: 'all 0.2s ease',
             }}
           >
+            {/* Student Hub logo on top right */}
+            <div className="absolute top-2 right-3 flex items-center gap-1.5 z-10 opacity-60">
+              <GraduationCap className="h-3.5 w-3.5 text-gray-500" />
+              <span className="text-[10px] font-medium text-gray-500 tracking-wide">Students Hub</span>
+            </div>
+
             {/* Page content area */}
-            <div className="relative h-full p-3 sm:p-4 md:p-6">
+            <div className="relative h-full p-3 sm:p-4 md:p-5">
               {/* Page header with editable title */}
-              <div className="mb-3 pb-2 flex items-start justify-between gap-2">
+              <div className="mb-2 pb-2 flex items-start justify-between gap-2">
                 <div className="flex-1">
                   {isEditingTitle ? (
                     <div className="flex items-center gap-2">
@@ -306,12 +333,12 @@ export const DiaryNotebook = ({
                         onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
                         onBlur={handleTitleSave}
                         autoFocus
-                        className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 font-serif bg-transparent border-gray-300 h-8"
+                        className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 font-serif bg-transparent border-gray-300 h-7"
                       />
                     </div>
                   ) : (
                     <h2 
-                      className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 font-serif flex items-center gap-2 cursor-pointer hover:text-gray-600 group"
+                      className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 font-serif flex items-center gap-2 cursor-pointer hover:text-gray-600 group"
                       onClick={handleTitleEdit}
                     >
                       {currentPage?.title || `Page ${currentPageIndex + 1}`}
@@ -326,40 +353,57 @@ export const DiaryNotebook = ({
                       onBlur={handleDescriptionSave}
                       autoFocus
                       placeholder="Write a description here..."
-                      className="text-xs sm:text-sm text-gray-600 bg-transparent border-gray-300 h-6 mt-0.5"
+                      className="text-xs text-gray-600 bg-transparent border-gray-300 h-5 mt-0.5"
                     />
                   ) : (
                     <p 
-                      className="text-xs sm:text-sm text-gray-600 cursor-pointer hover:text-gray-500 flex items-center gap-1 group mt-0.5"
+                      className="text-xs text-gray-600 cursor-pointer hover:text-gray-500 flex items-center gap-1 group mt-0.5"
                       onClick={handleDescriptionEdit}
                     >
                       {currentPage?.semester || 'Write a description here...'}
-                      <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-50 transition-opacity" />
+                      <Pencil className="h-2 w-2 opacity-0 group-hover:opacity-50 transition-opacity" />
+                    </p>
+                  )}
+                  {/* Creation date */}
+                  {currentPage?.created_at && (
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      Created {format(new Date(currentPage.created_at), 'MMM d, yyyy')}
                     </p>
                   )}
                 </div>
+                {/* Full view toggle */}
+                {onToggleFullView && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onToggleFullView}
+                    className="h-6 w-6 opacity-60 hover:opacity-100"
+                  >
+                    {isFullView ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
               </div>
 
               {/* Drag hint when empty */}
               {pageItems.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
                   <div className="text-center text-gray-500">
-                    <GraduationCap className="h-12 sm:h-16 w-12 sm:w-16 mx-auto mb-3 opacity-20" />
-                    <p className="text-base sm:text-lg font-serif">Drag modules and courses here</p>
-                    <p className="text-xs sm:text-sm mt-2">Use the sidebar to add content</p>
+                    <GraduationCap className="h-10 sm:h-12 w-10 sm:w-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm sm:text-base font-serif">Drag modules and courses here</p>
+                    <p className="text-xs mt-1">Use the sidebar to add content</p>
                   </div>
                 </div>
               )}
 
               {/* Render page items with absolute positioning */}
-              <div className="relative" style={{ minHeight: 'calc(100% - 60px)' }}>
+              <div className="relative" style={{ minHeight: 'calc(100% - 50px)' }}>
                 {pageItems.filter(item => !item.zone).map(renderItem)}
               </div>
             </div>
 
             {/* Subtle page curl effect */}
             <div 
-              className="absolute bottom-0 right-0 w-12 h-12 pointer-events-none"
+              className="absolute bottom-0 right-0 w-10 h-10 pointer-events-none"
               style={{
                 background: 'linear-gradient(135deg, transparent 50%, rgba(139,119,80,0.08) 50%)',
                 borderRadius: '0 0 8px 0',
@@ -371,27 +415,27 @@ export const DiaryNotebook = ({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-8 sm:left-10 top-1/2 -translate-y-1/2 z-20 opacity-60 hover:opacity-100 bg-white/90 shadow-lg h-8 w-8 sm:h-10 sm:w-10 rounded-full"
+            className="absolute left-8 sm:left-10 top-1/2 -translate-y-1/2 z-20 opacity-60 hover:opacity-100 bg-white/90 shadow-lg h-7 w-7 sm:h-8 sm:w-8 rounded-full"
             onClick={() => handlePageTurn('left')}
             disabled={currentPageIndex === 0 || isFlipping}
           >
-            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            className="absolute -right-1 sm:right-0 top-1/2 -translate-y-1/2 z-20 opacity-60 hover:opacity-100 bg-white/90 shadow-lg h-8 w-8 sm:h-10 sm:w-10 rounded-full"
+            className="absolute -right-1 sm:right-0 top-1/2 -translate-y-1/2 z-20 opacity-60 hover:opacity-100 bg-white/90 shadow-lg h-7 w-7 sm:h-8 sm:w-8 rounded-full"
             onClick={() => handlePageTurn('right')}
             disabled={currentPageIndex === pages.length - 1 || isFlipping}
           >
-            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+            <ChevronRight className="h-4 w-4 text-gray-600" />
           </Button>
 
           {/* Draggable Page dots */}
           <DndContext sensors={pageSensors} collisionDetection={closestCenter} onDragEnd={handlePageReorder}>
             <SortableContext items={pages.map(p => p.id)} strategy={horizontalListSortingStrategy}>
-              <div className="absolute -bottom-5 sm:bottom-1 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-20 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+              <div className="absolute -bottom-4 sm:bottom-1 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-20 bg-white/80 px-2 py-1 rounded-full shadow-sm">
                 {pages.map((page, index) => (
                   <SortablePageDot
                     key={page.id}
@@ -407,58 +451,60 @@ export const DiaryNotebook = ({
         </div>
       </div>
 
-      {/* Course Detail Popup */}
+      {/* Course Detail Popup - Improved styling */}
       <Dialog open={!!selectedCourse} onOpenChange={() => setSelectedCourse(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-xl max-h-[80vh] overflow-auto bg-gradient-to-br from-white to-blue-50/50">
           <DialogHeader>
             <DialogTitle className="flex items-start gap-3">
-              <GraduationCap className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
-              <span>{selectedCourse?.name_course}</span>
+              <div className="p-2 rounded-lg bg-blue-100">
+                <GraduationCap className="h-5 w-5 text-blue-600" />
+              </div>
+              <span className="text-lg">{selectedCourse?.name_course}</span>
             </DialogTitle>
           </DialogHeader>
           {selectedCourse && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-2">
               {/* Basic Info */}
               <div className="flex flex-wrap gap-2">
                 {selectedCourse.code && (
-                  <Badge variant="secondary" className="font-mono">{selectedCourse.code}</Badge>
+                  <Badge variant="secondary" className="font-mono bg-gray-100">{selectedCourse.code}</Badge>
                 )}
                 {selectedCourse.ects && (
-                  <Badge variant="outline">{selectedCourse.ects} ECTS</Badge>
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{selectedCourse.ects} ECTS</Badge>
                 )}
                 {selectedCourse.ba_ma && (
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="border-purple-200 text-purple-700">
                     {selectedCourse.ba_ma === 'Ba' ? 'Bachelor' : selectedCourse.ba_ma === 'Ma' ? 'Master' : selectedCourse.ba_ma}
                   </Badge>
                 )}
                 {selectedCourse.term && (
-                  <Badge variant="outline">{selectedCourse.term}</Badge>
+                  <Badge variant="outline" className="border-green-200 text-green-700">{selectedCourse.term}</Badge>
                 )}
                 {selectedCourse.language && (
-                  <Badge variant="outline">{selectedCourse.language}</Badge>
+                  <Badge variant="outline" className="border-amber-200 text-amber-700">{selectedCourse.language}</Badge>
                 )}
               </div>
 
               {/* Description */}
               {selectedCourse.description && (
-                <div>
-                  <h4 className="font-medium text-sm mb-1 text-gray-700">Description</h4>
-                  <p className="text-sm text-gray-600">{selectedCourse.description}</p>
+                <div className="p-3 rounded-lg bg-white/80 border border-gray-100">
+                  <h4 className="font-medium text-xs mb-1 text-gray-500 uppercase tracking-wide">Description</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">{selectedCourse.description}</p>
                 </div>
               )}
 
               {/* Topics */}
               {selectedCourse.topics && (
-                <div>
-                  <h4 className="font-medium text-sm mb-1 text-gray-700">Topics</h4>
-                  <p className="text-sm text-gray-600">{selectedCourse.topics}</p>
+                <div className="p-3 rounded-lg bg-white/80 border border-gray-100">
+                  <h4 className="font-medium text-xs mb-1 text-gray-500 uppercase tracking-wide">Topics</h4>
+                  <p className="text-sm text-gray-700">{selectedCourse.topics}</p>
                 </div>
               )}
 
               {/* Professor */}
               {selectedCourse.professor_name && (
-                <div>
-                  <h4 className="font-medium text-sm mb-1 text-gray-700">Professor(s)</h4>
+                <div className="p-3 rounded-lg bg-white/80 border border-gray-100">
+                  <h4 className="font-medium text-xs mb-2 text-gray-500 uppercase tracking-wide">Professor(s)</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedCourse.professor_name.split(';').map((name: string, idx: number) => (
                       <TeacherLink key={idx} teacherName={name.trim()} />
@@ -469,17 +515,17 @@ export const DiaryNotebook = ({
 
               {/* Software/Equipment */}
               {selectedCourse.software_equipment && (
-                <div>
-                  <h4 className="font-medium text-sm mb-1 text-gray-700">Software & Equipment</h4>
-                  <p className="text-sm text-gray-600">{selectedCourse.software_equipment}</p>
+                <div className="p-3 rounded-lg bg-white/80 border border-gray-100">
+                  <h4 className="font-medium text-xs mb-1 text-gray-500 uppercase tracking-wide">Software & Equipment</h4>
+                  <p className="text-sm text-gray-700">{selectedCourse.software_equipment}</p>
                 </div>
               )}
 
               {/* Exam Type */}
               {selectedCourse.type_exam && (
-                <div>
-                  <h4 className="font-medium text-sm mb-1 text-gray-700">Exam Type</h4>
-                  <p className="text-sm text-gray-600">{selectedCourse.type_exam}</p>
+                <div className="p-3 rounded-lg bg-amber-50/80 border border-amber-100">
+                  <h4 className="font-medium text-xs mb-1 text-amber-600 uppercase tracking-wide">Exam Type</h4>
+                  <p className="text-sm text-gray-700 font-medium">{selectedCourse.type_exam}</p>
                 </div>
               )}
             </div>
@@ -508,7 +554,7 @@ const SortablePageDot = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 200ms ease',
+    transition: transition || 'transform 150ms ease',
     zIndex: isDragging ? 10 : 1,
   };
 
@@ -520,18 +566,19 @@ const SortablePageDot = ({
       {...listeners}
       onClick={onClick}
       className={cn(
-        "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all cursor-grab active:cursor-grabbing",
+        "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full cursor-grab active:cursor-grabbing",
         isActive 
           ? "bg-gray-700 scale-125 shadow-sm" 
           : "bg-gray-300 hover:bg-gray-500 hover:scale-110",
-        isDragging && "opacity-70 scale-150"
+        isDragging && "opacity-70 scale-150",
+        "transition-all duration-150"
       )}
       title={page.title || `Page ${index + 1}`}
     />
   );
 };
 
-// Draggable Item Wrapper with resize support on all sides
+// Draggable Item Wrapper with resize support and grid snapping
 const DraggableItem = ({ 
   item, 
   children, 
@@ -548,7 +595,7 @@ const DraggableItem = ({
   const [resizeDirection, setResizeDirection] = useState<string | null>(null);
   const [hasMoved, setHasMoved] = useState(false);
   const [position, setPosition] = useState({ x: item.position_x, y: item.position_y });
-  const [size, setSize] = useState({ width: item.width || 220, height: item.height || 100 });
+  const [size, setSize] = useState({ width: item.width || 180, height: item.height || 80 });
   const [pendingUpdate, setPendingUpdate] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; itemX: number; itemY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number; startLeft: number; startTop: number } | null>(null);
@@ -575,10 +622,11 @@ const DraggableItem = ({
         setHasMoved(true);
       }
       
-      setPosition({
-        x: Math.max(0, dragRef.current.itemX + dx),
-        y: Math.max(0, dragRef.current.itemY + dy),
-      });
+      // Snap to grid
+      const newX = snapToGrid(Math.max(0, dragRef.current.itemX + dx));
+      const newY = snapToGrid(Math.max(0, dragRef.current.itemY + dy));
+      
+      setPosition({ x: newX, y: newY });
     }
     if (isResizing && resizeRef.current) {
       const dx = e.clientX - resizeRef.current.startX;
@@ -589,16 +637,16 @@ const DraggableItem = ({
       let newX = position.x;
       let newY = position.y;
       
-      // Handle different resize directions
-      if (resizeDirection?.includes('e')) newWidth = Math.max(120, resizeRef.current.startWidth + dx);
+      // Handle different resize directions with grid snapping
+      if (resizeDirection?.includes('e')) newWidth = snapToGrid(Math.max(100, resizeRef.current.startWidth + dx));
       if (resizeDirection?.includes('w')) {
-        newWidth = Math.max(120, resizeRef.current.startWidth - dx);
-        newX = resizeRef.current.startLeft + dx;
+        newWidth = snapToGrid(Math.max(100, resizeRef.current.startWidth - dx));
+        newX = snapToGrid(resizeRef.current.startLeft + dx);
       }
-      if (resizeDirection?.includes('s')) newHeight = Math.max(60, resizeRef.current.startHeight + dy);
+      if (resizeDirection?.includes('s')) newHeight = snapToGrid(Math.max(60, resizeRef.current.startHeight + dy));
       if (resizeDirection?.includes('n')) {
-        newHeight = Math.max(60, resizeRef.current.startHeight - dy);
-        newY = resizeRef.current.startTop + dy;
+        newHeight = snapToGrid(Math.max(60, resizeRef.current.startHeight - dy));
+        newY = snapToGrid(resizeRef.current.startTop + dy);
       }
       
       setSize({ width: newWidth, height: newHeight });
@@ -613,8 +661,8 @@ const DraggableItem = ({
       setIsDragging(false);
       if (hasMoved) {
         setPendingUpdate(true);
-        onUpdatePosition(item.id, { position_x: Math.round(position.x), position_y: Math.round(position.y) });
-        setTimeout(() => setPendingUpdate(false), 500);
+        onUpdatePosition(item.id, { position_x: position.x, position_y: position.y });
+        setTimeout(() => setPendingUpdate(false), 300);
       } else if (onClickAction) {
         onClickAction();
       }
@@ -624,12 +672,12 @@ const DraggableItem = ({
       setResizeDirection(null);
       setPendingUpdate(true);
       onUpdatePosition(item.id, { 
-        width: Math.round(size.width), 
-        height: Math.round(size.height),
-        position_x: Math.round(position.x),
-        position_y: Math.round(position.y)
+        width: size.width, 
+        height: size.height,
+        position_x: position.x,
+        position_y: position.y
       });
-      setTimeout(() => setPendingUpdate(false), 500);
+      setTimeout(() => setPendingUpdate(false), 300);
     }
     dragRef.current = null;
     resizeRef.current = null;
@@ -670,17 +718,17 @@ const DraggableItem = ({
 
   useEffect(() => {
     if (!isResizing && !pendingUpdate) {
-      setSize({ width: item.width || 220, height: item.height || 100 });
+      setSize({ width: item.width || 180, height: item.height || 80 });
     }
   }, [item.width, item.height, isResizing, pendingUpdate]);
 
-  const resizeHandleClass = "resize-handle absolute opacity-0 group-hover:opacity-100 transition-opacity bg-transparent z-10";
+  const resizeHandleClass = "resize-handle absolute opacity-0 group-hover:opacity-100 bg-transparent z-10 transition-opacity duration-150";
 
   return (
     <div
       className={cn(
         "absolute group",
-        isDragging && "z-50 shadow-2xl scale-[1.02]",
+        isDragging && "z-50 shadow-2xl",
         isResizing && "z-50"
       )}
       style={{
@@ -689,9 +737,10 @@ const DraggableItem = ({
         width: size.width,
         height: size.height,
         cursor: isDragging ? 'grabbing' : 'grab',
+        transform: isDragging ? 'scale(1.02)' : 'scale(1)',
         transition: isDragging || isResizing 
-          ? 'box-shadow 0.15s ease, transform 0.15s ease' 
-          : 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          ? 'box-shadow 0.1s ease, transform 0.1s ease' 
+          : 'all 0.15s ease',
       }}
       onMouseDown={handleMouseDown}
     >
@@ -704,42 +753,42 @@ const DraggableItem = ({
       <div className={cn(resizeHandleClass, "right-0 top-2 bottom-2 w-1 cursor-e-resize")} onMouseDown={(e) => handleResizeStart(e, 'e')} />
       
       {/* Corner resize handles */}
-      <div className={cn(resizeHandleClass, "top-0 left-0 w-3 h-3 cursor-nw-resize")} onMouseDown={(e) => handleResizeStart(e, 'nw')} />
-      <div className={cn(resizeHandleClass, "top-0 right-0 w-3 h-3 cursor-ne-resize")} onMouseDown={(e) => handleResizeStart(e, 'ne')} />
-      <div className={cn(resizeHandleClass, "bottom-0 left-0 w-3 h-3 cursor-sw-resize")} onMouseDown={(e) => handleResizeStart(e, 'sw')} />
-      <div className={cn(resizeHandleClass, "bottom-0 right-0 w-3 h-3 cursor-se-resize flex items-end justify-end pr-0.5 pb-0.5")} onMouseDown={(e) => handleResizeStart(e, 'se')}>
-        <Maximize2 className="h-2.5 w-2.5 text-gray-400 rotate-90" />
+      <div className={cn(resizeHandleClass, "top-0 left-0 w-2 h-2 cursor-nw-resize")} onMouseDown={(e) => handleResizeStart(e, 'nw')} />
+      <div className={cn(resizeHandleClass, "top-0 right-0 w-2 h-2 cursor-ne-resize")} onMouseDown={(e) => handleResizeStart(e, 'ne')} />
+      <div className={cn(resizeHandleClass, "bottom-0 left-0 w-2 h-2 cursor-sw-resize")} onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+      <div className={cn(resizeHandleClass, "bottom-0 right-0 w-2 h-2 cursor-se-resize flex items-end justify-end pr-0.5 pb-0.5")} onMouseDown={(e) => handleResizeStart(e, 'se')}>
+        <Maximize2 className="h-2 w-2 text-gray-400 rotate-90" />
       </div>
     </div>
   );
 };
 
-// Course Card Component
+// Course Card Component - smaller
 const CourseCard = ({ item, course, onRemove, onDuplicate }: any) => (
   <div className="group relative h-full">
-    <div className="p-3 rounded-lg bg-blue-50/90 border border-blue-200 shadow-sm hover:shadow-md transition-all cursor-pointer hover:bg-blue-100/90 h-full">
+    <div className="p-2 rounded-lg bg-blue-50/90 border border-blue-200 shadow-sm hover:shadow-md transition-all cursor-pointer hover:bg-blue-100/90 h-full">
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
-        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
       >
-        <X className="h-3 w-3" />
+        <X className="h-2.5 w-2.5" />
       </button>
       {onDuplicate && (
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
-          className="absolute -top-2 right-5 w-5 h-5 rounded-full bg-blue-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+          className="absolute -top-1.5 right-4 w-4 h-4 rounded-full bg-blue-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
           title="Duplicate"
         >
-          <Copy className="h-3 w-3" />
+          <Copy className="h-2.5 w-2.5" />
         </button>
       )}
-      <div className="flex items-start gap-2">
-        <GraduationCap className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+      <div className="flex items-start gap-1.5">
+        <GraduationCap className="h-3.5 w-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm text-gray-800 line-clamp-2">{course.name_course}</div>
-          <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-600 flex-wrap">
+          <div className="font-medium text-xs text-gray-800 line-clamp-2">{course.name_course}</div>
+          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-600 flex-wrap">
             {course.code && <span className="font-mono">{course.code}</span>}
-            {course.ects && <span className="bg-blue-200/60 px-1.5 py-0.5 rounded font-medium">{course.ects} ECTS</span>}
+            {course.ects && <span className="bg-blue-200/60 px-1 py-0.5 rounded font-medium">{course.ects} ECTS</span>}
           </div>
         </div>
       </div>
@@ -747,31 +796,31 @@ const CourseCard = ({ item, course, onRemove, onDuplicate }: any) => (
   </div>
 );
 
-// Lab Card Component
+// Lab Card Component - smaller
 const LabCard = ({ item, lab, onRemove, onDuplicate }: any) => (
   <div className="group relative h-full">
-    <div className="p-3 rounded-lg bg-purple-50/90 border border-purple-200 shadow-sm hover:shadow-md transition-shadow h-full">
+    <div className="p-2 rounded-lg bg-purple-50/90 border border-purple-200 shadow-sm hover:shadow-md transition-shadow h-full">
       <button
         onClick={() => onRemove(item.id)}
-        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
       >
-        <X className="h-3 w-3" />
+        <X className="h-2.5 w-2.5" />
       </button>
       {onDuplicate && (
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
-          className="absolute -top-2 right-5 w-5 h-5 rounded-full bg-purple-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+          className="absolute -top-1.5 right-4 w-4 h-4 rounded-full bg-purple-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
           title="Duplicate"
         >
-          <Copy className="h-3 w-3" />
+          <Copy className="h-2.5 w-2.5" />
         </button>
       )}
-      <div className="flex items-start gap-2">
-        <Beaker className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+      <div className="flex items-start gap-1.5">
+        <Beaker className="h-3.5 w-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm text-gray-800 line-clamp-2">{lab.name}</div>
+          <div className="font-medium text-xs text-gray-800 line-clamp-2">{lab.name}</div>
           {lab.topics && (
-            <div className="text-xs text-gray-600 mt-1 line-clamp-1">{lab.topics}</div>
+            <div className="text-[10px] text-gray-600 mt-1 line-clamp-1">{lab.topics}</div>
           )}
         </div>
       </div>
@@ -779,7 +828,7 @@ const LabCard = ({ item, lab, onRemove, onDuplicate }: any) => (
   </div>
 );
 
-// Note Card Component with color picker
+// Note Card Component with color picker - smaller
 const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
   const allColors: Record<string, { bg: string; border: string; name: string }> = {
     yellow: { bg: 'bg-yellow-100/90', border: 'border-yellow-300', name: 'Yellow' },
@@ -796,30 +845,30 @@ const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
 
   return (
     <div className="group relative h-full">
-      <div className={cn("p-3 rounded-lg border shadow-sm h-full flex flex-col", currentColor.bg, currentColor.border)}>
+      <div className={cn("p-2 rounded-lg border shadow-sm h-full flex flex-col", currentColor.bg, currentColor.border)}>
         <button
           onClick={() => onRemove(item.id)}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
         >
-          <X className="h-3 w-3" />
+          <X className="h-2.5 w-2.5" />
         </button>
         
         {/* Duplicate button */}
         {onDuplicate && (
           <button
             onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
-            className="absolute -top-2 right-5 w-5 h-5 rounded-full bg-gray-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+            className="absolute -top-1.5 right-4 w-4 h-4 rounded-full bg-gray-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
             title="Duplicate"
           >
-            <Copy className="h-3 w-3" />
+            <Copy className="h-2.5 w-2.5" />
           </button>
         )}
         
         {/* Color picker */}
         <Popover>
           <PopoverTrigger asChild>
-            <button className="absolute -top-2 left-2 w-5 h-5 rounded-full bg-white shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 border">
-              <Palette className="h-3 w-3 text-gray-500" />
+            <button className="absolute -top-1.5 left-2 w-4 h-4 rounded-full bg-white shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 border">
+              <Palette className="h-2.5 w-2.5 text-gray-500" />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-2" side="top">
@@ -829,7 +878,7 @@ const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
                   key={colorId}
                   onClick={() => onUpdate(item.id, { color: colorId })}
                   className={cn(
-                    "w-6 h-6 rounded border-2 transition-all",
+                    "w-5 h-5 rounded border-2 transition-all",
                     colorData.bg,
                     item.color === colorId ? 'ring-2 ring-gray-400 scale-110' : 'hover:scale-105'
                   )}
@@ -840,12 +889,12 @@ const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
           </PopoverContent>
         </Popover>
 
-        <GripVertical className="h-3 w-3 text-gray-400 mb-2 opacity-50" />
+        <GripVertical className="h-2.5 w-2.5 text-gray-400 mb-1 opacity-50" />
         <Textarea
           value={item.content || ''}
           onChange={(e) => onUpdate(item.id, { content: e.target.value })}
           placeholder="Write your note..."
-          className="bg-transparent border-none resize-none p-0 text-sm text-gray-700 focus-visible:ring-0 flex-1 min-h-[40px]"
+          className="bg-transparent border-none resize-none p-0 text-xs text-gray-700 focus-visible:ring-0 flex-1 min-h-[30px]"
           onClick={(e) => e.stopPropagation()}
         />
       </div>
@@ -853,22 +902,22 @@ const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
   );
 };
 
-// Module Wrapper Component with resize support
+// Module Wrapper Component - more compact
 const ModuleWrapper = ({ item, onRemove, onUpdate, title, icon, children }: any) => (
   <div className="group relative h-full">
     <div className="rounded-lg border border-gray-300 bg-white/95 shadow-md overflow-hidden h-full flex flex-col">
       <button
         onClick={() => onRemove(item.id)}
-        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
       >
-        <X className="h-3 w-3" />
+        <X className="h-2.5 w-2.5" />
       </button>
-      <div className="px-3 py-2 bg-gray-100/80 border-b border-gray-200 flex items-center gap-2">
-        <GripVertical className="h-3 w-3 text-gray-400" />
+      <div className="px-2 py-1.5 bg-gray-100/80 border-b border-gray-200 flex items-center gap-1.5">
+        <GripVertical className="h-2.5 w-2.5 text-gray-400" />
         {icon}
-        <span className="text-sm font-medium text-gray-700">{title}</span>
+        <span className="text-xs font-medium text-gray-700">{title}</span>
       </div>
-      <div className="p-3 flex-1 overflow-auto">
+      <div className="p-2 flex-1 overflow-auto">
         {children}
       </div>
     </div>
