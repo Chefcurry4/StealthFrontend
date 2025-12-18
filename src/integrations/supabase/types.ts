@@ -424,6 +424,184 @@ export type Database = {
         }
         Relationships: []
       }
+      diary_lab_communications: {
+        Row: {
+          created_at: string
+          email_draft_id: string | null
+          id: string
+          lab_id: string | null
+          notes: string | null
+          reply_received: boolean | null
+          sent_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_draft_id?: string | null
+          id?: string
+          lab_id?: string | null
+          notes?: string | null
+          reply_received?: boolean | null
+          sent_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_draft_id?: string | null
+          id?: string
+          lab_id?: string | null
+          notes?: string | null
+          reply_received?: boolean | null
+          sent_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diary_lab_communications_email_draft_id_fkey"
+            columns: ["email_draft_id"]
+            isOneToOne: false
+            referencedRelation: "email_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diary_lab_communications_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "Labs(L)"
+            referencedColumns: ["id_lab"]
+          },
+        ]
+      }
+      diary_notebooks: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diary_page_items: {
+        Row: {
+          color: string | null
+          content: string | null
+          created_at: string
+          height: number | null
+          id: string
+          is_completed: boolean | null
+          item_type: string
+          page_id: string
+          position_x: number
+          position_y: number
+          reference_id: string | null
+          updated_at: string
+          width: number | null
+          zone: string | null
+        }
+        Insert: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_completed?: boolean | null
+          item_type: string
+          page_id: string
+          position_x?: number
+          position_y?: number
+          reference_id?: string | null
+          updated_at?: string
+          width?: number | null
+          zone?: string | null
+        }
+        Update: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_completed?: boolean | null
+          item_type?: string
+          page_id?: string
+          position_x?: number
+          position_y?: number
+          reference_id?: string | null
+          updated_at?: string
+          width?: number | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diary_page_items_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "diary_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diary_pages: {
+        Row: {
+          created_at: string
+          id: string
+          notebook_id: string
+          page_number: number
+          page_type: string
+          semester: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notebook_id: string
+          page_number?: number
+          page_type?: string
+          semester?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notebook_id?: string
+          page_number?: number
+          page_type?: string
+          semester?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diary_pages_notebook_id_fkey"
+            columns: ["notebook_id"]
+            isOneToOne: false
+            referencedRelation: "diary_notebooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_drafts: {
         Row: {
           ai_generated: boolean | null

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark } from "lucide-react";
+import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark, Book } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ export const Header = () => {
 
   const userNavigation = [
     { name: "Workbench", href: "/workbench", icon: Briefcase },
+    { name: "Diary", href: "/diary", icon: Book },
   ];
 
   const handleSignOut = async () => {
