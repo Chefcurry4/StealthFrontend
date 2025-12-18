@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Maximize2, Palette, Copy } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Maximize2, Palette, Copy, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { DiaryPage, DiaryPageItem } from "@/types/diary";
@@ -23,6 +24,7 @@ interface DiaryNotebookProps {
   onRemoveItem: (id: string) => void;
   onUpdateItem: (id: string, updates: any) => void;
   onDuplicateItem?: (item: DiaryPageItem) => void;
+  onUpdatePage?: (pageId: string, updates: { title?: string; semester?: string }) => void;
 }
 
 export const DiaryNotebook = ({
@@ -34,12 +36,15 @@ export const DiaryNotebook = ({
   onRemoveItem,
   onUpdateItem,
   onDuplicateItem,
+  onUpdatePage,
 }: DiaryNotebookProps) => {
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [labs, setLabs] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
   const pageRef = useRef<HTMLDivElement>(null);
 
   const { setNodeRef, isOver } = useDroppable({
@@ -101,6 +106,18 @@ export const DiaryNotebook = ({
 
   const handleCourseClick = (course: any) => {
     setSelectedCourse(course);
+  };
+
+  const handleTitleEdit = () => {
+    setEditedTitle(currentPage?.title || '');
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = () => {
+    if (currentPage && onUpdatePage && editedTitle.trim()) {
+      onUpdatePage(currentPage.id, { title: editedTitle.trim() });
+    }
+    setIsEditingTitle(false);
   };
 
   const renderItem = (item: DiaryPageItem) => {
@@ -219,7 +236,7 @@ export const DiaryNotebook = ({
       <div className="h-full flex items-center justify-center p-2 sm:p-3 md:p-4">
         {/* Book container - fits screen */}
         <div 
-          className="relative w-full h-full max-h-[calc(100vh-180px)] md:max-h-[calc(100vh-140px)] flex"
+          className="relative w-full h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)] flex"
           style={{ perspective: "2000px" }}
         >
           {/* Black book spine */}
@@ -233,7 +250,7 @@ export const DiaryNotebook = ({
             }}
             id="diary-page-content"
             className={cn(
-              "flex-1 rounded-r-lg shadow-2xl transition-all duration-400 overflow-auto relative",
+              "flex-1 rounded-r-lg shadow-2xl transition-all duration-300 overflow-auto relative",
               isFlipping && flipDirection === 'right' && "animate-[flipRight_0.4s_ease-in-out]",
               isFlipping && flipDirection === 'left' && "animate-[flipLeft_0.4s_ease-in-out]",
               isOver && "ring-2 ring-amber-400 ring-offset-2"
@@ -249,14 +266,33 @@ export const DiaryNotebook = ({
           >
             {/* Page content area */}
             <div className="relative h-full p-3 sm:p-4 md:p-6">
-              {/* Page header */}
-              <div className="mb-3 pb-2">
-                <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 font-serif">
-                  {currentPage?.title || `Page ${currentPageIndex + 1}`}
-                </h2>
-                {currentPage?.semester && (
-                  <span className="text-xs sm:text-sm text-gray-600">{currentPage.semester}</span>
-                )}
+              {/* Page header with editable title */}
+              <div className="mb-3 pb-2 flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  {isEditingTitle ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editedTitle}
+                        onChange={(e) => setEditedTitle(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
+                        onBlur={handleTitleSave}
+                        autoFocus
+                        className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 font-serif bg-transparent border-gray-300 h-8"
+                      />
+                    </div>
+                  ) : (
+                    <h2 
+                      className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 font-serif flex items-center gap-2 cursor-pointer hover:text-gray-600 group"
+                      onClick={handleTitleEdit}
+                    >
+                      {currentPage?.title || `Page ${currentPageIndex + 1}`}
+                      <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+                    </h2>
+                  )}
+                  {currentPage?.semester && (
+                    <span className="text-xs sm:text-sm text-gray-600">{currentPage.semester}</span>
+                  )}
+                </div>
               </div>
 
               {/* Drag hint when empty */}
@@ -408,7 +444,7 @@ export const DiaryNotebook = ({
   );
 };
 
-// Draggable Item Wrapper with resize support
+// Draggable Item Wrapper with resize support - FIXED position persistence
 const DraggableItem = ({ 
   item, 
   children, 
@@ -425,6 +461,7 @@ const DraggableItem = ({
   const [hasMoved, setHasMoved] = useState(false);
   const [position, setPosition] = useState({ x: item.position_x, y: item.position_y });
   const [size, setSize] = useState({ width: item.width || 220, height: item.height || 100 });
+  const [pendingUpdate, setPendingUpdate] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; itemX: number; itemY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
 
@@ -446,8 +483,7 @@ const DraggableItem = ({
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
       
-      // Only consider it a move if we've moved more than 5 pixels
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         setHasMoved(true);
       }
       
@@ -470,16 +506,21 @@ const DraggableItem = ({
     if (isDragging) {
       setIsDragging(false);
       if (hasMoved) {
+        // Mark as pending update to prevent reset from useEffect
+        setPendingUpdate(true);
         // Save position to database
         onUpdatePosition(item.id, { position_x: position.x, position_y: position.y });
+        // Clear pending after a short delay
+        setTimeout(() => setPendingUpdate(false), 500);
       } else if (onClickAction) {
-        // It was a click, not a drag
         onClickAction();
       }
     }
     if (isResizing) {
       setIsResizing(false);
+      setPendingUpdate(true);
       onUpdatePosition(item.id, { width: size.width, height: size.height });
+      setTimeout(() => setPendingUpdate(false), 500);
     }
     dragRef.current = null;
     resizeRef.current = null;
@@ -506,29 +547,34 @@ const DraggableItem = ({
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing]);
+  }, [isDragging, isResizing, position, size]);
 
-  // Sync position from props when item updates
+  // Sync position from props - but NOT when we're dragging or have a pending update
   useEffect(() => {
-    if (!isDragging) {
+    if (!isDragging && !pendingUpdate) {
       setPosition({ x: item.position_x, y: item.position_y });
     }
-  }, [item.position_x, item.position_y, isDragging]);
+  }, [item.position_x, item.position_y, isDragging, pendingUpdate]);
 
   useEffect(() => {
-    if (!isResizing) {
+    if (!isResizing && !pendingUpdate) {
       setSize({ width: item.width || 220, height: item.height || 100 });
     }
-  }, [item.width, item.height, isResizing]);
+  }, [item.width, item.height, isResizing, pendingUpdate]);
 
   return (
     <div
-      className={cn("absolute group", (isDragging || isResizing) && "opacity-80 z-50")}
+      className={cn(
+        "absolute group transition-shadow duration-200",
+        isDragging && "opacity-90 z-50 shadow-2xl",
+        isResizing && "z-50"
+      )}
       style={{
         left: position.x,
         top: position.y,
         width: size.width,
         cursor: isDragging ? 'grabbing' : 'grab',
+        transition: isDragging ? 'none' : 'box-shadow 0.2s ease',
       }}
       onMouseDown={handleMouseDown}
     >

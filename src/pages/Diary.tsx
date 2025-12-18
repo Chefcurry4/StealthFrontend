@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { useDiaryNotebooks, useCreateDiaryNotebook } from "@/hooks/useDiaryNotebooks";
-import { useDiaryPages, useCreateDiaryPage, useDeleteDiaryPage } from "@/hooks/useDiaryPages";
+import { useDiaryPages, useCreateDiaryPage, useDeleteDiaryPage, useUpdateDiaryPage } from "@/hooks/useDiaryPages";
 import { useDiaryPageItems, useCreateDiaryPageItem, useUpdateDiaryPageItem, useDeleteDiaryPageItem } from "@/hooks/useDiaryPageItems";
 import { DiaryNotebook } from "@/components/diary/DiaryNotebook";
 import { DiarySidebar } from "@/components/diary/DiarySidebar";
@@ -42,6 +42,7 @@ const Diary = () => {
   const { data: pages, isLoading: pagesLoading } = useDiaryPages(selectedNotebookId || "");
   const createPage = useCreateDiaryPage();
   const deletePage = useDeleteDiaryPage();
+  const updatePage = useUpdateDiaryPage();
   
   const currentPage = pages?.[currentPageIndex];
   const { data: pageItems } = useDiaryPageItems(currentPage?.id || "");
@@ -52,7 +53,7 @@ const Diary = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
       },
     })
   );
@@ -201,12 +202,9 @@ const Diary = () => {
 
     // Handle dropping on page canvas
     if (overId === 'diary-page-canvas') {
-      const dropPosition = over.rect;
-      const activeRect = active.rect.current.translated;
-      
-      // Calculate position relative to the drop zone
-      const posX = activeRect ? Math.max(0, activeRect.left - dropPosition.left) : 100;
-      const posY = activeRect ? Math.max(0, activeRect.top - dropPosition.top) : 100;
+      // Calculate a visible position - always start near the top-left visible area
+      const posX = 20 + (pageItems?.length || 0) * 15;
+      const posY = 60 + (pageItems?.length || 0) * 15;
 
       if (activeDataCurrent?.type === 'course') {
         createItem.mutate({
@@ -288,6 +286,11 @@ const Diary = () => {
   const handleUpdateItem = (itemId: string, updates: any) => {
     if (!currentPage) return;
     updateItem.mutate({ id: itemId, pageId: currentPage.id, ...updates });
+  };
+
+  const handleUpdatePage = (pageId: string, updates: { title?: string; semester?: string }) => {
+    if (!selectedNotebookId) return;
+    updatePage.mutate({ id: pageId, notebookId: selectedNotebookId, ...updates });
   };
 
   if (!user) {
@@ -419,6 +422,7 @@ const Diary = () => {
                   onRemoveItem={handleRemoveItem}
                   onUpdateItem={handleUpdateItem}
                   onDuplicateItem={handleDuplicateItem}
+                  onUpdatePage={handleUpdatePage}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center">
