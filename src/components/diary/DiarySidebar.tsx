@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { 
   Book, ChevronLeft, ChevronRight, GraduationCap, Beaker, 
-  Search, StickyNote, LayoutGrid, Calendar, FileText
+  Search, StickyNote, LayoutGrid, Calendar, Type
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
   const modules = [
     { id: 'semester_planner', label: 'Semester Planner', icon: Calendar, color: 'bg-blue-100 text-blue-700 border-blue-200' },
     { id: 'lab_tracker', label: 'Lab Tracker', icon: Beaker, color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    { id: 'notes_module', label: 'Notes Module', icon: FileText, color: 'bg-green-100 text-green-700 border-green-200' },
+    { id: 'text', label: 'Add Text', icon: Type, color: 'bg-gray-100 text-gray-700 border-gray-200' },
   ];
 
   const noteColors = [

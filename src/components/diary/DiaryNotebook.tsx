@@ -3,7 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { DiaryPage, DiaryPageItem } from "@/types/diary";
 import { DiarySemesterPlanner } from "./DiarySemesterPlanner";
 import { DiaryLabTracker } from "./DiaryLabTracker";
-import { DiaryNotesPage } from "./DiaryNotesPage";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { TeacherLink } from "@/components/TeacherLink";
@@ -318,23 +317,15 @@ export const DiaryNotebook = ({
       );
     }
 
-    if (item.item_type === 'notes_module' as any) {
+    if (item.item_type === 'text' as any) {
       return (
         <DraggableItem key={item.id} {...commonProps}>
-          <ModuleWrapper 
+          <TextCard 
             item={item} 
             onRemove={onRemoveItem}
             onUpdate={onUpdateItem}
-            title="Notes"
-            icon={<StickyNote className="h-3 w-3" />}
-          >
-            <DiaryNotesPage 
-              page={currentPage!}
-              items={pageItems.filter(i => i.item_type === 'note' || i.item_type === 'todo')}
-              onRemoveItem={onRemoveItem}
-              isLoading={false}
-            />
-          </ModuleWrapper>
+            onDuplicate={onDuplicateItem}
+          />
         </DraggableItem>
       );
     }
@@ -1028,6 +1019,78 @@ const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
           placeholder="Write your note..."
           className="bg-transparent border-none resize-none p-0 text-xs text-gray-700 focus-visible:ring-0 flex-1 min-h-[30px]"
           onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Text Card Component - simple text directly on page with fast typing support
+const TextCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
+  const [localContent, setLocalContent] = useState(item.content || '');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced save for fast typing
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setLocalContent(newContent);
+    
+    // Clear existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // Debounce the save
+    timeoutRef.current = setTimeout(() => {
+      onUpdate(item.id, { content: newContent });
+    }, 300);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Sync with prop changes (when item updates from server)
+  useEffect(() => {
+    setLocalContent(item.content || '');
+  }, [item.content]);
+
+  return (
+    <div className="group relative h-full">
+      <div className="p-2 rounded-lg bg-transparent h-full flex flex-col">
+        <button
+          onClick={() => onRemove(item.id)}
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+        >
+          <X className="h-2.5 w-2.5" />
+        </button>
+        
+        {onDuplicate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
+            className="absolute -top-1.5 right-4 w-4 h-4 rounded-full bg-gray-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+            title="Duplicate"
+          >
+            <Copy className="h-2.5 w-2.5" />
+          </button>
+        )}
+
+        <div className="flex items-center gap-1 opacity-50 mb-1 group-hover:opacity-70">
+          <Type className="h-3 w-3 text-gray-600" />
+          <GripVertical className="h-2.5 w-2.5 text-gray-400" />
+        </div>
+        <textarea
+          value={localContent}
+          onChange={handleChange}
+          placeholder="Type here..."
+          className="bg-transparent border-none resize-none p-0 text-sm text-gray-800 focus:outline-none flex-1 min-h-[30px] font-serif leading-relaxed"
+          onClick={(e) => e.stopPropagation()}
+          style={{ caretColor: '#374151' }}
         />
       </div>
     </div>

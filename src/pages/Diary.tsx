@@ -224,6 +224,25 @@ const Diary = () => {
     });
   };
 
+  const handleAddQuickText = () => {
+    if (!currentPage) return;
+    
+    const posX = 20 + (pageItems?.length || 0) * 20;
+    const posY = 60 + (pageItems?.length || 0) * 20;
+    
+    createItem.mutate({
+      pageId: currentPage.id,
+      itemType: 'text' as any,
+      content: '',
+      positionX: Math.round(posX),
+      positionY: Math.round(posY),
+      width: 200,
+      height: 100,
+    }, {
+      onSuccess: () => toast.success("Text added!"),
+    });
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveData(event.active.data.current);
   };
@@ -268,23 +287,37 @@ const Diary = () => {
           onSuccess: () => toast.success("Lab added to page!"),
         });
       } else if (activeDataCurrent?.type === 'module') {
-        // Smaller default sizes for modules - fully visible on screen
-        const moduleSize = {
-          semester_planner: { width: 380, height: 320 },
-          lab_tracker: { width: 280, height: 200 },
-          notes_module: { width: 260, height: 180 },
-        }[activeDataCurrent.moduleType] || { width: 280, height: 200 };
-        
-        createItem.mutate({
-          pageId: currentPage.id,
-          itemType: activeDataCurrent.moduleType,
-          positionX: Math.round(posX),
-          positionY: Math.round(posY),
-          width: moduleSize.width,
-          height: moduleSize.height,
-        }, {
-          onSuccess: () => toast.success(`${activeDataCurrent.label} added!`),
-        });
+        // Handle text module separately
+        if (activeDataCurrent.moduleType === 'text') {
+          createItem.mutate({
+            pageId: currentPage.id,
+            itemType: 'text' as any,
+            content: '',
+            positionX: Math.round(posX),
+            positionY: Math.round(posY),
+            width: 200,
+            height: 100,
+          }, {
+            onSuccess: () => toast.success("Text added!"),
+          });
+        } else {
+          // Smaller default sizes for modules - fully visible on screen
+          const moduleSize = {
+            semester_planner: { width: 380, height: 320 },
+            lab_tracker: { width: 280, height: 200 },
+          }[activeDataCurrent.moduleType] || { width: 280, height: 200 };
+          
+          createItem.mutate({
+            pageId: currentPage.id,
+            itemType: activeDataCurrent.moduleType,
+            positionX: Math.round(posX),
+            positionY: Math.round(posY),
+            width: moduleSize.width,
+            height: moduleSize.height,
+          }, {
+            onSuccess: () => toast.success(`${activeDataCurrent.label} added!`),
+          });
+        }
       } else if (activeDataCurrent?.type === 'note') {
         createItem.mutate({
           pageId: currentPage.id,
@@ -446,13 +479,13 @@ const Diary = () => {
                             variant="outline"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => handleAddQuickNote('blue')}
+                            onClick={() => handleAddQuickText()}
                             disabled={!currentPage}
                           >
-                            <Type className="h-3.5 w-3.5 text-blue-600" />
+                            <Type className="h-3.5 w-3.5 text-gray-600" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Add text note</TooltipContent>
+                        <TooltipContent>Add text</TooltipContent>
                       </Tooltip>
                     </div>
                   </TooltipProvider>
