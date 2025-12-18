@@ -9,7 +9,7 @@ interface DiarySemesterPlannerProps {
   items: DiaryPageItem[];
   courses: any[];
   onRemoveItem: (id: string) => void;
-  onCourseClick?: (courseId: string) => void;
+  onCourseClick?: (course: any) => void;
 }
 
 const SEMESTERS = [
@@ -157,7 +157,7 @@ interface SemesterDropZoneProps {
   items: DiaryPageItem[];
   courses: any[];
   onRemoveItem: (id: string) => void;
-  onCourseClick?: (courseId: string) => void;
+  onCourseClick?: (course: any) => void;
 }
 
 const SemesterDropZone = ({ semester, items, courses, onRemoveItem, onCourseClick }: SemesterDropZoneProps) => {
@@ -211,7 +211,7 @@ const SemesterDropZone = ({ semester, items, courses, onRemoveItem, onCourseClic
           return (
             <div
               key={item.id}
-              onClick={() => onCourseClick?.(course.id_course)}
+              onClick={() => onCourseClick?.(course)}
               className="p-2 rounded bg-white border border-gray-200 text-xs relative group shadow-sm hover:shadow-md transition-all cursor-pointer hover:bg-gray-50"
             >
               <button
