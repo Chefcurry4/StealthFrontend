@@ -40,6 +40,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface WorkbenchSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  onOpen?: () => void;
   onNewChat: () => void;
   currentConversationId?: string;
   onSelectConversation?: (id: string) => void;
@@ -51,6 +52,7 @@ interface WorkbenchSidebarProps {
 export const WorkbenchSidebar = ({
   isOpen,
   onToggle,
+  onOpen,
   onNewChat,
   currentConversationId,
   onSelectConversation,
@@ -68,6 +70,31 @@ export const WorkbenchSidebar = ({
   const [searchQuery, setSearchQuery] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-open sidebar on hover (PC only, 0.2s delay)
+  const handleMouseEnter = () => {
+    if (isMobile || isOpen) return;
+    hoverTimeoutRef.current = setTimeout(() => {
+      onOpen?.();
+    }, 200);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const { data: conversations } = useAIConversations();
   const { data: savedCourses } = useSavedCourses();
@@ -676,7 +703,11 @@ export const WorkbenchSidebar = ({
   // Collapsed state (desktop only)
   if (!isOpen && !isMobile) {
     return (
-      <div className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm w-14">
+      <div 
+        className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm w-14"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <Button
           variant="ghost"
           size="icon"

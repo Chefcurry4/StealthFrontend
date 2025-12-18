@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Filter, Bookmark } from "lucide-react";
+import { Search, Filter, Bookmark, RotateCcw, LayoutGrid } from "lucide-react";
 import { CourseCardImage } from "@/components/CourseCardImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,13 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
 
+type DisplaySize = '5' | '7' | '10';
+
 const Courses = () => {
   const [filters, setFilters] = useState<CourseFilters>({});
   const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
   const itemsPerPage = 20;
   const queryClient = useQueryClient();
   
@@ -65,6 +68,26 @@ const Courses = () => {
     }));
   };
 
+  const resetFilters = () => {
+    setFilters({});
+    setEctsRange([0, 30]);
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '') || ectsRange[0] !== 0 || ectsRange[1] !== 30;
+
+  const getGridCols = () => {
+    switch (displaySize) {
+      case '10': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10';
+      case '7': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7';
+      default: return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+    }
+  };
+
+  const getCardSize = () => {
+    return displaySize === '10' ? 'small' : 'default';
+  };
+
   return (
     <>
       <SEO 
@@ -103,9 +126,37 @@ const Courses = () => {
         {/* Filters */}
         <section className="py-6 border-b backdrop-blur theme-section" style={{ borderColor: 'var(--theme-card-border)' }}>
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="h-4 w-4 opacity-70" />
-              <span className="text-sm font-medium">Filters:</span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 opacity-70" />
+                <span className="text-sm font-medium">Filters:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetFilters}
+                    className="text-xs gap-1"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset Filters
+                  </Button>
+                )}
+                <div className="hidden lg:flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4 opacity-70" />
+                  <Select value={displaySize} onValueChange={(v) => setDisplaySize(v as DisplaySize)}>
+                    <SelectTrigger className="w-[120px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per row</SelectItem>
+                      <SelectItem value="7">7 per row</SelectItem>
+                      <SelectItem value="10">10 per row</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <Select onValueChange={(value) => updateFilter("universityId", value)}>
@@ -231,7 +282,7 @@ const Courses = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 lg:gap-4">
+              <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4`}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                   <CourseCardSkeleton key={i} />
                 ))}
@@ -249,48 +300,57 @@ const Courses = () => {
                 <div className="mb-4 text-sm opacity-70">
                   Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, allCourses?.length || 0)} of {allCourses?.length || 0} courses
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 lg:gap-4">
+                <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4`}>
                   {courses?.map((course) => {
                     const isSaved = savedCourses?.some((sc: any) => sc.course_id === course.id_course);
+                    const isSmall = getCardSize() === 'small';
                     
                     return (
-                      <Card key={course.id_course} className="flex flex-col overflow-hidden backdrop-blur-md">
+                      <Card 
+                        key={course.id_course} 
+                        className="flex flex-col overflow-hidden backdrop-blur-md cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all duration-200"
+                        onClick={() => navigate(`/courses/${course.id_course}`)}
+                      >
                         <CourseCardImage 
                           courseId={course.id_course}
                           courseName={course.name_course}
                           level={course.ba_ma}
-                          className="h-20 sm:h-24 lg:h-28"
+                          className={isSmall ? "h-14 sm:h-16 lg:h-18" : "h-20 sm:h-24 lg:h-28"}
                         />
-                        <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
-                          <CardTitle className="text-sm sm:text-base lg:text-lg line-clamp-2">{course.name_course}</CardTitle>
+                        <CardHeader className={`flex-1 ${isSmall ? 'p-2 sm:p-2.5' : 'p-3 sm:p-4 lg:p-6'}`}>
+                          <CardTitle className={`${isSmall ? 'text-xs sm:text-sm' : 'text-sm sm:text-base lg:text-lg'} line-clamp-2`}>{course.name_course}</CardTitle>
                           {course.code && (
-                            <p className="text-xs sm:text-sm opacity-70">{course.code}</p>
+                            <p className={`${isSmall ? 'text-[10px]' : 'text-xs sm:text-sm'} opacity-70`}>{course.code}</p>
                           )}
                         </CardHeader>
-                        <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
-                          <div className="flex flex-wrap gap-1 sm:gap-2">
+                        <CardContent className={`space-y-2 ${isSmall ? 'p-2 sm:p-2.5' : 'p-3 sm:p-4 lg:p-6'} pt-0`}>
+                          <div className="flex flex-wrap gap-1">
                             {course.ects && (
-                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium theme-badge">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full ${isSmall ? 'text-[8px]' : 'text-[10px] sm:text-xs'} font-medium theme-badge`}>
                                 {course.ects} ECTS
                               </span>
                             )}
-                            {course.language && (
+                            {course.language && !isSmall && (
                               <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium theme-badge opacity-80">
                                 {course.language}
                               </span>
                             )}
                           </div>
-                          <div className="flex gap-2">
-                            <Link to={`/courses/${course.id_course}`} className="flex-1">
-                              <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
-                                View Details
-                              </Button>
-                            </Link>
+                          <div className="flex gap-1 sm:gap-2">
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className={`flex-1 theme-btn-secondary ${isSmall ? 'text-[10px] h-6' : 'text-xs sm:text-sm'}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View
+                            </Button>
                             <Button
                               variant={isSaved ? "default" : "outline"}
                               size="sm"
-                              className="theme-btn-secondary p-2 sm:p-2.5"
-                              onClick={() => {
+                              className={`theme-btn-secondary ${isSmall ? 'p-1.5 h-6' : 'p-2 sm:p-2.5'}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 if (!user) {
                                   navigate("/auth");
                                   return;
@@ -298,7 +358,7 @@ const Courses = () => {
                                 toggleSave.mutate(course.id_course);
                               }}
                             >
-                              <Bookmark className={`h-3 w-3 sm:h-4 sm:w-4 ${isSaved ? "fill-current" : ""}`} />
+                              <Bookmark className={`${isSmall ? 'h-2.5 w-2.5' : 'h-3 w-3 sm:h-4 sm:w-4'} ${isSaved ? "fill-current" : ""}`} />
                             </Button>
                           </div>
                         </CardContent>
