@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Maximize2, Palette, Copy, Pencil } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -14,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { TeacherLink } from "@/components/TeacherLink";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
 interface DiaryNotebookProps {
   pages: DiaryPage[];
   currentPageIndex: number;
@@ -25,6 +27,7 @@ interface DiaryNotebookProps {
   onUpdateItem: (id: string, updates: any) => void;
   onDuplicateItem?: (item: DiaryPageItem) => void;
   onUpdatePage?: (pageId: string, updates: { title?: string; semester?: string }) => void;
+  onReorderPages?: (activeId: string, overId: string) => void;
 }
 
 export const DiaryNotebook = ({
@@ -37,6 +40,7 @@ export const DiaryNotebook = ({
   onUpdateItem,
   onDuplicateItem,
   onUpdatePage,
+  onReorderPages,
 }: DiaryNotebookProps) => {
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
@@ -44,8 +48,14 @@ export const DiaryNotebook = ({
   const [labs, setLabs] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
   const pageRef = useRef<HTMLDivElement>(null);
+
+  const pageSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   const { setNodeRef, isOver } = useDroppable({
     id: 'diary-page-canvas',
@@ -118,6 +128,25 @@ export const DiaryNotebook = ({
       onUpdatePage(currentPage.id, { title: editedTitle.trim() });
     }
     setIsEditingTitle(false);
+  };
+
+  const handleDescriptionEdit = () => {
+    setEditedDescription(currentPage?.semester || '');
+    setIsEditingDescription(true);
+  };
+
+  const handleDescriptionSave = () => {
+    if (currentPage && onUpdatePage) {
+      onUpdatePage(currentPage.id, { semester: editedDescription.trim() || undefined });
+    }
+    setIsEditingDescription(false);
+  };
+
+  const handlePageReorder = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id && onReorderPages) {
+      onReorderPages(active.id as string, over.id as string);
+    }
   };
 
   const renderItem = (item: DiaryPageItem) => {
@@ -289,8 +318,24 @@ export const DiaryNotebook = ({
                       <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                     </h2>
                   )}
-                  {currentPage?.semester && (
-                    <span className="text-xs sm:text-sm text-gray-600">{currentPage.semester}</span>
+                  {isEditingDescription ? (
+                    <Input
+                      value={editedDescription}
+                      onChange={(e) => setEditedDescription(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleDescriptionSave()}
+                      onBlur={handleDescriptionSave}
+                      autoFocus
+                      placeholder="Write a description here..."
+                      className="text-xs sm:text-sm text-gray-600 bg-transparent border-gray-300 h-6 mt-0.5"
+                    />
+                  ) : (
+                    <p 
+                      className="text-xs sm:text-sm text-gray-600 cursor-pointer hover:text-gray-500 flex items-center gap-1 group mt-0.5"
+                      onClick={handleDescriptionEdit}
+                    >
+                      {currentPage?.semester || 'Write a description here...'}
+                      <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-50 transition-opacity" />
+                    </p>
                   )}
                 </div>
               </div>
@@ -343,21 +388,22 @@ export const DiaryNotebook = ({
             <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
           </Button>
 
-          {/* Page dots */}
-          <div className="absolute -bottom-5 sm:bottom-1 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-20 bg-white/80 px-2 py-1 rounded-full shadow-sm">
-            {pages.map((page, index) => (
-              <button
-                key={page.id}
-                onClick={() => onPageChange(index)}
-                className={cn(
-                  "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all",
-                  index === currentPageIndex 
-                    ? "bg-gray-700 scale-110" 
-                    : "bg-gray-300 hover:bg-gray-500"
-                )}
-              />
-            ))}
-          </div>
+          {/* Draggable Page dots */}
+          <DndContext sensors={pageSensors} collisionDetection={closestCenter} onDragEnd={handlePageReorder}>
+            <SortableContext items={pages.map(p => p.id)} strategy={horizontalListSortingStrategy}>
+              <div className="absolute -bottom-5 sm:bottom-1 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-20 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+                {pages.map((page, index) => (
+                  <SortablePageDot
+                    key={page.id}
+                    page={page}
+                    index={index}
+                    isActive={index === currentPageIndex}
+                    onClick={() => onPageChange(index)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
 
@@ -444,7 +490,48 @@ export const DiaryNotebook = ({
   );
 };
 
-// Draggable Item Wrapper with resize support - FIXED position persistence
+// Sortable Page Dot Component
+const SortablePageDot = ({ 
+  page, 
+  index, 
+  isActive, 
+  onClick 
+}: { 
+  page: DiaryPage; 
+  index: number; 
+  isActive: boolean; 
+  onClick: () => void;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: page.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || 'transform 200ms ease',
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      className={cn(
+        "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all cursor-grab active:cursor-grabbing",
+        isActive 
+          ? "bg-gray-700 scale-125 shadow-sm" 
+          : "bg-gray-300 hover:bg-gray-500 hover:scale-110",
+        isDragging && "opacity-70 scale-150"
+      )}
+      title={page.title || `Page ${index + 1}`}
+    />
+  );
+};
+
+// Draggable Item Wrapper with resize support on all sides
 const DraggableItem = ({ 
   item, 
   children, 
@@ -458,12 +545,13 @@ const DraggableItem = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState<string | null>(null);
   const [hasMoved, setHasMoved] = useState(false);
   const [position, setPosition] = useState({ x: item.position_x, y: item.position_y });
   const [size, setSize] = useState({ width: item.width || 220, height: item.height || 100 });
   const [pendingUpdate, setPendingUpdate] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; itemX: number; itemY: number } | null>(null);
-  const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
+  const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number; startLeft: number; startTop: number } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, textarea, input, .resize-handle')) return;
@@ -495,10 +583,28 @@ const DraggableItem = ({
     if (isResizing && resizeRef.current) {
       const dx = e.clientX - resizeRef.current.startX;
       const dy = e.clientY - resizeRef.current.startY;
-      setSize({
-        width: Math.max(150, resizeRef.current.startWidth + dx),
-        height: Math.max(80, resizeRef.current.startHeight + dy),
-      });
+      
+      let newWidth = resizeRef.current.startWidth;
+      let newHeight = resizeRef.current.startHeight;
+      let newX = position.x;
+      let newY = position.y;
+      
+      // Handle different resize directions
+      if (resizeDirection?.includes('e')) newWidth = Math.max(120, resizeRef.current.startWidth + dx);
+      if (resizeDirection?.includes('w')) {
+        newWidth = Math.max(120, resizeRef.current.startWidth - dx);
+        newX = resizeRef.current.startLeft + dx;
+      }
+      if (resizeDirection?.includes('s')) newHeight = Math.max(60, resizeRef.current.startHeight + dy);
+      if (resizeDirection?.includes('n')) {
+        newHeight = Math.max(60, resizeRef.current.startHeight - dy);
+        newY = resizeRef.current.startTop + dy;
+      }
+      
+      setSize({ width: newWidth, height: newHeight });
+      if (resizeDirection?.includes('w') || resizeDirection?.includes('n')) {
+        setPosition({ x: newX, y: newY });
+      }
     }
   };
 
@@ -506,11 +612,8 @@ const DraggableItem = ({
     if (isDragging) {
       setIsDragging(false);
       if (hasMoved) {
-        // Mark as pending update to prevent reset from useEffect
         setPendingUpdate(true);
-        // Save position to database
-        onUpdatePosition(item.id, { position_x: position.x, position_y: position.y });
-        // Clear pending after a short delay
+        onUpdatePosition(item.id, { position_x: Math.round(position.x), position_y: Math.round(position.y) });
         setTimeout(() => setPendingUpdate(false), 500);
       } else if (onClickAction) {
         onClickAction();
@@ -518,23 +621,32 @@ const DraggableItem = ({
     }
     if (isResizing) {
       setIsResizing(false);
+      setResizeDirection(null);
       setPendingUpdate(true);
-      onUpdatePosition(item.id, { width: size.width, height: size.height });
+      onUpdatePosition(item.id, { 
+        width: Math.round(size.width), 
+        height: Math.round(size.height),
+        position_x: Math.round(position.x),
+        position_y: Math.round(position.y)
+      });
       setTimeout(() => setPendingUpdate(false), 500);
     }
     dragRef.current = null;
     resizeRef.current = null;
   };
 
-  const handleResizeStart = (e: React.MouseEvent) => {
+  const handleResizeStart = (e: React.MouseEvent, direction: string) => {
     e.preventDefault();
     e.stopPropagation();
     setIsResizing(true);
+    setResizeDirection(direction);
     resizeRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       startWidth: size.width,
       startHeight: size.height,
+      startLeft: position.x,
+      startTop: position.y,
     };
   };
 
@@ -547,14 +659,14 @@ const DraggableItem = ({
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, position, size]);
+  }, [isDragging, isResizing, position, size, resizeDirection]);
 
   // Sync position from props - but NOT when we're dragging or have a pending update
   useEffect(() => {
-    if (!isDragging && !pendingUpdate) {
+    if (!isDragging && !pendingUpdate && !isResizing) {
       setPosition({ x: item.position_x, y: item.position_y });
     }
-  }, [item.position_x, item.position_y, isDragging, pendingUpdate]);
+  }, [item.position_x, item.position_y, isDragging, pendingUpdate, isResizing]);
 
   useEffect(() => {
     if (!isResizing && !pendingUpdate) {
@@ -562,29 +674,41 @@ const DraggableItem = ({
     }
   }, [item.width, item.height, isResizing, pendingUpdate]);
 
+  const resizeHandleClass = "resize-handle absolute opacity-0 group-hover:opacity-100 transition-opacity bg-transparent z-10";
+
   return (
     <div
       className={cn(
-        "absolute group transition-shadow duration-200",
-        isDragging && "opacity-90 z-50 shadow-2xl",
+        "absolute group",
+        isDragging && "z-50 shadow-2xl scale-[1.02]",
         isResizing && "z-50"
       )}
       style={{
         left: position.x,
         top: position.y,
         width: size.width,
+        height: size.height,
         cursor: isDragging ? 'grabbing' : 'grab',
-        transition: isDragging ? 'none' : 'box-shadow 0.2s ease',
+        transition: isDragging || isResizing 
+          ? 'box-shadow 0.15s ease, transform 0.15s ease' 
+          : 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
       onMouseDown={handleMouseDown}
     >
-      {children}
-      {/* Resize handle */}
-      <div
-        className="resize-handle absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity"
-        onMouseDown={handleResizeStart}
-      >
-        <Maximize2 className="h-3 w-3 text-gray-400 rotate-90" />
+      <div className="h-full">{children}</div>
+      
+      {/* Edge resize handles */}
+      <div className={cn(resizeHandleClass, "top-0 left-2 right-2 h-1 cursor-n-resize")} onMouseDown={(e) => handleResizeStart(e, 'n')} />
+      <div className={cn(resizeHandleClass, "bottom-0 left-2 right-2 h-1 cursor-s-resize")} onMouseDown={(e) => handleResizeStart(e, 's')} />
+      <div className={cn(resizeHandleClass, "left-0 top-2 bottom-2 w-1 cursor-w-resize")} onMouseDown={(e) => handleResizeStart(e, 'w')} />
+      <div className={cn(resizeHandleClass, "right-0 top-2 bottom-2 w-1 cursor-e-resize")} onMouseDown={(e) => handleResizeStart(e, 'e')} />
+      
+      {/* Corner resize handles */}
+      <div className={cn(resizeHandleClass, "top-0 left-0 w-3 h-3 cursor-nw-resize")} onMouseDown={(e) => handleResizeStart(e, 'nw')} />
+      <div className={cn(resizeHandleClass, "top-0 right-0 w-3 h-3 cursor-ne-resize")} onMouseDown={(e) => handleResizeStart(e, 'ne')} />
+      <div className={cn(resizeHandleClass, "bottom-0 left-0 w-3 h-3 cursor-sw-resize")} onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+      <div className={cn(resizeHandleClass, "bottom-0 right-0 w-3 h-3 cursor-se-resize flex items-end justify-end pr-0.5 pb-0.5")} onMouseDown={(e) => handleResizeStart(e, 'se')}>
+        <Maximize2 className="h-2.5 w-2.5 text-gray-400 rotate-90" />
       </div>
     </div>
   );
