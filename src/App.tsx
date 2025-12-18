@@ -29,6 +29,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import LearningAgreementDetail from "./pages/LearningAgreementDetail";
 import Workbench from "./pages/Workbench";
+import Diary from "./pages/Diary";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
@@ -67,6 +68,7 @@ const AppContent = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learning-agreements/:id" element={<LearningAgreementDetail />} />
                 <Route path="/workbench" element={<Workbench />} />
+                <Route path="/diary" element={<Diary />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/cookie-policy" element={<CookiePolicy />} />
