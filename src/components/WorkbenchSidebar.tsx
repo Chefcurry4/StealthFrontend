@@ -41,6 +41,7 @@ interface WorkbenchSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   onOpen?: () => void;
+  onClose?: () => void;
   onNewChat: () => void;
   currentConversationId?: string;
   onSelectConversation?: (id: string) => void;
@@ -53,6 +54,7 @@ export const WorkbenchSidebar = ({
   isOpen,
   onToggle,
   onOpen,
+  onClose,
   onNewChat,
   currentConversationId,
   onSelectConversation,
@@ -74,16 +76,22 @@ export const WorkbenchSidebar = ({
 
   // Auto-open sidebar on hover (PC only, 0.2s delay)
   const handleMouseEnter = () => {
-    if (isMobile || isOpen) return;
-    hoverTimeoutRef.current = setTimeout(() => {
-      onOpen?.();
-    }, 200);
+    if (isMobile) return;
+    if (!isOpen) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        onOpen?.();
+      }, 200);
+    }
   };
 
   const handleMouseLeave = () => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
+    }
+    // Auto-close sidebar when mouse leaves (PC only)
+    if (!isMobile && isOpen) {
+      onClose?.();
     }
   };
 
@@ -790,7 +798,10 @@ export const WorkbenchSidebar = ({
 
   // Desktop expanded sidebar
   return (
-    <div className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm relative">
+    <div 
+      className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm relative"
+      onMouseLeave={handleMouseLeave}
+    >
       <SidebarContent />
       {/* Resize Handle */}
       <div 
