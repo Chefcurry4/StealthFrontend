@@ -164,7 +164,12 @@ export const DiaryNotebook = ({
           icon={<Beaker className="h-4 w-4" />}
           modeConfig={modeConfig}
         >
-          <DiaryLabTracker />
+          <DiaryLabTracker 
+            page={currentPage!}
+            items={pageItems.filter(i => i.item_type === 'lab')}
+            onRemoveItem={onRemoveItem}
+            isLoading={false}
+          />
         </ModuleWrapper>
       );
     }
@@ -179,7 +184,12 @@ export const DiaryNotebook = ({
           icon={<StickyNote className="h-4 w-4" />}
           modeConfig={modeConfig}
         >
-          <DiaryNotesPage items={pageItems.filter(i => i.item_type === 'todo')} onRemoveItem={onRemoveItem} />
+          <DiaryNotesPage 
+            page={currentPage!}
+            items={pageItems.filter(i => i.item_type === 'note' || i.item_type === 'todo')}
+            onRemoveItem={onRemoveItem}
+            isLoading={false}
+          />
         </ModuleWrapper>
       );
     }
@@ -188,18 +198,18 @@ export const DiaryNotebook = ({
   };
 
   return (
-    <div className="h-full flex items-center justify-center p-4 md:p-8">
+    <div className="h-full flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8">
       {/* Book container */}
       <div 
-        className="relative w-full max-w-5xl h-full flex"
+        className="relative w-full max-w-6xl h-full min-h-[60vh] md:min-h-[70vh] flex"
         style={{ perspective: "2000px" }}
       >
-        {/* Spiral binding */}
-        <div className="absolute left-4 md:left-8 top-0 bottom-0 w-3 md:w-4 z-10 flex flex-col justify-around py-8 rounded-full bg-gradient-to-b from-gray-400 to-gray-600">
-          {Array.from({ length: 15 }).map((_, i) => (
+        {/* Spiral binding - hidden on very small screens */}
+        <div className="hidden sm:flex absolute left-2 sm:left-4 md:left-6 top-0 bottom-0 w-2 sm:w-3 md:w-4 z-10 flex-col justify-around py-6 md:py-8 rounded-full bg-gradient-to-b from-gray-400 to-gray-600 shadow-lg">
+          {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="w-3 md:w-4 h-2 rounded-full bg-gray-300 shadow-inner"
+              className="w-2 sm:w-3 md:w-4 h-1.5 md:h-2 rounded-full bg-gray-300 shadow-inner"
             />
           ))}
         </div>
@@ -209,67 +219,67 @@ export const DiaryNotebook = ({
           ref={setNodeRef}
           id="diary-page-content"
           className={cn(
-            "flex-1 ml-8 md:ml-12 rounded-r-lg shadow-2xl transition-all duration-400 overflow-hidden relative",
+            "flex-1 ml-0 sm:ml-6 md:ml-10 rounded-lg sm:rounded-r-lg shadow-2xl transition-all duration-400 overflow-hidden relative",
             isFlipping && flipDirection === 'right' && "animate-[flipRight_0.4s_ease-in-out]",
             isFlipping && flipDirection === 'left' && "animate-[flipLeft_0.4s_ease-in-out]",
             isOver && "ring-2 ring-primary ring-offset-2"
           )}
           style={{ 
-            background: '#fefefe',
+            background: 'linear-gradient(135deg, #fefefe 0%, #f9f6f1 100%)',
             backgroundImage: `
-              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E")
+              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E")
             `,
             transformStyle: 'preserve-3d',
-            boxShadow: '0 0 30px rgba(0,0,0,0.1), inset 0 0 50px rgba(0,0,0,0.02)',
+            boxShadow: '4px 4px 20px rgba(0,0,0,0.15), -2px 0 8px rgba(0,0,0,0.05), inset 0 0 60px rgba(0,0,0,0.02)',
           }}
         >
-          {/* Paper texture overlay */}
+          {/* Paper edge effect */}
           <div 
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: 'linear-gradient(to right, rgba(0,0,0,0.02) 0%, transparent 3%, transparent 97%, rgba(0,0,0,0.02) 100%)',
+              background: 'linear-gradient(to right, rgba(0,0,0,0.03) 0%, transparent 2%, transparent 98%, rgba(0,0,0,0.03) 100%)',
             }}
           />
 
-          {/* Subtle lines (optional notebook style) */}
+          {/* Subtle ruled lines */}
           <div 
-            className="absolute inset-0 pointer-events-none opacity-10"
+            className="absolute inset-0 pointer-events-none opacity-[0.07]"
             style={{
               backgroundImage: `repeating-linear-gradient(
                 transparent,
-                transparent 31px,
-                #ccc 31px,
-                #ccc 32px
+                transparent 27px,
+                #9ca3af 27px,
+                #9ca3af 28px
               )`,
-              backgroundPosition: '0 40px',
+              backgroundPosition: '0 60px',
             }}
           />
 
           {/* Red margin line */}
           <div 
-            className="absolute top-0 bottom-0 left-12 md:left-16 w-px opacity-20"
-            style={{ background: '#e74c3c' }}
+            className="hidden sm:block absolute top-0 bottom-0 left-10 md:left-14 w-px opacity-25"
+            style={{ background: '#dc2626' }}
           />
 
           {/* Page content area */}
-          <div className="relative h-full overflow-auto p-4 md:p-6 pl-16 md:pl-20">
+          <div className="relative h-full overflow-auto p-3 sm:p-4 md:p-6 sm:pl-14 md:pl-18">
             {/* Page header */}
-            <div className="mb-4 pb-2 border-b border-gray-200">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-800">
+            <div className="mb-3 sm:mb-4 pb-2 border-b border-gray-300/50">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 font-serif">
                 {currentPage?.title || `Page ${currentPageIndex + 1}`}
               </h2>
               {currentPage?.semester && (
-                <span className="text-sm text-gray-500">{currentPage.semester}</span>
+                <span className="text-xs sm:text-sm text-gray-500">{currentPage.semester}</span>
               )}
             </div>
 
             {/* Drag hint when empty */}
             {pageItems.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
                 <div className="text-center text-gray-400">
-                  <GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                  <p className="text-lg">Drag modules and courses here</p>
-                  <p className="text-sm">Use the sidebar to add content</p>
+                  <GraduationCap className="h-12 sm:h-16 w-12 sm:w-16 mx-auto mb-3 sm:mb-4 opacity-20" />
+                  <p className="text-sm sm:text-lg">Drag modules and courses here</p>
+                  <p className="text-xs sm:text-sm">Use the sidebar to add content</p>
                 </div>
               </div>
             )}
@@ -293,34 +303,34 @@ export const DiaryNotebook = ({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 opacity-50 hover:opacity-100 bg-white/80 shadow-md"
+          className="absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 z-20 opacity-60 hover:opacity-100 bg-white/90 shadow-lg h-10 w-10 sm:h-12 sm:w-12 rounded-full"
           onClick={() => handlePageTurn('left')}
           disabled={currentPageIndex === 0 || isFlipping}
         >
-          <ChevronLeft className="h-8 w-8 text-gray-600" />
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 opacity-50 hover:opacity-100 bg-white/80 shadow-md"
+          className="absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 z-20 opacity-60 hover:opacity-100 bg-white/90 shadow-lg h-10 w-10 sm:h-12 sm:w-12 rounded-full"
           onClick={() => handlePageTurn('right')}
           disabled={currentPageIndex === pages.length - 1 || isFlipping}
         >
-          <ChevronRight className="h-8 w-8 text-gray-600" />
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
         </Button>
 
         {/* Page dots */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+        <div className="absolute -bottom-6 sm:bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-20 bg-white/80 px-3 py-1.5 rounded-full shadow-sm">
           {pages.map((page, index) => (
             <button
               key={page.id}
               onClick={() => onPageChange(index)}
               className={cn(
-                "w-2 h-2 rounded-full transition-all",
+                "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all",
                 index === currentPageIndex 
-                  ? "bg-gray-700 scale-125" 
-                  : "bg-gray-300 hover:bg-gray-400"
+                  ? "bg-gray-700 scale-110" 
+                  : "bg-gray-300 hover:bg-gray-500"
               )}
             />
           ))}

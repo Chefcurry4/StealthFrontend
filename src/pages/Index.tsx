@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, UserPlus } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useCourses } from "@/hooks/useCourses";
@@ -43,6 +43,15 @@ const Index = () => {
       description: "AI advisor & saved items",
       href: "/workbench",
       color: "text-orange-500",
+      authRequired: true,
+    },
+    {
+      icon: BookMarked,
+      title: "My Diary",
+      description: "Plan your semester",
+      href: "/diary",
+      color: "text-rose-500",
+      authRequired: true,
     },
   ];
 
@@ -83,8 +92,10 @@ const Index = () => {
             )}
 
             {/* Navigation Hubs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {hubs.map((hub) => {
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+              {hubs
+                .filter((hub) => !hub.authRequired || user)
+                .map((hub) => {
                 const Icon = hub.icon;
                 return (
                   <Link key={hub.title} to={hub.href}>
