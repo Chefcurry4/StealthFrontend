@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Maximize2, Palette } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Maximize2, Palette, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +22,7 @@ interface DiaryNotebookProps {
   pageItems: DiaryPageItem[];
   onRemoveItem: (id: string) => void;
   onUpdateItem: (id: string, updates: any) => void;
+  onDuplicateItem?: (item: DiaryPageItem) => void;
 }
 
 export const DiaryNotebook = ({
@@ -32,6 +33,7 @@ export const DiaryNotebook = ({
   pageItems,
   onRemoveItem,
   onUpdateItem,
+  onDuplicateItem,
 }: DiaryNotebookProps) => {
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
@@ -106,12 +108,12 @@ export const DiaryNotebook = ({
       const course = courses.find(c => c.id_course === item.reference_id);
       if (!course) return null;
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem}>
+        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem} onClickAction={() => handleCourseClick(course)}>
           <CourseCard 
             item={item} 
             course={course} 
             onRemove={onRemoveItem}
-            onClick={() => handleCourseClick(course)}
+            onDuplicate={onDuplicateItem}
           />
         </DraggableItem>
       );
@@ -126,6 +128,7 @@ export const DiaryNotebook = ({
             item={item} 
             lab={lab} 
             onRemove={onRemoveItem}
+            onDuplicate={onDuplicateItem}
           />
         </DraggableItem>
       );
@@ -138,6 +141,7 @@ export const DiaryNotebook = ({
             item={item} 
             onRemove={onRemoveItem}
             onUpdate={onUpdateItem}
+            onDuplicate={onDuplicateItem}
           />
         </DraggableItem>
       );
@@ -405,9 +409,20 @@ export const DiaryNotebook = ({
 };
 
 // Draggable Item Wrapper with resize support
-const DraggableItem = ({ item, children, onUpdatePosition }: { item: DiaryPageItem; children: React.ReactNode; onUpdatePosition: (id: string, updates: any) => void }) => {
+const DraggableItem = ({ 
+  item, 
+  children, 
+  onUpdatePosition,
+  onClickAction 
+}: { 
+  item: DiaryPageItem; 
+  children: React.ReactNode; 
+  onUpdatePosition: (id: string, updates: any) => void;
+  onClickAction?: () => void;
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [hasMoved, setHasMoved] = useState(false);
   const [position, setPosition] = useState({ x: item.position_x, y: item.position_y });
   const [size, setSize] = useState({ width: item.width || 220, height: item.height || 100 });
   const dragRef = useRef<{ startX: number; startY: number; itemX: number; itemY: number } | null>(null);
@@ -417,6 +432,7 @@ const DraggableItem = ({ item, children, onUpdatePosition }: { item: DiaryPageIt
     if ((e.target as HTMLElement).closest('button, textarea, input, .resize-handle')) return;
     e.preventDefault();
     setIsDragging(true);
+    setHasMoved(false);
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -429,6 +445,12 @@ const DraggableItem = ({ item, children, onUpdatePosition }: { item: DiaryPageIt
     if (isDragging && dragRef.current) {
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
+      
+      // Only consider it a move if we've moved more than 5 pixels
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        setHasMoved(true);
+      }
+      
       setPosition({
         x: Math.max(0, dragRef.current.itemX + dx),
         y: Math.max(0, dragRef.current.itemY + dy),
@@ -447,7 +469,13 @@ const DraggableItem = ({ item, children, onUpdatePosition }: { item: DiaryPageIt
   const handleMouseUp = () => {
     if (isDragging) {
       setIsDragging(false);
-      onUpdatePosition(item.id, { position_x: position.x, position_y: position.y });
+      if (hasMoved) {
+        // Save position to database
+        onUpdatePosition(item.id, { position_x: position.x, position_y: position.y });
+      } else if (onClickAction) {
+        // It was a click, not a drag
+        onClickAction();
+      }
     }
     if (isResizing) {
       setIsResizing(false);
@@ -517,18 +545,24 @@ const DraggableItem = ({ item, children, onUpdatePosition }: { item: DiaryPageIt
 };
 
 // Course Card Component
-const CourseCard = ({ item, course, onRemove, onClick }: any) => (
+const CourseCard = ({ item, course, onRemove, onDuplicate }: any) => (
   <div className="group relative h-full">
-    <div 
-      className="p-3 rounded-lg bg-blue-50/90 border border-blue-200 shadow-sm hover:shadow-md transition-all cursor-pointer hover:bg-blue-100/90 h-full"
-      onClick={onClick}
-    >
+    <div className="p-3 rounded-lg bg-blue-50/90 border border-blue-200 shadow-sm hover:shadow-md transition-all cursor-pointer hover:bg-blue-100/90 h-full">
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
         className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
       >
         <X className="h-3 w-3" />
       </button>
+      {onDuplicate && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
+          className="absolute -top-2 right-5 w-5 h-5 rounded-full bg-blue-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+          title="Duplicate"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      )}
       <div className="flex items-start gap-2">
         <GraduationCap className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
@@ -544,7 +578,7 @@ const CourseCard = ({ item, course, onRemove, onClick }: any) => (
 );
 
 // Lab Card Component
-const LabCard = ({ item, lab, onRemove }: any) => (
+const LabCard = ({ item, lab, onRemove, onDuplicate }: any) => (
   <div className="group relative h-full">
     <div className="p-3 rounded-lg bg-purple-50/90 border border-purple-200 shadow-sm hover:shadow-md transition-shadow h-full">
       <button
@@ -553,6 +587,15 @@ const LabCard = ({ item, lab, onRemove }: any) => (
       >
         <X className="h-3 w-3" />
       </button>
+      {onDuplicate && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
+          className="absolute -top-2 right-5 w-5 h-5 rounded-full bg-purple-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+          title="Duplicate"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      )}
       <div className="flex items-start gap-2">
         <Beaker className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
@@ -567,7 +610,7 @@ const LabCard = ({ item, lab, onRemove }: any) => (
 );
 
 // Note Card Component with color picker
-const NoteCard = ({ item, onRemove, onUpdate }: any) => {
+const NoteCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
   const allColors: Record<string, { bg: string; border: string; name: string }> = {
     yellow: { bg: 'bg-yellow-100/90', border: 'border-yellow-300', name: 'Yellow' },
     pink: { bg: 'bg-pink-100/90', border: 'border-pink-300', name: 'Pink' },
@@ -590,6 +633,17 @@ const NoteCard = ({ item, onRemove, onUpdate }: any) => {
         >
           <X className="h-3 w-3" />
         </button>
+        
+        {/* Duplicate button */}
+        {onDuplicate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
+            className="absolute -top-2 right-5 w-5 h-5 rounded-full bg-gray-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+            title="Duplicate"
+          >
+            <Copy className="h-3 w-3" />
+          </button>
+        )}
         
         {/* Color picker */}
         <Popover>
