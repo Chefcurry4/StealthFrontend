@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Book, Plus, ChevronLeft, ChevronRight, Trash2, Download, Copy } from "lucide-react";
+import { Book, Plus, Trash2, Download, Copy, StickyNote, Type, Maximize2, Minimize2 } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,8 +24,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 const Diary = () => {
   const navigate = useNavigate();
@@ -36,6 +41,8 @@ const Diary = () => {
   const [selectedNotebookId, setSelectedNotebookId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [activeData, setActiveData] = useState<any>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isFullView, setIsFullView] = useState(false);
 
   const { data: notebooks, isLoading: notebooksLoading } = useDiaryNotebooks();
   const createNotebook = useCreateDiaryNotebook();
@@ -139,8 +146,8 @@ const Diary = () => {
             content: item.content || undefined,
             positionX: item.position_x + 20,
             positionY: item.position_y + 20,
-            width: item.width || 200,
-            height: item.height || 100,
+            width: item.width || 180,
+            height: item.height || 80,
             color: item.color || undefined,
             zone: item.zone || undefined,
           });
@@ -159,10 +166,10 @@ const Diary = () => {
       itemType: item.item_type as any,
       referenceId: item.reference_id || undefined,
       content: item.content || undefined,
-      positionX: item.position_x + 30,
-      positionY: item.position_y + 30,
-      width: item.width || 200,
-      height: item.height || 100,
+      positionX: item.position_x + 20,
+      positionY: item.position_y + 20,
+      width: item.width || 180,
+      height: item.height || 80,
       color: item.color || undefined,
       zone: item.zone || undefined,
     }, {
@@ -170,22 +177,51 @@ const Diary = () => {
     });
   };
 
-  const handleExportPdf = async () => {
+  // Export as PNG
+  const handleExportPng = async () => {
     const element = document.getElementById('diary-page-content');
     if (!element) return;
 
+    setIsExporting(true);
     try {
-      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('portrait', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${currentPage?.title || 'diary-page'}.pdf`);
-      toast.success("PDF exported!");
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        backgroundColor: '#fdf8e8',
+        useCORS: true,
+      });
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `${currentPage?.title || 'diary-page'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast.success("PNG exported!");
     } catch (error) {
-      toast.error("Failed to export PDF");
+      toast.error("Failed to export PNG");
+    } finally {
+      setIsExporting(false);
     }
+  };
+
+  const handleAddQuickNote = (color: string = 'yellow') => {
+    if (!currentPage) return;
+    
+    const posX = 20 + (pageItems?.length || 0) * 20;
+    const posY = 60 + (pageItems?.length || 0) * 20;
+    
+    createItem.mutate({
+      pageId: currentPage.id,
+      itemType: 'note',
+      content: '',
+      positionX: Math.round(posX),
+      positionY: Math.round(posY),
+      width: 160,
+      height: 120,
+      color,
+    }, {
+      onSuccess: () => toast.success("Note added!"),
+    });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -204,8 +240,8 @@ const Diary = () => {
     // Handle dropping on page canvas
     if (overId === 'diary-page-canvas') {
       // Calculate a visible position - always start near the top-left visible area
-      const posX = 20 + (pageItems?.length || 0) * 15;
-      const posY = 60 + (pageItems?.length || 0) * 15;
+      const posX = 20 + (pageItems?.length || 0) * 20;
+      const posY = 50 + (pageItems?.length || 0) * 20;
 
       if (activeDataCurrent?.type === 'course') {
         createItem.mutate({
@@ -214,8 +250,8 @@ const Diary = () => {
           referenceId: activeDataCurrent.course.id_course,
           positionX: Math.round(posX),
           positionY: Math.round(posY),
-          width: 200,
-          height: 80,
+          width: 180,
+          height: 70,
         }, {
           onSuccess: () => toast.success("Course added to page!"),
         });
@@ -226,19 +262,26 @@ const Diary = () => {
           referenceId: activeDataCurrent.lab.id_lab,
           positionX: Math.round(posX),
           positionY: Math.round(posY),
-          width: 200,
-          height: 80,
+          width: 180,
+          height: 70,
         }, {
           onSuccess: () => toast.success("Lab added to page!"),
         });
       } else if (activeDataCurrent?.type === 'module') {
+        // Smaller default sizes for modules - fully visible on screen
+        const moduleSize = {
+          semester_planner: { width: 380, height: 320 },
+          lab_tracker: { width: 280, height: 200 },
+          notes_module: { width: 260, height: 180 },
+        }[activeDataCurrent.moduleType] || { width: 280, height: 200 };
+        
         createItem.mutate({
           pageId: currentPage.id,
           itemType: activeDataCurrent.moduleType,
           positionX: Math.round(posX),
           positionY: Math.round(posY),
-          width: activeDataCurrent.moduleType === 'semester_planner' ? 450 : 300,
-          height: activeDataCurrent.moduleType === 'semester_planner' ? 280 : 250,
+          width: moduleSize.width,
+          height: moduleSize.height,
         }, {
           onSuccess: () => toast.success(`${activeDataCurrent.label} added!`),
         });
@@ -249,8 +292,8 @@ const Diary = () => {
           content: '',
           positionX: Math.round(posX),
           positionY: Math.round(posY),
-          width: 200,
-          height: 150,
+          width: 160,
+          height: 120,
           color: activeDataCurrent.color || 'yellow',
         }, {
           onSuccess: () => toast.success("Note added!"),
@@ -358,13 +401,13 @@ const Diary = () => {
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Toolbar */}
             <div 
-              className="flex items-center justify-between p-4 border-b"
+              className="flex items-center justify-between p-3 border-b"
               style={{ 
                 borderColor: modeConfig.ui.cardBorder,
                 background: modeConfig.ui.cardBackground 
               }}
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -374,24 +417,61 @@ const Diary = () => {
                   <Book className="h-4 w-4" />
                 </Button>
                 
-                <h1 className="text-xl font-bold flex items-center gap-2">
-                  <Book className="h-5 w-5" />
+                <h1 className="text-lg font-bold flex items-center gap-2">
+                  <Book className="h-4 w-4" />
                   {notebooks?.find(n => n.id === selectedNotebookId)?.name || "Diary"}
                 </h1>
+
+                {/* Quick add buttons when sidebar is closed */}
+                {!sidebarOpen && (
+                  <TooltipProvider>
+                    <div className="flex items-center gap-1 ml-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleAddQuickNote('yellow')}
+                            disabled={!currentPage}
+                          >
+                            <StickyNote className="h-3.5 w-3.5 text-yellow-600" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Add sticky note</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleAddQuickNote('blue')}
+                            disabled={!currentPage}
+                          >
+                            <Type className="h-3.5 w-3.5 text-blue-600" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Add text note</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleAddPage}
+                  className="h-8 text-xs"
                   style={{ 
                     borderColor: modeConfig.ui.cardBorder,
                     background: modeConfig.ui.buttonSecondary,
                     color: modeConfig.ui.buttonSecondaryText
                   }}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-3.5 w-3.5 mr-1" />
                   Add Page
                 </Button>
                 {pages && pages.length > 0 && (
@@ -400,40 +480,66 @@ const Diary = () => {
                       variant="outline"
                       size="sm"
                       onClick={handleDuplicatePage}
+                      className="h-8 text-xs"
                       style={{ 
                         borderColor: modeConfig.ui.cardBorder,
                         background: modeConfig.ui.buttonSecondary,
                         color: modeConfig.ui.buttonSecondaryText
                       }}
                     >
-                      <Copy className="h-4 w-4 mr-1" />
+                      <Copy className="h-3.5 w-3.5 mr-1" />
                       Duplicate
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={handleExportPdf}
+                      onClick={() => setIsFullView(!isFullView)}
+                      className="h-8 text-xs"
                       style={{ 
                         borderColor: modeConfig.ui.cardBorder,
                         background: modeConfig.ui.buttonSecondary,
                         color: modeConfig.ui.buttonSecondaryText
                       }}
                     >
-                      <Download className="h-4 w-4 mr-1" />
-                      Export PDF
+                      {isFullView ? <Minimize2 className="h-3.5 w-3.5 mr-1" /> : <Maximize2 className="h-3.5 w-3.5 mr-1" />}
+                      {isFullView ? 'Exit Full View' : 'Full View'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportPng}
+                      disabled={isExporting}
+                      className="h-8 text-xs"
+                      style={{ 
+                        borderColor: modeConfig.ui.cardBorder,
+                        background: modeConfig.ui.buttonSecondary,
+                        color: modeConfig.ui.buttonSecondaryText
+                      }}
+                    >
+                      {isExporting ? (
+                        <>
+                          <Loader size="sm" />
+                          <span className="ml-1">Exporting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          Export PNG
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setDeleteDialogOpen(true)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive h-8 text-xs"
                       style={{ 
                         borderColor: modeConfig.ui.cardBorder,
                         background: modeConfig.ui.buttonSecondary,
                       }}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete Page
+                      <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      Delete
                     </Button>
                   </>
                 )}
@@ -458,13 +564,15 @@ const Diary = () => {
                   onDuplicateItem={handleDuplicateItem}
                   onUpdatePage={handleUpdatePage}
                   onReorderPages={handleReorderPages}
+                  isFullView={isFullView}
+                  onToggleFullView={() => setIsFullView(!isFullView)}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
-                    <Book className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-lg opacity-70">Your diary is empty</p>
-                    <p className="text-sm opacity-50 mb-4">Add a page to get started</p>
+                    <Book className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-base opacity-70">Your diary is empty</p>
+                    <p className="text-sm opacity-50 mb-3">Add a page to get started</p>
                     <Button
                       onClick={handleAddPage}
                       style={{ 
@@ -480,71 +588,38 @@ const Diary = () => {
               )}
             </div>
 
-            {/* Page Navigation */}
-            {pages && pages.length > 0 && (
-              <div 
-                className="flex items-center justify-center gap-4 p-4 border-t"
-                style={{ 
-                  borderColor: modeConfig.ui.cardBorder,
-                  background: modeConfig.ui.cardBackground 
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
-                  disabled={currentPageIndex === 0}
-                  style={{ color: modeConfig.textColor }}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                
-                <span className="text-sm font-medium">
-                  Page {currentPageIndex + 1} of {pages.length}
-                </span>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
-                  disabled={currentPageIndex === pages.length - 1}
-                  style={{ color: modeConfig.textColor }}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </div>
-            )}
+            {/* Page Navigation - moved inside notebook */}
           </div>
         </div>
 
         {/* Drag Overlay */}
         <DragOverlay>
           {activeData && (
-            <div 
-              className="p-3 rounded-lg shadow-xl opacity-90"
-              style={{ 
-                background: modeConfig.ui.cardBackground,
-                border: `2px solid ${modeConfig.ui.buttonPrimary}`
-              }}
-            >
+            <div className="opacity-80 transform scale-105 rotate-2 shadow-xl pointer-events-none">
               {activeData.type === 'course' && (
-                <div className="text-sm font-medium">{activeData.course.name_course}</div>
+                <div className="p-2 rounded-lg bg-blue-100 border-2 border-blue-300 shadow-lg">
+                  <p className="text-xs font-medium">{activeData.course?.name_course}</p>
+                </div>
               )}
               {activeData.type === 'lab' && (
-                <div className="text-sm font-medium">{activeData.lab.name}</div>
+                <div className="p-2 rounded-lg bg-purple-100 border-2 border-purple-300 shadow-lg">
+                  <p className="text-xs font-medium">{activeData.lab?.name}</p>
+                </div>
               )}
               {activeData.type === 'module' && (
-                <div className="text-sm font-medium">{activeData.label}</div>
+                <div className="p-2 rounded-lg bg-gray-100 border-2 border-gray-300 shadow-lg">
+                  <p className="text-xs font-medium">{activeData.label}</p>
+                </div>
               )}
               {activeData.type === 'note' && (
-                <div className="text-sm font-medium">Sticky Note</div>
+                <div className="w-10 h-10 rounded shadow-lg bg-yellow-200 border-2 border-yellow-400" />
               )}
             </div>
           )}
         </DragOverlay>
       </DndContext>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -555,7 +630,10 @@ const Diary = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCurrentPage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDeleteCurrentPage}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
