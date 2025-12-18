@@ -225,7 +225,11 @@ const Labs = () => {
                     const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3) || [];
                     
                     return (
-                      <Card key={lab.id_lab} className="overflow-hidden flex flex-col backdrop-blur-md">
+                      <Card 
+                        key={lab.id_lab} 
+                        className="overflow-hidden flex flex-col backdrop-blur-md cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all duration-200"
+                        onClick={() => navigate(`/labs/${lab.slug || lab.id_lab}`)}
+                      >
                         <LabCardImage 
                           labName={lab.name} 
                           labId={lab.id_lab} 
@@ -247,16 +251,20 @@ const Labs = () => {
                           )}
                           
                           <div className="flex gap-2 mt-auto">
-                            <Link to={`/labs/${lab.slug || lab.id_lab}`} className="flex-1">
-                              <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
-                                View Details
-                              </Button>
-                            </Link>
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="flex-1 theme-btn-secondary text-xs sm:text-sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View Details
+                            </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
                               className="theme-btn-secondary"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 if (!user) {
                                   navigate("/auth");
                                   return;

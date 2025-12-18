@@ -456,6 +456,7 @@ const Workbench = () => {
       <WorkbenchSidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onOpen={() => setSidebarOpen(true)}
         onNewChat={handleNewChat}
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
