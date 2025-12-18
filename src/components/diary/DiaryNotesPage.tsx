@@ -159,42 +159,45 @@ export const DiaryNotesPage = ({ page, items, onRemoveItem, isLoading }: DiaryNo
                 </button>
 
                 {isEditing ? (
-                  <div className="space-y-2">
+                  <div className="h-full flex flex-col">
                     <Textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      className="min-h-[80px] bg-transparent border-none resize-none focus:ring-0 p-0"
+                      className="flex-1 min-h-[80px] bg-transparent border-none resize-none focus:ring-0 p-0 text-base font-medium text-center placeholder:text-center"
                       style={{ color: colorConfig.text }}
+                      placeholder="Type your note..."
                       autoFocus
                     />
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-center gap-2 mt-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setEditingNote(null)}
-                        className="h-6 px-2"
+                        className="h-7 px-3"
+                        style={{ color: colorConfig.text }}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleSaveNote(item.id)}
-                        className="h-6 px-2"
+                        className="h-7 px-3"
+                        style={{ color: colorConfig.text }}
                       >
-                        <Check className="h-3 w-3" />
+                        <Check className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div
-                    className="cursor-pointer min-h-[80px]"
+                    className="cursor-pointer min-h-[80px] flex items-center justify-center text-center text-base font-medium"
                     onClick={() => {
                       setEditingNote(item.id);
                       setEditContent(item.content || '');
                     }}
                   >
-                    {item.content || <span className="opacity-50 text-sm">Click to add note...</span>}
+                    {item.content || <span className="opacity-50">Click to add note...</span>}
                   </div>
                 )}
               </div>
