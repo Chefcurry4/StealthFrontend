@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { useDiaryNotebooks, useCreateDiaryNotebook } from "@/hooks/useDiaryNotebooks";
-import { useDiaryPages, useCreateDiaryPage, useDeleteDiaryPage, useUpdateDiaryPage } from "@/hooks/useDiaryPages";
+import { useDiaryPages, useCreateDiaryPage, useDeleteDiaryPage, useUpdateDiaryPage, useReorderDiaryPages } from "@/hooks/useDiaryPages";
 import { useDiaryPageItems, useCreateDiaryPageItem, useUpdateDiaryPageItem, useDeleteDiaryPageItem } from "@/hooks/useDiaryPageItems";
 import { DiaryNotebook } from "@/components/diary/DiaryNotebook";
 import { DiarySidebar } from "@/components/diary/DiarySidebar";
@@ -43,6 +43,7 @@ const Diary = () => {
   const createPage = useCreateDiaryPage();
   const deletePage = useDeleteDiaryPage();
   const updatePage = useUpdateDiaryPage();
+  const reorderPages = useReorderDiaryPages();
   
   const currentPage = pages?.[currentPageIndex];
   const { data: pageItems } = useDiaryPageItems(currentPage?.id || "");
@@ -236,8 +237,8 @@ const Diary = () => {
           itemType: activeDataCurrent.moduleType,
           positionX: Math.round(posX),
           positionY: Math.round(posY),
-          width: activeDataCurrent.moduleType === 'semester_planner' ? 600 : 300,
-          height: activeDataCurrent.moduleType === 'semester_planner' ? 400 : 250,
+          width: activeDataCurrent.moduleType === 'semester_planner' ? 450 : 300,
+          height: activeDataCurrent.moduleType === 'semester_planner' ? 280 : 250,
         }, {
           onSuccess: () => toast.success(`${activeDataCurrent.label} added!`),
         });
@@ -291,6 +292,39 @@ const Diary = () => {
   const handleUpdatePage = (pageId: string, updates: { title?: string; semester?: string }) => {
     if (!selectedNotebookId) return;
     updatePage.mutate({ id: pageId, notebookId: selectedNotebookId, ...updates });
+  };
+
+  const handleReorderPages = (activeId: string, overId: string) => {
+    if (!pages || !selectedNotebookId) return;
+    
+    const oldIndex = pages.findIndex(p => p.id === activeId);
+    const newIndex = pages.findIndex(p => p.id === overId);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    // Create new order
+    const reorderedPages = [...pages];
+    const [movedPage] = reorderedPages.splice(oldIndex, 1);
+    reorderedPages.splice(newIndex, 0, movedPage);
+    
+    // Update page numbers
+    const updates = reorderedPages.map((page, index) => ({
+      id: page.id,
+      page_number: index + 1,
+    }));
+    
+    reorderPages.mutate({ pages: updates, notebookId: selectedNotebookId }, {
+      onSuccess: () => {
+        // Update current index if needed
+        if (currentPageIndex === oldIndex) {
+          setCurrentPageIndex(newIndex);
+        } else if (currentPageIndex > oldIndex && currentPageIndex <= newIndex) {
+          setCurrentPageIndex(currentPageIndex - 1);
+        } else if (currentPageIndex < oldIndex && currentPageIndex >= newIndex) {
+          setCurrentPageIndex(currentPageIndex + 1);
+        }
+      },
+    });
   };
 
   if (!user) {
@@ -423,6 +457,7 @@ const Diary = () => {
                   onUpdateItem={handleUpdateItem}
                   onDuplicateItem={handleDuplicateItem}
                   onUpdatePage={handleUpdatePage}
+                  onReorderPages={handleReorderPages}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center">

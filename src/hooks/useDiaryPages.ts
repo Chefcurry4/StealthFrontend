@@ -99,3 +99,24 @@ export const useDeleteDiaryPage = () => {
     },
   });
 };
+
+export const useReorderDiaryPages = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pages, notebookId }: { pages: { id: string; page_number: number }[]; notebookId: string }) => {
+      // Update each page's page_number
+      for (const page of pages) {
+        const { error } = await supabase
+          .from("diary_pages")
+          .update({ page_number: page.page_number })
+          .eq("id", page.id);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["diary-pages", variables.notebookId] });
+    },
+  });
+};
