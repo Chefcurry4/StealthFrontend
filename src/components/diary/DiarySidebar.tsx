@@ -57,6 +57,9 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
     { id: 'blue', label: 'Blue', class: 'bg-blue-200' },
     { id: 'green', label: 'Green', class: 'bg-green-200' },
     { id: 'purple', label: 'Purple', class: 'bg-purple-200' },
+    { id: 'orange', label: 'Orange', class: 'bg-orange-200' },
+    { id: 'cyan', label: 'Cyan', class: 'bg-cyan-200' },
+    { id: 'rose', label: 'Rose', class: 'bg-rose-200' },
   ];
 
   return (
@@ -171,7 +174,7 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
                 
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: modeConfig.ui.cardBorder }}>
                   <p className="text-xs text-muted-foreground mb-3">Sticky Notes</p>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {noteColors.map((color) => (
                       <DraggableNote key={color.id} color={color} />
                     ))}
