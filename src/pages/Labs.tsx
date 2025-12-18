@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Filter, Bookmark, ArrowUpDown } from "lucide-react";
+import { Search, Filter, Bookmark, ArrowUpDown, RotateCcw, LayoutGrid } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,13 @@ import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
 import { SEO } from "@/components/SEO";
 
 type SortOption = 'name-asc' | 'name-desc' | 'most-saved';
+type DisplaySize = '5' | '7' | '10';
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
   const [researchDomain, setResearchDomain] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+  const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
   const { data: labs, isLoading, error, refetch } = useLabs(filters);
   const { data: universities } = useUniversities();
   const { user } = useAuth();
@@ -32,6 +34,30 @@ const Labs = () => {
   const toggleSave = useToggleSaveLab();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const hasActiveFilters = filters.search || filters.universityId || filters.facultyArea || researchDomain;
+
+  const resetFilters = () => {
+    setFilters({});
+    setResearchDomain('');
+    setSortBy('name-asc');
+  };
+
+  const getGridCols = () => {
+    switch (displaySize) {
+      case '5': return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+      case '7': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
+      case '10': return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-10';
+      default: return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+    }
+  };
+
+  const getCardSize = () => {
+    if (displaySize === '10') {
+      return { imageHeight: 'h-16 sm:h-18 lg:h-20', textSize: 'text-xs', padding: 'p-2' };
+    }
+    return { imageHeight: 'h-20 sm:h-24 lg:h-28', textSize: 'text-sm sm:text-base lg:text-lg', padding: 'p-3 sm:p-4' };
+  };
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["labs"] });
@@ -142,6 +168,12 @@ const Labs = () => {
             <div className="flex items-center gap-2 mb-3">
               <Filter className="h-4 w-4 opacity-70" />
               <span className="text-sm font-medium">Filters:</span>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 px-2 text-xs">
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Reset
+                </Button>
+              )}
             </div>
             <div className="flex flex-wrap gap-3">
               <Select onValueChange={(value) => updateFilter("universityId", value)}>
@@ -196,6 +228,18 @@ const Labs = () => {
                   <SelectItem value="most-saved">Most Saved</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Select value={displaySize} onValueChange={(value) => setDisplaySize(value as DisplaySize)}>
+                <SelectTrigger className="w-[140px]">
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Display" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 per row</SelectItem>
+                  <SelectItem value="7">7 per row</SelectItem>
+                  <SelectItem value="10">10 per row</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>
@@ -204,7 +248,7 @@ const Labs = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+              <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4`}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                   <Skeleton key={i} className="h-52 sm:h-64 lg:h-80" />
                 ))}
@@ -220,9 +264,10 @@ const Labs = () => {
             ) : (
               <>
                 <p className="text-sm opacity-60 mb-4">{sortedLabs?.length} labs found</p>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+                <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4`}>
                   {sortedLabs?.map((lab) => {
-                    const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3) || [];
+                    const topics = lab.topics?.split(',').map(t => t.trim()).filter(Boolean).slice(0, displaySize === '10' ? 2 : 3) || [];
+                    const cardSize = getCardSize();
                     
                     return (
                       <Card 
@@ -235,12 +280,12 @@ const Labs = () => {
                           labId={lab.id_lab} 
                           topics={lab.topics}
                           facultyMatch={lab.faculty_match}
-                          className="h-20 sm:h-24 lg:h-28" 
+                          className={cardSize.imageHeight} 
                         />
-                        <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
-                          <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 sm:mb-3 line-clamp-2">{lab.name}</h3>
+                        <CardContent className={`${cardSize.padding} flex flex-col flex-1`}>
+                          <h3 className={`font-bold ${cardSize.textSize} mb-2 sm:mb-3 line-clamp-2`}>{lab.name}</h3>
                           
-                          {topics.length > 0 && (
+                          {topics.length > 0 && displaySize !== '10' && (
                             <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-4 flex-1">
                               {topics.map((topic, idx) => (
                                 <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs theme-badge">
@@ -254,15 +299,15 @@ const Labs = () => {
                             <Button 
                               variant="secondary" 
                               size="sm" 
-                              className="flex-1 theme-btn-secondary text-xs sm:text-sm"
+                              className={`flex-1 theme-btn-secondary ${displaySize === '10' ? 'text-xs h-7' : 'text-xs sm:text-sm'}`}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              View Details
+                              View
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              className="theme-btn-secondary"
+                              className={`theme-btn-secondary ${displaySize === '10' ? 'h-7 w-7 p-0' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!user) {

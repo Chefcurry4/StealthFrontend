@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search } from "lucide-react";
+import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -121,6 +121,10 @@ export const Header = () => {
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="h-4 w-4 mr-2" />
                   My Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile?tab=workbench")}>
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Saved Items
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
