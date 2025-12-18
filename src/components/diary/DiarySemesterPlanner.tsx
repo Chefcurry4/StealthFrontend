@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { X, GraduationCap, Snowflake, Sun, FileText, Mic, CalendarClock } from "lucide-react";
 import { DiaryPageItem } from "@/types/diary";
 import { useDiaryAnalytics } from "@/hooks/useDiaryAnalytics";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface DiarySemesterPlannerProps {
   pageId: string;
@@ -17,7 +19,7 @@ const SEMESTERS = [
   { id: 'summer', label: 'Summer Semester', icon: Sun, color: 'bg-amber-50 border-amber-200' },
 ];
 
-// Helper function to count exam types
+// Helper function to count exam types - "During the semester" counts as both written AND project
 const countExamTypes = (courses: any[]) => {
   let written = 0;
   let oral = 0;
@@ -25,11 +27,16 @@ const countExamTypes = (courses: any[]) => {
 
   courses.forEach((course) => {
     const examType = course.type_exam?.toLowerCase() || "";
-    if (examType.includes("written") || examType.includes("écrit") || examType.includes("write")) {
+    
+    // "During the semester" means both written exam AND project/midterm
+    if (examType.includes("semester") || examType.includes("during") || examType.includes("continuous")) {
+      written++;
+      project++;
+    } else if (examType.includes("written") || examType.includes("écrit") || examType.includes("write")) {
       written++;
     } else if (examType.includes("oral")) {
       oral++;
-    } else if (examType.includes("semester") || examType.includes("during") || examType.includes("project") || examType.includes("continuous")) {
+    } else if (examType.includes("project") || examType.includes("midterm")) {
       project++;
     }
   });
@@ -55,6 +62,7 @@ const countLevels = (courses: any[]) => {
 };
 
 export const DiarySemesterPlanner = ({ pageId, items, courses, onRemoveItem, onCourseClick }: DiarySemesterPlannerProps) => {
+  const [selectedSemester, setSelectedSemester] = useState<'winter' | 'summer'>('winter');
   const analytics = useDiaryAnalytics(courses);
   const examCounts = countExamTypes(courses);
   const levelCounts = countLevels(courses);
@@ -63,8 +71,38 @@ export const DiarySemesterPlanner = ({ pageId, items, courses, onRemoveItem, onC
     return items.filter(item => item.zone === zone);
   };
 
+  const currentSemester = SEMESTERS.find(s => s.id === selectedSemester)!;
+
   return (
     <div className="space-y-3">
+      {/* Semester Toggle */}
+      <div className="flex justify-center gap-2">
+        <Button
+          variant={selectedSemester === 'winter' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedSemester('winter')}
+          className={cn(
+            "gap-2",
+            selectedSemester === 'winter' && "bg-sky-600 hover:bg-sky-700"
+          )}
+        >
+          <Snowflake className="h-4 w-4" />
+          Winter
+        </Button>
+        <Button
+          variant={selectedSemester === 'summer' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedSemester('summer')}
+          className={cn(
+            "gap-2",
+            selectedSemester === 'summer' && "bg-amber-600 hover:bg-amber-700"
+          )}
+        >
+          <Sun className="h-4 w-4" />
+          Summer
+        </Button>
+      </div>
+
       {/* Analytics Summary */}
       {courses.length > 0 && (
         <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-gray-50/80 border border-gray-200">
@@ -128,24 +166,19 @@ export const DiarySemesterPlanner = ({ pageId, items, courses, onRemoveItem, onC
         </div>
       )}
 
-      {/* Semester Zones */}
-      <div className="grid grid-cols-2 gap-3">
-        {SEMESTERS.map((semester) => (
-          <SemesterDropZone
-            key={semester.id}
-            semester={semester}
-            items={getItemsForZone(semester.id)}
-            courses={courses}
-            onRemoveItem={onRemoveItem}
-            onCourseClick={onCourseClick}
-          />
-        ))}
-      </div>
+      {/* Single Semester Zone */}
+      <SemesterDropZone
+        semester={currentSemester}
+        items={getItemsForZone(currentSemester.id)}
+        courses={courses}
+        onRemoveItem={onRemoveItem}
+        onCourseClick={onCourseClick}
+      />
 
       {items.length === 0 && (
         <div className="text-center py-6 text-gray-400">
           <GraduationCap className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Drag courses to plan semesters</p>
+          <p className="text-sm">Drag courses to plan your {selectedSemester} semester</p>
         </div>
       )}
     </div>
@@ -177,9 +210,9 @@ const SemesterDropZone = ({ semester, items, courses, onRemoveItem, onCourseClic
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-lg border-2 border-dashed p-3 min-h-[140px] transition-all",
+        "rounded-lg border-2 border-dashed p-3 min-h-[200px] transition-all",
         semester.color,
-        isOver && "border-solid scale-[1.02] shadow-lg"
+        isOver && "border-solid scale-[1.01] shadow-lg"
       )}
     >
       <div className="flex items-center justify-between mb-3">
@@ -239,7 +272,7 @@ const SemesterDropZone = ({ semester, items, courses, onRemoveItem, onCourseClic
       </div>
 
       {items.length === 0 && (
-        <div className="text-center py-4 text-gray-400 text-xs">
+        <div className="text-center py-8 text-gray-400 text-xs">
           Drop courses here
         </div>
       )}

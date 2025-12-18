@@ -190,11 +190,13 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
                 ) : filteredCourses && filteredCourses.length > 0 ? (
                   <>
                     <p className="text-xs text-muted-foreground mb-3">Drag courses to the page or semester planner</p>
-                    {filteredCourses.map((item) => (
-                      item.course && (
-                        <DraggableCourseItem key={item.id} course={item.course} />
-                      )
-                    ))}
+                    <div className="space-y-2">
+                      {filteredCourses.map((item) => (
+                        item.course && (
+                          <DraggableCourseItem key={item.id} course={item.course} />
+                        )
+                      ))}
+                    </div>
                   </>
                 ) : (
                   <div className="text-center py-8">
@@ -213,11 +215,13 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
                 ) : filteredLabs && filteredLabs.length > 0 ? (
                   <>
                     <p className="text-xs text-muted-foreground mb-3">Drag labs to the page</p>
-                    {filteredLabs.map((item) => (
-                      item.lab && (
-                        <DraggableLabItem key={item.id} lab={item.lab} />
-                      )
-                    ))}
+                    <div className="space-y-2">
+                      {filteredLabs.map((item) => (
+                        item.lab && (
+                          <DraggableLabItem key={item.id} lab={item.lab} />
+                        )
+                      ))}
+                    </div>
                   </>
                 ) : (
                   <div className="text-center py-8">
@@ -285,7 +289,7 @@ const DraggableNote = ({ color }: { color: any }) => {
   );
 };
 
-// Draggable Course Item
+// Draggable Course Item - FIXED to show full content
 const DraggableCourseItem = ({ course }: { course: any }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `course-${course.id_course}`,
@@ -298,17 +302,17 @@ const DraggableCourseItem = ({ course }: { course: any }) => {
       {...attributes}
       {...listeners}
       className={cn(
-        "p-3 rounded-lg bg-blue-50 border border-blue-200 cursor-grab active:cursor-grabbing transition-all",
+        "p-3 rounded-lg bg-blue-50 border border-blue-200 cursor-grab active:cursor-grabbing transition-all w-full",
         isDragging && "opacity-50 scale-95"
       )}
     >
       <div className="flex items-start gap-2">
         <GraduationCap className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm text-gray-800 truncate">{course.name_course}</div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-            {course.code && <span>{course.code}</span>}
-            {course.ects && <span className="bg-blue-100 px-1.5 py-0.5 rounded">{course.ects} ECTS</span>}
+          <div className="font-medium text-sm text-gray-800 break-words leading-tight">{course.name_course}</div>
+          <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500 flex-wrap">
+            {course.code && <span className="font-mono bg-gray-100 px-1 rounded">{course.code}</span>}
+            {course.ects && <span className="bg-blue-100 px-1.5 py-0.5 rounded font-medium">{course.ects} ECTS</span>}
           </div>
         </div>
       </div>
@@ -329,16 +333,16 @@ const DraggableLabItem = ({ lab }: { lab: any }) => {
       {...attributes}
       {...listeners}
       className={cn(
-        "p-3 rounded-lg bg-purple-50 border border-purple-200 cursor-grab active:cursor-grabbing transition-all",
+        "p-3 rounded-lg bg-purple-50 border border-purple-200 cursor-grab active:cursor-grabbing transition-all w-full",
         isDragging && "opacity-50 scale-95"
       )}
     >
       <div className="flex items-start gap-2">
         <Beaker className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm text-gray-800 truncate">{lab.name}</div>
+          <div className="font-medium text-sm text-gray-800 break-words leading-tight">{lab.name}</div>
           {lab.topics && (
-            <div className="text-xs text-gray-500 mt-1 truncate">{lab.topics}</div>
+            <div className="text-xs text-gray-500 mt-1 line-clamp-2">{lab.topics}</div>
           )}
         </div>
       </div>
