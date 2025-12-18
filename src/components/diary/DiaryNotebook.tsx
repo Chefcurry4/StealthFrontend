@@ -65,6 +65,7 @@ export const DiaryNotebook = ({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
+  const [showGrid, setShowGrid] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
 
   const pageSensors = useSensors(
@@ -278,8 +279,20 @@ export const DiaryNotebook = ({
     <>
       <div className={cn(
         "h-full flex items-center justify-center p-2 sm:p-3 md:p-4",
-        isFullView && "fixed inset-0 z-50 bg-black/80 p-4"
+        isFullView && "fixed inset-0 z-50 bg-black/80 p-8"
       )}>
+        {/* Floating close button for full view */}
+        {isFullView && onToggleFullView && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onToggleFullView}
+            className="fixed top-4 right-4 z-[60] bg-white hover:bg-gray-100 shadow-lg"
+          >
+            <X className="h-4 w-4 mr-1.5" />
+            Exit Full View
+          </Button>
+        )}
         {/* Book container - fits screen */}
         <div 
           className={cn(
@@ -314,10 +327,24 @@ export const DiaryNotebook = ({
               transition: 'all 0.2s ease',
             }}
           >
+            {/* Grid overlay */}
+            {showGrid && (
+              <div 
+                className="absolute inset-0 pointer-events-none z-0 opacity-30"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(to right, rgba(139,119,80,0.2) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(139,119,80,0.2) 1px, transparent 1px)
+                  `,
+                  backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+                }}
+              />
+            )}
+
             {/* Student Hub logo on top right */}
-            <div className="absolute top-2 right-3 flex items-center gap-1.5 z-10 opacity-60">
-              <GraduationCap className="h-3.5 w-3.5 text-gray-500" />
-              <span className="text-[10px] font-medium text-gray-500 tracking-wide">Students Hub</span>
+            <div className="absolute top-2 right-3 flex items-center gap-2 z-10 opacity-70">
+              <GraduationCap className="h-5 w-5 text-gray-600" />
+              <span className="text-xs font-semibold text-gray-600 tracking-wide">Students Hub</span>
             </div>
 
             {/* Page content area */}
@@ -371,6 +398,21 @@ export const DiaryNotebook = ({
                     </p>
                   )}
                 </div>
+                {/* Grid toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowGrid(!showGrid)}
+                  className={cn("h-6 w-6 opacity-60 hover:opacity-100", showGrid && "opacity-100 bg-gray-200")}
+                  title={showGrid ? "Hide grid" : "Show grid"}
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="1" y="1" width="6" height="6" />
+                    <rect x="9" y="1" width="6" height="6" />
+                    <rect x="1" y="9" width="6" height="6" />
+                    <rect x="9" y="9" width="6" height="6" />
+                  </svg>
+                </Button>
                 {/* Full view toggle */}
                 {onToggleFullView && (
                   <Button
