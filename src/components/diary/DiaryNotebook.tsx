@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
@@ -21,10 +21,43 @@ import { format } from "date-fns";
 
 // Grid size for snapping
 const GRID_SIZE = 20;
+// Edge snap threshold
+const EDGE_SNAP_THRESHOLD = 15;
+// Page boundaries (approximate)
+const PAGE_PADDING = 20;
 
 // Snap to grid helper
 const snapToGrid = (value: number): number => {
   return Math.round(value / GRID_SIZE) * GRID_SIZE;
+};
+
+// Snap to edge helper - snaps when close to edges or other items
+const snapToEdge = (
+  value: number, 
+  size: number, 
+  pageSize: number, 
+  otherItems: { pos: number; size: number }[]
+): number => {
+  // Snap to page start
+  if (value < EDGE_SNAP_THRESHOLD + PAGE_PADDING) return PAGE_PADDING;
+  
+  // Snap to page end
+  const endPos = pageSize - size - PAGE_PADDING;
+  if (value > endPos - EDGE_SNAP_THRESHOLD) return endPos;
+  
+  // Snap to other items
+  for (const item of otherItems) {
+    // Snap to item's left edge
+    if (Math.abs(value - item.pos) < EDGE_SNAP_THRESHOLD) return item.pos;
+    // Snap to item's right edge
+    if (Math.abs(value - (item.pos + item.size)) < EDGE_SNAP_THRESHOLD) return item.pos + item.size;
+    // Snap current item's right to other item's left
+    if (Math.abs(value + size - item.pos) < EDGE_SNAP_THRESHOLD) return item.pos - size;
+    // Snap current item's right to other item's right
+    if (Math.abs(value + size - (item.pos + item.size)) < EDGE_SNAP_THRESHOLD) return item.pos + item.size - size;
+  }
+  
+  return snapToGrid(value);
 };
 
 interface DiaryNotebookProps {
@@ -66,6 +99,8 @@ export const DiaryNotebook = ({
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [showGrid, setShowGrid] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [copiedItem, setCopiedItem] = useState<DiaryPageItem | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
   const pageSensors = useSensors(
@@ -75,6 +110,28 @@ export const DiaryNotebook = ({
   const { setNodeRef, isOver } = useDroppable({
     id: 'diary-page-canvas',
   });
+
+  // Keyboard shortcuts for copy/paste
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedItemId) {
+        const item = pageItems.find(i => i.id === selectedItemId);
+        if (item) {
+          setCopiedItem(item);
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && copiedItem && onDuplicateItem) {
+        onDuplicateItem({
+          ...copiedItem,
+          position_x: copiedItem.position_x + 40,
+          position_y: copiedItem.position_y + 40,
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedItemId, copiedItem, pageItems, onDuplicateItem]);
 
   // Fetch course and lab details for items
   useEffect(() => {
@@ -164,12 +221,22 @@ export const DiaryNotebook = ({
     }
   };
 
+  const currentPageItemsFiltered = pageItems.filter(item => !item.zone);
+  
   const renderItem = (item: DiaryPageItem) => {
+    const commonProps = {
+      item,
+      onUpdatePosition: onUpdateItem,
+      otherItems: currentPageItemsFiltered,
+      isSelected: selectedItemId === item.id,
+      onSelect: setSelectedItemId,
+    };
+
     if (item.item_type === 'course') {
       const course = courses.find(c => c.id_course === item.reference_id);
       if (!course) return null;
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem} onClickAction={() => handleCourseClick(course)}>
+        <DraggableItem key={item.id} {...commonProps} onClickAction={() => handleCourseClick(course)}>
           <CourseCard 
             item={item} 
             course={course} 
@@ -184,7 +251,7 @@ export const DiaryNotebook = ({
       const lab = labs.find(l => l.id_lab === item.reference_id);
       if (!lab) return null;
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem}>
+        <DraggableItem key={item.id} {...commonProps}>
           <LabCard 
             item={item} 
             lab={lab} 
@@ -197,7 +264,7 @@ export const DiaryNotebook = ({
 
     if (item.item_type === 'note') {
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem}>
+        <DraggableItem key={item.id} {...commonProps}>
           <NoteCard 
             item={item} 
             onRemove={onRemoveItem}
@@ -210,7 +277,7 @@ export const DiaryNotebook = ({
 
     if (item.item_type === 'semester_planner' as any) {
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem}>
+        <DraggableItem key={item.id} {...commonProps}>
           <ModuleWrapper 
             item={item} 
             onRemove={onRemoveItem}
@@ -232,7 +299,7 @@ export const DiaryNotebook = ({
 
     if (item.item_type === 'lab_tracker' as any) {
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem}>
+        <DraggableItem key={item.id} {...commonProps}>
           <ModuleWrapper 
             item={item} 
             onRemove={onRemoveItem}
@@ -253,7 +320,7 @@ export const DiaryNotebook = ({
 
     if (item.item_type === 'notes_module' as any) {
       return (
-        <DraggableItem key={item.id} item={item} onUpdatePosition={onUpdateItem}>
+        <DraggableItem key={item.id} {...commonProps}>
           <ModuleWrapper 
             item={item} 
             onRemove={onRemoveItem}
@@ -438,8 +505,8 @@ export const DiaryNotebook = ({
               )}
 
               {/* Render page items with absolute positioning */}
-              <div className="relative" style={{ minHeight: 'calc(100% - 50px)' }}>
-                {pageItems.filter(item => !item.zone).map(renderItem)}
+              <div className="relative" style={{ minHeight: 'calc(100% - 50px)' }} onClick={() => setSelectedItemId(null)}>
+                {currentPageItemsFiltered.map(renderItem)}
               </div>
             </div>
 
@@ -620,17 +687,23 @@ const SortablePageDot = ({
   );
 };
 
-// Draggable Item Wrapper with resize support and grid snapping
+// Draggable Item Wrapper with resize support, grid snapping, and edge snapping
 const DraggableItem = ({ 
   item, 
   children, 
   onUpdatePosition,
-  onClickAction 
+  onClickAction,
+  otherItems = [],
+  isSelected,
+  onSelect,
 }: { 
   item: DiaryPageItem; 
   children: React.ReactNode; 
   onUpdatePosition: (id: string, updates: any) => void;
   onClickAction?: () => void;
+  otherItems?: DiaryPageItem[];
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -642,9 +715,22 @@ const DraggableItem = ({
   const dragRef = useRef<{ startX: number; startY: number; itemX: number; itemY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number; startLeft: number; startTop: number } | null>(null);
 
+  // Get page dimensions (approximate)
+  const pageWidth = 800;
+  const pageHeight = 600;
+
+  // Build other items position data for edge snapping
+  const otherItemsX = otherItems
+    .filter(i => i.id !== item.id)
+    .map(i => ({ pos: i.position_x, size: i.width || 180 }));
+  const otherItemsY = otherItems
+    .filter(i => i.id !== item.id)
+    .map(i => ({ pos: i.position_y, size: i.height || 80 }));
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, textarea, input, .resize-handle')) return;
     e.preventDefault();
+    onSelect?.(item.id);
     setIsDragging(true);
     setHasMoved(false);
     dragRef.current = {
@@ -664,9 +750,11 @@ const DraggableItem = ({
         setHasMoved(true);
       }
       
-      // Snap to grid
-      const newX = snapToGrid(Math.max(0, dragRef.current.itemX + dx));
-      const newY = snapToGrid(Math.max(0, dragRef.current.itemY + dy));
+      // Apply edge snapping with fallback to grid snapping
+      const rawX = Math.max(0, dragRef.current.itemX + dx);
+      const rawY = Math.max(0, dragRef.current.itemY + dy);
+      const newX = snapToEdge(rawX, size.width, pageWidth, otherItemsX);
+      const newY = snapToEdge(rawY, size.height, pageHeight, otherItemsY);
       
       setPosition({ x: newX, y: newY });
     }
@@ -771,7 +859,8 @@ const DraggableItem = ({
       className={cn(
         "absolute group",
         isDragging && "z-50 shadow-2xl",
-        isResizing && "z-50"
+        isResizing && "z-50",
+        isSelected && !isDragging && "ring-2 ring-blue-400 ring-offset-1"
       )}
       style={{
         left: position.x,
@@ -781,8 +870,9 @@ const DraggableItem = ({
         cursor: isDragging ? 'grabbing' : 'grab',
         transform: isDragging ? 'scale(1.02)' : 'scale(1)',
         transition: isDragging || isResizing 
-          ? 'box-shadow 0.1s ease, transform 0.1s ease' 
-          : 'all 0.15s ease',
+          ? 'box-shadow 0.15s ease-out, transform 0.15s ease-out' 
+          : 'left 0.2s ease-out, top 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out',
+        willChange: isDragging || isResizing ? 'left, top, width, height' : 'auto',
       }}
       onMouseDown={handleMouseDown}
     >
