@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Book, Plus, ChevronLeft, ChevronRight, Trash2, Download } from "lucide-react";
+import { Book, Plus, ChevronLeft, ChevronRight, Trash2, Download, Copy } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,7 @@ import { DiarySidebar } from "@/components/diary/DiarySidebar";
 import { SEO } from "@/components/SEO";
 import { Loader } from "@/components/Loader";
 import { toast } from "sonner";
+import { DiaryPageItem } from "@/types/diary";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,6 +112,59 @@ const Diary = () => {
           setCurrentPageIndex(currentPageIndex - 1);
         }
       },
+    });
+  };
+
+  const handleDuplicatePage = () => {
+    if (!currentPage || !selectedNotebookId || !pages || !pageItems) return;
+    
+    const nextPageNumber = pages.length + 1;
+    
+    createPage.mutate({
+      notebookId: selectedNotebookId,
+      pageNumber: nextPageNumber,
+      pageType: currentPage.page_type as any,
+      title: `${currentPage.title} (Copy)`,
+      semester: currentPage.semester || undefined,
+    }, {
+      onSuccess: (newPage) => {
+        // Duplicate all items from current page to new page
+        pageItems.forEach((item) => {
+          createItem.mutate({
+            pageId: newPage.id,
+            itemType: item.item_type as any,
+            referenceId: item.reference_id || undefined,
+            content: item.content || undefined,
+            positionX: item.position_x + 20,
+            positionY: item.position_y + 20,
+            width: item.width || 200,
+            height: item.height || 100,
+            color: item.color || undefined,
+            zone: item.zone || undefined,
+          });
+        });
+        setCurrentPageIndex(nextPageNumber - 1);
+        toast.success("Page duplicated!");
+      },
+    });
+  };
+
+  const handleDuplicateItem = (item: DiaryPageItem) => {
+    if (!currentPage) return;
+    
+    createItem.mutate({
+      pageId: currentPage.id,
+      itemType: item.item_type as any,
+      referenceId: item.reference_id || undefined,
+      content: item.content || undefined,
+      positionX: item.position_x + 30,
+      positionY: item.position_y + 30,
+      width: item.width || 200,
+      height: item.height || 100,
+      color: item.color || undefined,
+      zone: item.zone || undefined,
+    }, {
+      onSuccess: () => toast.success("Item duplicated!"),
     });
   };
 
@@ -308,6 +362,19 @@ const Diary = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={handleDuplicatePage}
+                      style={{ 
+                        borderColor: modeConfig.ui.cardBorder,
+                        background: modeConfig.ui.buttonSecondary,
+                        color: modeConfig.ui.buttonSecondaryText
+                      }}
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Duplicate
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={handleExportPdf}
                       style={{ 
                         borderColor: modeConfig.ui.cardBorder,
@@ -351,6 +418,7 @@ const Diary = () => {
                   pageItems={pageItems || []}
                   onRemoveItem={handleRemoveItem}
                   onUpdateItem={handleUpdateItem}
+                  onDuplicateItem={handleDuplicateItem}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center">
