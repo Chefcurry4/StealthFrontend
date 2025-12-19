@@ -39,6 +39,7 @@ const CourseDetail = () => {
   const [workload, setWorkload] = useState("");
   const [organization, setOrganization] = useState("");
   const [comment, setComment] = useState("");
+  const [validationError, setValidationError] = useState("");
   
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editRating, setEditRating] = useState(5);
@@ -46,6 +47,7 @@ const CourseDetail = () => {
   const [editWorkload, setEditWorkload] = useState("");
   const [editOrganization, setEditOrganization] = useState("");
   const [editComment, setEditComment] = useState("");
+  const [editValidationError, setEditValidationError] = useState("");
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
 
@@ -66,6 +68,19 @@ const CourseDetail = () => {
       navigate("/auth");
       return;
     }
+    
+    // Validate required fields
+    const missingFields = [];
+    if (!difficulty) missingFields.push("Difficulty");
+    if (!workload) missingFields.push("Workload");
+    if (!organization) missingFields.push("Organization");
+    
+    if (missingFields.length > 0) {
+      setValidationError(`Please select: ${missingFields.join(", ")}`);
+      return;
+    }
+    
+    setValidationError("");
     createReview.mutate(
       {
         course_id: id!,
@@ -82,6 +97,7 @@ const CourseDetail = () => {
           setWorkload("");
           setOrganization("");
           setComment("");
+          setValidationError("");
         },
       }
     );
@@ -98,6 +114,19 @@ const CourseDetail = () => {
 
   const handleUpdateReview = () => {
     if (!editingReviewId) return;
+    
+    // Validate required fields
+    const missingFields = [];
+    if (!editDifficulty) missingFields.push("Difficulty");
+    if (!editWorkload) missingFields.push("Workload");
+    if (!editOrganization) missingFields.push("Organization");
+    
+    if (missingFields.length > 0) {
+      setEditValidationError(`Please select: ${missingFields.join(", ")}`);
+      return;
+    }
+    
+    setEditValidationError("");
     updateReview.mutate(
       {
         id: editingReviewId,
@@ -110,6 +139,7 @@ const CourseDetail = () => {
       {
         onSuccess: () => {
           setEditingReviewId(null);
+          setEditValidationError("");
         },
       }
     );
@@ -192,9 +222,15 @@ const CourseDetail = () => {
     onSubmit: () => void,
     isPending: boolean,
     submitText: string,
-    onCancel?: () => void
+    onCancel?: () => void,
+    validationError?: string
   ) => (
     <div className="space-y-4">
+      {validationError && (
+        <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+          {validationError}
+        </div>
+      )}
       <div>
         <Label className="mb-3 block">Rating: {formRating} Star{formRating !== 1 && "s"}</Label>
         <div className="flex items-center gap-3">
@@ -210,9 +246,9 @@ const CourseDetail = () => {
         </div>
       </div>
       <div>
-        <Label>Exam/Projects Difficulty</Label>
+        <Label>Exam/Projects Difficulty <span className="text-destructive">*</span></Label>
         <Select value={formDifficulty} onValueChange={setFormDifficulty}>
-          <SelectTrigger>
+          <SelectTrigger className={!formDifficulty && validationError ? "border-destructive" : ""}>
             <SelectValue placeholder="Select difficulty" />
           </SelectTrigger>
           <SelectContent>
@@ -224,9 +260,9 @@ const CourseDetail = () => {
         </Select>
       </div>
       <div>
-        <Label>Workload</Label>
+        <Label>Workload <span className="text-destructive">*</span></Label>
         <Select value={formWorkload} onValueChange={setFormWorkload}>
-          <SelectTrigger>
+          <SelectTrigger className={!formWorkload && validationError ? "border-destructive" : ""}>
             <SelectValue placeholder="Select workload" />
           </SelectTrigger>
           <SelectContent>
@@ -238,9 +274,9 @@ const CourseDetail = () => {
         </Select>
       </div>
       <div>
-        <Label>Course Structure & Organization</Label>
+        <Label>Course Structure & Organization <span className="text-destructive">*</span></Label>
         <Select value={formOrganization} onValueChange={setFormOrganization}>
-          <SelectTrigger>
+          <SelectTrigger className={!formOrganization && validationError ? "border-destructive" : ""}>
             <SelectValue placeholder="Select organization" />
           </SelectTrigger>
           <SelectContent>
@@ -252,7 +288,7 @@ const CourseDetail = () => {
         </Select>
       </div>
       <div>
-        <Label>Comment</Label>
+        <Label>Comment (optional)</Label>
         <Textarea
           value={formComment}
           onChange={(e) => setFormComment(e.target.value)}
@@ -401,7 +437,9 @@ const CourseDetail = () => {
                       setComment,
                       handleSubmitReview,
                       createReview.isPending,
-                      "Submit Review"
+                      "Submit Review",
+                      undefined,
+                      validationError
                     )}
                   </div>
                 )}
@@ -429,7 +467,8 @@ const CourseDetail = () => {
                               handleUpdateReview,
                               updateReview.isPending,
                               "Update Review",
-                              () => setEditingReviewId(null)
+                              () => setEditingReviewId(null),
+                              editValidationError
                             )}
                           </div>
                         ) : (
