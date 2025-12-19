@@ -17,6 +17,7 @@ import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
+import { useCourseRatings } from "@/hooks/useCourseRatings";
 
 type DisplaySize = '5' | '7' | '10';
 
@@ -44,6 +45,11 @@ const Courses = () => {
       totalPages: Math.ceil(allCourses.length / itemsPerPage)
     };
   }, [allCourses, currentPage]);
+  
+  // Fetch ratings for current page courses
+  const courseIds = useMemo(() => courses.map(c => c.id_course), [courses]);
+  const { data: ratingsMap } = useCourseRatings(courseIds);
+  
   const { data: universities } = useUniversities();
   const { data: programs } = usePrograms();
   const { user } = useAuth();
@@ -316,6 +322,8 @@ const Courses = () => {
                           courseName={course.name_course}
                           level={course.ba_ma}
                           className={isSmall ? "h-14 sm:h-16 lg:h-18" : "h-20 sm:h-24 lg:h-28"}
+                          averageRating={ratingsMap?.[course.id_course]?.average_rating}
+                          reviewCount={ratingsMap?.[course.id_course]?.review_count}
                         />
                         <CardHeader className={`flex-1 ${isSmall ? 'p-2 sm:p-2.5' : 'p-3 sm:p-4 lg:p-6'}`}>
                           <CardTitle className={`${isSmall ? 'text-xs sm:text-sm' : 'text-sm sm:text-base lg:text-lg'} line-clamp-2`}>{course.name_course}</CardTitle>

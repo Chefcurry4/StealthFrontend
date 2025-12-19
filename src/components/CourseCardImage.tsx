@@ -1,15 +1,21 @@
+import { Star } from "lucide-react";
+
 interface CourseCardImageProps {
   courseId: string;
   courseName: string;
   level?: string | null;
   className?: string;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export const CourseCardImage = ({ 
   courseId, 
   courseName, 
   level,
-  className = "" 
+  className = "",
+  averageRating,
+  reviewCount = 0,
 }: CourseCardImageProps) => {
   // Generate color based on course ID
   const hash = courseId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -35,6 +41,14 @@ export const CourseCardImage = ({
           backgroundSize: '200px 200px',
         }}
       />
+      
+      {/* Rating badge - top right */}
+      {averageRating !== undefined && reviewCount > 0 && (
+        <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-0.5">
+          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+          <span className="text-xs font-semibold text-foreground">{averageRating.toFixed(1)}</span>
+        </div>
+      )}
       
       {/* Level badge */}
       {level && (
