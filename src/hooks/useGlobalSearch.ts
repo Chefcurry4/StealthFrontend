@@ -20,10 +20,11 @@ export const useGlobalSearch = (query: string) => {
     if (trimmedQuery.length < 2) {
       setResults([]);
       setIsTyping(false);
+      setIsLoading(false);
       return;
     }
 
-    // Show typing indicator immediately
+    // Show typing indicator immediately when user types
     setIsTyping(true);
 
     const debounceTimer = setTimeout(async () => {
@@ -143,5 +144,8 @@ export const useGlobalSearch = (query: string) => {
     };
   }, [query]);
 
-  return { results, isLoading, isTyping };
+  // Combine isTyping and isLoading for a unified "searching" state
+  const isSearching = isTyping || isLoading;
+
+  return { results, isLoading, isTyping, isSearching };
 };
