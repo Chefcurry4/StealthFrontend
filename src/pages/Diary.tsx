@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Book, Plus, Trash2, Download, Copy, StickyNote, Type, Maximize2, Minimize2 } from "lucide-react";
+import { Book, Plus, Trash2, Download, Copy, Type, Maximize2, Minimize2 } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -204,26 +204,6 @@ const Diary = () => {
     }
   };
 
-  const handleAddQuickNote = (color: string = 'yellow') => {
-    if (!currentPage) return;
-    
-    const posX = 20 + (pageItems?.length || 0) * 20;
-    const posY = 60 + (pageItems?.length || 0) * 20;
-    
-    createItem.mutate({
-      pageId: currentPage.id,
-      itemType: 'note',
-      content: '',
-      positionX: Math.round(posX),
-      positionY: Math.round(posY),
-      width: 160,
-      height: 120,
-      color,
-    }, {
-      onSuccess: () => toast.success("Note added!"),
-    });
-  };
-
   const handleAddQuickText = () => {
     if (!currentPage) return;
     
@@ -318,19 +298,6 @@ const Diary = () => {
             onSuccess: () => toast.success(`${activeDataCurrent.label} added!`),
           });
         }
-      } else if (activeDataCurrent?.type === 'note') {
-        createItem.mutate({
-          pageId: currentPage.id,
-          itemType: 'note',
-          content: '',
-          positionX: Math.round(posX),
-          positionY: Math.round(posY),
-          width: 160,
-          height: 120,
-          color: activeDataCurrent.color || 'yellow',
-        }, {
-          onSuccess: () => toast.success("Note added!"),
-        });
       }
     }
 
@@ -455,39 +422,24 @@ const Diary = () => {
                   {notebooks?.find(n => n.id === selectedNotebookId)?.name || "Diary"}
                 </h1>
 
-                {/* Quick add buttons when sidebar is closed */}
+                {/* Quick add button when sidebar is closed */}
                 {!sidebarOpen && (
                   <TooltipProvider>
-                    <div className="flex items-center gap-1 ml-2">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => handleAddQuickNote('yellow')}
-                            disabled={!currentPage}
-                          >
-                            <StickyNote className="h-3.5 w-3.5 text-yellow-600" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Add sticky note</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => handleAddQuickText()}
-                            disabled={!currentPage}
-                          >
-                            <Type className="h-3.5 w-3.5 text-gray-600" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Add text</TooltipContent>
-                      </Tooltip>
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 ml-2"
+                          onClick={() => handleAddQuickText()}
+                          disabled={!currentPage}
+                        >
+                          <Type className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                          Add Text
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Add text to page</TooltipContent>
+                    </Tooltip>
                   </TooltipProvider>
                 )}
               </div>
@@ -640,12 +592,9 @@ const Diary = () => {
                 </div>
               )}
               {activeData.type === 'module' && (
-                <div className="p-2 rounded-lg bg-gray-100 border-2 border-gray-300 shadow-lg">
+                <div className="p-2 rounded-lg bg-amber-50 border-2 border-amber-300 shadow-lg">
                   <p className="text-xs font-medium">{activeData.label}</p>
                 </div>
-              )}
-              {activeData.type === 'note' && (
-                <div className="w-10 h-10 rounded shadow-lg bg-yellow-200 border-2 border-yellow-400" />
               )}
             </div>
           )}

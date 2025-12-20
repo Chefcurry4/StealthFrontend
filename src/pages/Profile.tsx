@@ -21,6 +21,7 @@ import {
   WorkbenchEmailDrafts,
   WorkbenchLearningAgreements,
   WorkbenchActivity,
+  WorkbenchDiaryPages,
 } from "@/components/profile/workbench";
 import { 
   User, 
@@ -37,6 +38,7 @@ import {
   FileCheck,
   Activity,
   GraduationCap,
+  Book,
   Building,
   X,
   Check
@@ -183,6 +185,7 @@ const Profile = () => {
 
   const workbenchSections = [
     { id: "saved", label: "Saved", icon: BookOpen },
+    { id: "diary", label: "Diary Pages", icon: Book },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "ai-history", label: "AI Chats", icon: MessageSquare },
     { id: "drafts", label: "Drafts", icon: Mail },
@@ -487,6 +490,7 @@ const Profile = () => {
             <Card className="bg-background/50 backdrop-blur-sm border-border/50">
               <CardContent className="p-6">
                 {workbenchSection === "saved" && <WorkbenchSavedItems />}
+                {workbenchSection === "diary" && <WorkbenchDiaryPages />}
                 {workbenchSection === "documents" && <WorkbenchDocuments />}
                 {workbenchSection === "ai-history" && <WorkbenchAIHistory />}
                 {workbenchSection === "drafts" && <WorkbenchEmailDrafts />}
