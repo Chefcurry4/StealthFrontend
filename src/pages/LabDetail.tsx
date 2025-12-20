@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Users, ExternalLink, MapPin, Bookmark, Filter, Microscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,11 @@ const LabDetail = () => {
   const toggleSave = useToggleSaveLab();
   
   const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
+  
+  // Scroll to top when the page loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [slug]);
   
   const { data: relatedLabs } = useLabs(
     activeFilter?.type === 'faculty' ? { facultyArea: activeFilter.value } :

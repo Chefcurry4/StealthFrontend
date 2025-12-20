@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { 
   Book, ChevronLeft, ChevronRight, GraduationCap, Beaker, 
-  Search, StickyNote, LayoutGrid, Calendar, Type
+  Search, LayoutGrid, Calendar, Type
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,20 +46,9 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
   );
 
   const modules = [
+    { id: 'text', label: 'Add Text', icon: Type, color: 'bg-amber-50 text-amber-700 border-amber-200' },
     { id: 'semester_planner', label: 'Semester Planner', icon: Calendar, color: 'bg-blue-100 text-blue-700 border-blue-200' },
     { id: 'lab_tracker', label: 'Lab Tracker', icon: Beaker, color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    { id: 'text', label: 'Add Text', icon: Type, color: 'bg-gray-100 text-gray-700 border-gray-200' },
-  ];
-
-  const noteColors = [
-    { id: 'yellow', label: 'Yellow', class: 'bg-yellow-200' },
-    { id: 'pink', label: 'Pink', class: 'bg-pink-200' },
-    { id: 'blue', label: 'Blue', class: 'bg-blue-200' },
-    { id: 'green', label: 'Green', class: 'bg-green-200' },
-    { id: 'purple', label: 'Purple', class: 'bg-purple-200' },
-    { id: 'orange', label: 'Orange', class: 'bg-orange-200' },
-    { id: 'cyan', label: 'Cyan', class: 'bg-cyan-200' },
-    { id: 'rose', label: 'Rose', class: 'bg-rose-200' },
   ];
 
   return (
@@ -171,15 +160,6 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
                 {modules.map((module) => (
                   <DraggableModule key={module.id} module={module} />
                 ))}
-                
-                <div className="mt-4 pt-4 border-t" style={{ borderColor: modeConfig.ui.cardBorder }}>
-                  <p className="text-xs text-muted-foreground mb-3">Sticky Notes</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {noteColors.map((color) => (
-                      <DraggableNote key={color.id} color={color} />
-                    ))}
-                  </div>
-                </div>
               </>
             )}
 
@@ -264,28 +244,6 @@ const DraggableModule = ({ module }: { module: any }) => {
         <span className="text-sm font-medium">{module.label}</span>
       </div>
     </div>
-  );
-};
-
-// Draggable Note Component
-const DraggableNote = ({ color }: { color: any }) => {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `note-${color.id}`,
-    data: { type: 'note', color: color.id },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        "w-8 h-8 rounded cursor-grab active:cursor-grabbing transition-all shadow-sm",
-        color.class,
-        isDragging && "opacity-50 scale-95"
-      )}
-      title={color.label}
-    />
   );
 };
 
