@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Book, Plus, Trash2, Download, Copy, Type, Maximize2, Minimize2 } from "lucide-react";
+import { Book, Plus, Trash2, Download, Copy, Type, Maximize2, Minimize2, Undo2, Redo2 } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,8 +8,10 @@ import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { useDiaryNotebooks, useCreateDiaryNotebook } from "@/hooks/useDiaryNotebooks";
 import { useDiaryPages, useCreateDiaryPage, useDeleteDiaryPage, useUpdateDiaryPage, useReorderDiaryPages } from "@/hooks/useDiaryPages";
 import { useDiaryPageItems, useCreateDiaryPageItem, useUpdateDiaryPageItem, useDeleteDiaryPageItem } from "@/hooks/useDiaryPageItems";
+import { useDiaryUndoRedo, DiaryAction } from "@/hooks/useDiaryHistory";
 import { DiaryNotebook } from "@/components/diary/DiaryNotebook";
 import { DiarySidebar } from "@/components/diary/DiarySidebar";
+import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { SEO } from "@/components/SEO";
 import { Loader } from "@/components/Loader";
 import { toast } from "sonner";
@@ -43,6 +45,8 @@ const Diary = () => {
   const [activeData, setActiveData] = useState<any>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isFullView, setIsFullView] = useState(false);
+  const { showHelp, setShowHelp } = useKeyboardShortcuts();
+  const { canUndo, canRedo, pushAction, getUndoAction, getRedoAction } = useDiaryUndoRedo();
 
   const { data: notebooks, isLoading: notebooksLoading } = useDiaryNotebooks();
   const createNotebook = useCreateDiaryNotebook();
@@ -72,6 +76,63 @@ const Diary = () => {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  // Keyboard shortcuts for diary
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Undo: Ctrl+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      // Redo: Ctrl+Shift+Z or Ctrl+Y
+      if ((e.ctrlKey || e.metaKey) && (e.key === "Z" || e.key === "y")) {
+        e.preventDefault();
+        handleRedo();
+      }
+      // Page navigation with arrow keys
+      if (e.key === "ArrowLeft" && !e.target) {
+        if (currentPageIndex > 0) setCurrentPageIndex(currentPageIndex - 1);
+      }
+      if (e.key === "ArrowRight" && !e.target) {
+        if (pages && currentPageIndex < pages.length - 1) setCurrentPageIndex(currentPageIndex + 1);
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentPageIndex, pages, canUndo, canRedo]);
+
+  const handleUndo = useCallback(() => {
+    const action = getUndoAction();
+    if (!action || !currentPage) return;
+    
+    if (action.type === "REMOVE_ITEM") {
+      // Re-create the item
+      createItem.mutate({
+        pageId: currentPage.id,
+        itemType: action.item.item_type,
+        referenceId: action.item.reference_id || undefined,
+        content: action.item.content || undefined,
+        positionX: action.item.position_x,
+        positionY: action.item.position_y,
+        width: action.item.width,
+        height: action.item.height,
+        color: action.item.color || undefined,
+      });
+      toast.success("Undo: Item restored");
+    }
+  }, [getUndoAction, currentPage, createItem]);
+
+  const handleRedo = useCallback(() => {
+    const action = getRedoAction();
+    if (!action || !currentPage) return;
+    
+    if (action.type === "REMOVE_ITEM") {
+      deleteItem.mutate({ id: action.itemId, pageId: currentPage.id });
+      toast.success("Redo: Item removed");
+    }
+  }, [getRedoAction, currentPage, deleteItem]);
 
   // Auto-select first notebook or create one
   useEffect(() => {
@@ -425,21 +486,51 @@ const Diary = () => {
                 {/* Quick add button when sidebar is closed */}
                 {!sidebarOpen && (
                   <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 ml-2"
-                          onClick={() => handleAddQuickText()}
-                          disabled={!currentPage}
-                        >
-                          <Type className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
-                          Add Text
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Add text to page</TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-center gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={handleUndo}
+                            disabled={!canUndo}
+                          >
+                            <Undo2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={handleRedo}
+                            disabled={!canRedo}
+                          >
+                            <Redo2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Redo (Ctrl+Shift+Z)</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 ml-1"
+                            onClick={() => handleAddQuickText()}
+                            disabled={!currentPage}
+                          >
+                            <Type className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                            Add Text
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Add text to page</TooltipContent>
+                      </Tooltip>
+                    </div>
                   </TooltipProvider>
                 )}
               </div>

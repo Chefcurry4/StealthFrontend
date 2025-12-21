@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { 
   Send, 
   Loader2, 
@@ -109,6 +111,25 @@ const Workbench = () => {
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { showHelp, setShowHelp } = useKeyboardShortcuts();
+  
+  // Keyboard shortcuts for workbench
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+N for new chat
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault();
+        handleNewChat();
+      }
+      // Escape to close sidebar
+      if (e.key === "Escape" && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarOpen]);
   
   // Data hooks for comprehensive AI context
   const { data: savedCourses } = useSavedCourses();
@@ -619,7 +640,11 @@ const Workbench = () => {
                             ))}
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap text-left leading-relaxed">{message.content}</p>
+                        {message.role === "assistant" ? (
+                          <MarkdownRenderer content={message.content} />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-left leading-relaxed">{message.content}</p>
+                        )}
                       </div>
 
                       {/* Message Actions */}
@@ -756,6 +781,9 @@ const Workbench = () => {
         </p>
       </div>
       </div>
+      
+      {/* Keyboard shortcuts help */}
+      <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
     </div>
   );
 };

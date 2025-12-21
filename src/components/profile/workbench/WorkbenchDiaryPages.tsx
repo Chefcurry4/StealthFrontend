@@ -5,6 +5,7 @@ import { useDiaryPages } from "@/hooks/useDiaryPages";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DiaryPageThumbnail } from "@/components/diary/DiaryPageThumbnail";
 import { format } from "date-fns";
 
 interface NotebookWithPages {
@@ -43,23 +44,23 @@ const NotebookCard = ({ notebook }: { notebook: any }) => {
             <Skeleton className="h-8 w-full" />
           </div>
         ) : pages && pages.length > 0 ? (
-          <div className="space-y-1.5 max-h-40 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
             {pages.map((page) => (
               <Link
                 key={page.id}
                 to="/diary"
-                className="flex items-center gap-2 p-2 rounded-md hover:bg-background/80 transition-colors group"
+                className="group relative"
               >
-                <FileText className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{page.title || `Page ${page.page_number}`}</p>
-                  {page.semester && (
-                    <p className="text-xs text-muted-foreground truncate">{page.semester}</p>
-                  )}
+                <DiaryPageThumbnail 
+                  pageId={page.id} 
+                  title={page.title}
+                  className="h-16 w-full hover:ring-2 hover:ring-primary/50 transition-all"
+                />
+                <div className="absolute bottom-0 left-1 right-0 bg-gradient-to-t from-black/60 to-transparent rounded-b-lg px-1.5 py-1">
+                  <p className="text-[10px] text-white truncate font-medium">
+                    {page.title || `Page ${page.page_number}`}
+                  </p>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(page.updated_at), "MMM d")}
-                </span>
               </Link>
             ))}
           </div>
