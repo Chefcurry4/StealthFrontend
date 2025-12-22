@@ -342,10 +342,10 @@ export const DiaryNotebook = ({
         {/* Floating close button for full view */}
         {isFullView && onToggleFullView && (
           <Button
-            variant="secondary"
+            variant="default"
             size="sm"
             onClick={onToggleFullView}
-            className="fixed top-4 right-4 z-[60] bg-white hover:bg-gray-100 shadow-lg"
+            className="fixed top-4 right-4 z-[60] bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl border-2 border-primary-foreground/20"
           >
             <X className="h-4 w-4 mr-1.5" />
             Exit Full View

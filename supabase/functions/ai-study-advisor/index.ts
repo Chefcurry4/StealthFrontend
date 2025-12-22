@@ -574,7 +574,13 @@ ${userSpecificContext || "No user-specific data available"}
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
 - If a query returns no results, suggest alternative search terms or related options
-- When users share documents (CVs, transcripts, etc.), use that context to personalize recommendations`;
+- When users share documents (CVs, transcripts, etc.), use that context to personalize recommendations
+
+**CRITICAL OUTPUT FORMAT:**
+When you return courses or labs from database queries, you MUST append the raw data at the END of your response using these exact HTML comment formats (the user won't see these, but the app will parse them to show interactive cards):
+- For courses: <!--COURSES:[{"id_course":"...","name_course":"...","code":"...","ects":...,"ba_ma":"...","professor_name":"...","language":"...","topics":"..."}]-->
+- For labs: <!--LABS:[{"id_lab":"...","name":"...","slug":"...","topics":"...","professors":"...","faculty_match":"..."}]-->
+Include ALL fields that are available. Place these at the very end of your response after all text content.`;
 
     console.log("Making initial AI call with tools...");
     
