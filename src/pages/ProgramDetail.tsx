@@ -14,10 +14,10 @@ import { TeacherLink } from "@/components/TeacherLink";
 // Map of program slugs that have master structure pages
 const MASTER_STRUCTURE_PROGRAMS: Record<string, string> = {
   "Life-Sc": "life-sciences-engineering",
-  "Archi": "architecture",
-  "CE": "civil-engineering",
-  "US": "urban-systems",
-  "SIE": "environmental-sciences-engineering",
+  "AR": "architecture",
+  "CIV": "civil-engineering",
+  "URB-SYS": "urban-systems",
+  "ENV-Sc": "environmental-sciences-engineering",
 };
 
 const ProgramDetail = () => {
