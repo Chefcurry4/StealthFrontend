@@ -11,14 +11,15 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       textColor: '#5e3a43',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(94,58,67,0.2)',
+        // ↑ more separation on light bg
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(94,58,67,0.3)',
         buttonPrimary: '#5e3a43',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(94,58,67,0.15)',
         buttonSecondaryText: '#5e3a43',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(94,58,67,0.3)',
+        inputBorder: 'rgba(94,58,67,0.4)',
       }
     },
     night: {
@@ -37,24 +38,26 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.OCEAN]: {
     name: 'Ocean',
     description: 'Vibrant cyans with a distinct sandy texture.',
-    grain: { intensity: 0.45, size: 1.0, type: 'fractalNoise' },
+    // ↓ less “fizz” on light background
+    grain: { intensity: 0.3, size: 1.0, type: 'fractalNoise' },
     colors: ['#4facfe', '#00f2fe', '#a8edea', '#43e97b', '#ffffff'],
     day: {
       background: '#e0f7fa',
       textColor: '#004d40',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(0,77,64,0.2)',
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(0,77,64,0.3)',
         buttonPrimary: '#004d40',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(0,77,64,0.15)',
         buttonSecondaryText: '#004d40',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(0,77,64,0.3)',
+        inputBorder: 'rgba(0,77,64,0.4)',
       }
     },
     night: {
@@ -73,24 +76,26 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.AURORA]: {
     name: 'Aurora',
     description: 'Magical night sky with soft, misty grain.',
-    grain: { intensity: 0.4, size: 1.2, type: 'fractalNoise' },
+    // ↓ slightly toned down for day readability
+    grain: { intensity: 0.3, size: 1.2, type: 'fractalNoise' },
     colors: ['#764ba2', '#667eea', '#43e97b', '#fa709a', '#2980b9'],
     day: {
       background: '#f3e8ff',
       textColor: '#4c1d95',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(76,29,149,0.2)',
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(76,29,149,0.3)',
         buttonPrimary: '#764ba2',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(118,75,162,0.15)',
         buttonSecondaryText: '#4c1d95',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(76,29,149,0.3)',
+        inputBorder: 'rgba(76,29,149,0.4)',
       }
     },
     night: {
@@ -109,24 +114,27 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.CHILLING]: {
     name: 'Chilling',
     description: 'Warm evening haze with medium film grain.',
-    grain: { intensity: 0.5, size: 1.1, type: 'fractalNoise' },
+    // ↓ reduce day “noise”
+    grain: { intensity: 0.35, size: 1.1, type: 'fractalNoise' },
     colors: ['#ff9a9e', '#fecfef', '#feada6', '#f5efef', '#a18cd1'],
     day: {
       background: '#fef7f0',
       textColor: '#5c4033',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(92,64,51,0.2)',
-        buttonPrimary: '#a18cd1',
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(92,64,51,0.3)',
+        // ↓ improved contrast with white text
+        buttonPrimary: '#7e6da3',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(161,140,209,0.15)',
         buttonSecondaryText: '#5c4033',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(92,64,51,0.3)',
+        inputBorder: 'rgba(92,64,51,0.4)',
       }
     },
     night: {
@@ -145,24 +153,26 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.FOREST]: {
     name: 'Forest',
     description: 'Organic greens with earthy, coarse texture.',
-    grain: { intensity: 0.65, size: 0.7, type: 'turbulence' },
+    // ↓ reduce day “fizz” (turbulence can be harsh on light UI)
+    grain: { intensity: 0.35, size: 0.7, type: 'turbulence' },
     colors: ['#134e5e', '#71b280', '#2d3436', '#55efc4', '#006400'],
     day: {
       background: '#ecfdf5',
       textColor: '#064e3b',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(6,78,59,0.2)',
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(6,78,59,0.3)',
         buttonPrimary: '#134e5e',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(19,78,94,0.15)',
         buttonSecondaryText: '#064e3b',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(6,78,59,0.3)',
+        inputBorder: 'rgba(6,78,59,0.4)',
       }
     },
     night: {
@@ -181,6 +191,7 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.NEON]: {
     name: 'Neon',
     description: 'Digital void with sharp, high-frequency static.',
@@ -191,14 +202,15 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       textColor: '#1a1a2e',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.7)',
-        cardBorder: 'rgba(26,26,46,0.2)',
+        // keep slightly “neon glass”, but give more separation
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(26,26,46,0.28)',
         buttonPrimary: '#9900cc',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(153,0,204,0.15)',
         buttonSecondaryText: '#1a1a2e',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(26,26,46,0.3)',
+        inputBorder: 'rgba(26,26,46,0.4)',
       }
     },
     night: {
@@ -217,6 +229,7 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.GOLD]: {
     name: 'Gold',
     description: 'Luxurious shimmer with subtle texture.',
@@ -227,14 +240,15 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       textColor: '#78350f',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(120,53,15,0.2)',
-        buttonPrimary: '#e65c00',
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(120,53,15,0.3)',
+        // ↓ improved contrast with white text
+        buttonPrimary: '#c85000',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(230,92,0,0.15)',
         buttonSecondaryText: '#78350f',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(120,53,15,0.3)',
+        inputBorder: 'rgba(120,53,15,0.4)',
       }
     },
     night: {
@@ -253,24 +267,27 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
+
   [ThemeId.FLOW]: {
     name: 'Flow',
     description: 'Bright, flowing waters with crystalline grain.',
-    grain: { intensity: 0.7, size: 0.85, type: 'fractalNoise' },
+    // ↓ reduce day “fizz”
+    grain: { intensity: 0.35, size: 0.85, type: 'fractalNoise' },
     colors: ['#00bfff', '#1ca9c9', '#48d1cc', '#87ceeb', '#ffffff'],
     day: {
       background: '#f0f9ff',
       textColor: '#0c4a6e',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.6)',
-        cardBorder: 'rgba(12,74,110,0.2)',
-        buttonPrimary: '#0284c7',
+        cardBackground: 'rgba(255,255,255,0.8)',
+        cardBorder: 'rgba(12,74,110,0.3)',
+        // ↓ improved contrast with white text
+        buttonPrimary: '#027cbb',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(2,132,199,0.15)',
         buttonSecondaryText: '#0c4a6e',
         inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(12,74,110,0.3)',
+        inputBorder: 'rgba(12,74,110,0.4)',
       }
     },
     night: {
