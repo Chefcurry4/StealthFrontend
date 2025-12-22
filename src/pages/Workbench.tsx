@@ -26,6 +26,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { AIResultCards } from "@/components/AIResultCard";
 import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { 
   Send, 
@@ -641,7 +642,10 @@ const Workbench = () => {
                           </div>
                         )}
                         {message.role === "assistant" ? (
-                          <MarkdownRenderer content={message.content} />
+                          <>
+                            <MarkdownRenderer content={message.content.replace(/<!--(COURSES|LABS):.*?-->/gs, '')} />
+                            <AIResultCards content={message.content} />
+                          </>
                         ) : (
                           <p className="whitespace-pre-wrap text-left leading-relaxed">{message.content}</p>
                         )}
