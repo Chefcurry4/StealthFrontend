@@ -554,10 +554,9 @@ const MasterStructure = () => {
                   <RechartsTooltip 
                     formatter={(value: number) => [`${value} ECTS`, 'Credits']}
                     contentStyle={{ 
-                      backgroundColor: 'gray', 
-                      color: 'white',
+                      backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '10px'
                     }}
                   />
                   <Legend />
