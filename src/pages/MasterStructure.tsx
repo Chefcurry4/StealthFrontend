@@ -555,6 +555,7 @@ const MasterStructure = () => {
                     formatter={(value: number) => [`${value} ECTS`, 'Credits']}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
+                      color: 'white',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
