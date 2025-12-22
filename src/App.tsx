@@ -35,6 +35,7 @@ import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
 import HelpCenter from "./pages/HelpCenter";
 import UserProfile from "./pages/UserProfile";
+import MasterStructure from "./pages/MasterStructure";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const AppContent = () => {
                 <Route path="/universities" element={<Universities />} />
                 <Route path="/universities/:slug" element={<UniversityDetail />} />
                 <Route path="/programs/:slug" element={<ProgramDetail />} />
+                <Route path="/programs/:slug/structure" element={<MasterStructure />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetail />} />
                 <Route path="/teachers/:id" element={<TeacherDetail />} />
