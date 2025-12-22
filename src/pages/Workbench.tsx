@@ -187,6 +187,14 @@ const Workbench = () => {
   const updateConversation = useUpdateConversation();
   const { data: loadedMessages } = useAIMessages(currentConversationId || null);
 
+  // Auto-load the most recent conversation when entering workbench
+  useEffect(() => {
+    if (!currentConversationId && recentConversations && recentConversations.length > 0 && messages.length === 0) {
+      // Load the most recent conversation
+      setCurrentConversationId(recentConversations[0].id);
+    }
+  }, [recentConversations, currentConversationId, messages.length]);
+
   // Load messages when switching conversations
   useEffect(() => {
     if (loadedMessages && loadedMessages.length > 0) {

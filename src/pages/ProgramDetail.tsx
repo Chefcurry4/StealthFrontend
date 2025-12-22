@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, GraduationCap, Clock, BookOpen, Filter, ChevronRight, Users } from "lucide-react";
+import { ArrowLeft, GraduationCap, Clock, BookOpen, Filter, ChevronRight, Users, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +10,11 @@ import { useProgram, useProgramCourses } from "@/hooks/usePrograms";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { TeacherLink } from "@/components/TeacherLink";
+
+// Map of program slugs that have master structure pages
+const MASTER_STRUCTURE_PROGRAMS: Record<string, string> = {
+  "Life-Sc": "life-sciences-engineering",
+};
 
 const ProgramDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -137,14 +142,30 @@ const ProgramDetail = () => {
     );
   }
 
+  const hasMasterStructure = slug && MASTER_STRUCTURE_PROGRAMS[slug];
+
   return (
     <div className="min-h-screen py-6 md:py-8">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => navigate(-1)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Go Back
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
+          
+          {/* View Master's Structure button - only show for programs with structure pages */}
+          {hasMasterStructure && programInfo?.level?.toLowerCase().includes("master") && (
+            <Button 
+              onClick={() => navigate(`/programs/${slug}/structure`)}
+              className="gap-2"
+              size="lg"
+            >
+              <LayoutGrid className="h-5 w-5" />
+              View Master's Structure
+            </Button>
+          )}
+        </div>
 
         {/* Program Info */}
         <div className="mb-6">
