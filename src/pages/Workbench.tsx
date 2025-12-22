@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
@@ -14,6 +14,7 @@ import {
   useUpdateConversation,
   useAIConversations 
 } from "@/hooks/useAIConversations";
+import { useConversationSearch } from "@/hooks/useConversationSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,6 +29,7 @@ import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { AIResultCards } from "@/components/AIResultCard";
 import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
+import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { 
   Send, 
   Loader2, 
@@ -45,7 +47,8 @@ import {
   ThumbsDown,
   GraduationCap,
   PanelLeft,
-  Database
+  Database,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -114,6 +117,33 @@ const Workbench = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
+  // Conversation search hook
+  const {
+    searchQuery: convSearchQuery,
+    setSearchQuery: setConvSearchQuery,
+    isSearchOpen,
+    openSearch,
+    closeSearch,
+    searchResults,
+    activeResultIndex,
+    activeResult,
+    goToNextResult,
+    goToPrevResult,
+  } = useConversationSearch(messages);
+  
+  // Scroll to message when search result changes
+  const scrollToMessage = useCallback((messageIndex: number) => {
+    const messageElements = document.querySelectorAll('[data-message-index]');
+    const targetElement = messageElements[messageIndex];
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetElement.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+      setTimeout(() => {
+        targetElement.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+      }, 2000);
+    }
+  }, []);
+  
   // Keyboard shortcuts for workbench
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -122,15 +152,24 @@ const Workbench = () => {
         e.preventDefault();
         handleNewChat();
       }
-      // Escape to close sidebar
-      if (e.key === "Escape" && sidebarOpen) {
-        setSidebarOpen(false);
+      // Ctrl+F for search in conversation
+      if ((e.ctrlKey || e.metaKey) && e.key === "f" && messages.length > 0) {
+        e.preventDefault();
+        openSearch();
+      }
+      // Escape to close sidebar or search
+      if (e.key === "Escape") {
+        if (isSearchOpen) {
+          closeSearch();
+        } else if (sidebarOpen) {
+          setSidebarOpen(false);
+        }
       }
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sidebarOpen]);
+  }, [sidebarOpen, messages.length, isSearchOpen, openSearch, closeSearch]);
   
   // Data hooks for comprehensive AI context
   const { data: savedCourses } = useSavedCourses();
@@ -558,6 +597,19 @@ const Workbench = () => {
           </DropdownMenuContent>
         </DropdownMenu>
         
+        {/* Search button */}
+        {messages.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+            onClick={openSearch}
+            title="Search in conversation (Ctrl+F)"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+        )}
+        
         {/* Document Context Indicator */}
         {attachments.length > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
@@ -568,6 +620,19 @@ const Workbench = () => {
           </div>
         )}
       </div>
+      
+      {/* Conversation Search Bar */}
+      <ConversationSearchBar
+        isOpen={isSearchOpen}
+        searchQuery={convSearchQuery}
+        onSearchChange={setConvSearchQuery}
+        onClose={closeSearch}
+        results={searchResults}
+        activeResultIndex={activeResultIndex}
+        onNextResult={goToNextResult}
+        onPrevResult={goToPrevResult}
+        onResultClick={scrollToMessage}
+      />
 
       {/* Chat Area */}
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
@@ -601,7 +666,11 @@ const Workbench = () => {
           ) : (
             <>
               {messages.map((message, idx) => (
-                <div key={message.id} className="group animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                <div 
+                  key={message.id} 
+                  data-message-index={idx}
+                  className="group animate-in fade-in-0 slide-in-from-bottom-2 duration-300 transition-all rounded-lg"
+                >
                   <div className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
                     {/* Avatar */}
                     {message.role === "assistant" ? (

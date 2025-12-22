@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   BookOpen, 
   Beaker, 
@@ -10,10 +17,15 @@ import {
   BookmarkCheck, 
   ExternalLink,
   GraduationCap,
-  Users
+  Users,
+  ArrowUpDown,
+  Filter,
+  BookmarkPlus,
+  Loader2
 } from "lucide-react";
 import { useToggleSaveCourse, useToggleSaveLab, useSavedCourses, useSavedLabs } from "@/hooks/useSavedItems";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface CourseResult {
   id_course: string;
@@ -230,6 +242,9 @@ export const parseAIResults = (content: string): { courses: CourseResult[], labs
   return { courses, labs };
 };
 
+type SortOption = "name" | "ects-asc" | "ects-desc";
+type FilterLevel = "all" | "Ba" | "Ma";
+
 // Component to render all result cards from an AI message
 interface AIResultCardsProps {
   content: string;
@@ -238,25 +253,193 @@ interface AIResultCardsProps {
 
 export const AIResultCards = ({ content, className }: AIResultCardsProps) => {
   const { courses, labs } = parseAIResults(content);
+  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [filterLevel, setFilterLevel] = useState<FilterLevel>("all");
+  const [filterProfessor, setFilterProfessor] = useState<string>("all");
+  const [isSavingAll, setIsSavingAll] = useState<"courses" | "labs" | null>(null);
+  
+  const toggleSaveCourse = useToggleSaveCourse();
+  const toggleSaveLab = useToggleSaveLab();
+  const { data: savedCourses } = useSavedCourses();
+  const { data: savedLabs } = useSavedLabs();
+
+  // Get unique professors from courses
+  const professors = useMemo(() => {
+    const profs = new Set<string>();
+    courses.forEach(c => {
+      if (c.professor_name) {
+        c.professor_name.split(',').forEach(p => profs.add(p.trim()));
+      }
+    });
+    return Array.from(profs).sort();
+  }, [courses]);
+
+  // Filter and sort courses
+  const filteredCourses = useMemo(() => {
+    let result = [...courses];
+    
+    // Apply level filter
+    if (filterLevel !== "all") {
+      result = result.filter(c => c.ba_ma === filterLevel);
+    }
+    
+    // Apply professor filter
+    if (filterProfessor !== "all") {
+      result = result.filter(c => 
+        c.professor_name?.toLowerCase().includes(filterProfessor.toLowerCase())
+      );
+    }
+    
+    // Apply sorting
+    switch (sortBy) {
+      case "name":
+        result.sort((a, b) => a.name_course.localeCompare(b.name_course));
+        break;
+      case "ects-asc":
+        result.sort((a, b) => (a.ects || 0) - (b.ects || 0));
+        break;
+      case "ects-desc":
+        result.sort((a, b) => (b.ects || 0) - (a.ects || 0));
+        break;
+    }
+    
+    return result;
+  }, [courses, sortBy, filterLevel, filterProfessor]);
+
+  // Get unsaved items
+  const unsavedCourses = useMemo(() => 
+    filteredCourses.filter(c => !savedCourses?.some(sc => sc.course_id === c.id_course)),
+    [filteredCourses, savedCourses]
+  );
+
+  const unsavedLabs = useMemo(() => 
+    labs.filter(l => !savedLabs?.some(sl => sl.lab_id === l.id_lab)),
+    [labs, savedLabs]
+  );
+
+  const handleSaveAllCourses = async () => {
+    if (unsavedCourses.length === 0) {
+      toast.info("All courses already saved");
+      return;
+    }
+    
+    setIsSavingAll("courses");
+    try {
+      for (const course of unsavedCourses) {
+        await toggleSaveCourse.mutateAsync(course.id_course);
+      }
+      toast.success(`Saved ${unsavedCourses.length} courses`);
+    } catch (error) {
+      toast.error("Failed to save some courses");
+    } finally {
+      setIsSavingAll(null);
+    }
+  };
+
+  const handleSaveAllLabs = async () => {
+    if (unsavedLabs.length === 0) {
+      toast.info("All labs already saved");
+      return;
+    }
+    
+    setIsSavingAll("labs");
+    try {
+      for (const lab of unsavedLabs) {
+        await toggleSaveLab.mutateAsync(lab.id_lab);
+      }
+      toast.success(`Saved ${unsavedLabs.length} labs`);
+    } catch (error) {
+      toast.error("Failed to save some labs");
+    } finally {
+      setIsSavingAll(null);
+    }
+  };
 
   if (courses.length === 0 && labs.length === 0) return null;
 
   return (
-    <div className={cn("mt-3 space-y-3", className)}>
+    <div className={cn("mt-3 space-y-4", className)}>
       {courses.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <BookOpen className="h-3 w-3" />
-            Courses found ({courses.length})
-          </p>
+          {/* Header with filters */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <BookOpen className="h-3 w-3" />
+              Courses found ({filteredCourses.length}/{courses.length})
+            </p>
+            
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Level filter */}
+              <Select value={filterLevel} onValueChange={(v) => setFilterLevel(v as FilterLevel)}>
+                <SelectTrigger className="h-7 text-xs w-[100px]">
+                  <Filter className="h-3 w-3 mr-1" />
+                  <SelectValue placeholder="Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All levels</SelectItem>
+                  <SelectItem value="Ba">Bachelor</SelectItem>
+                  <SelectItem value="Ma">Master</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Professor filter */}
+              {professors.length > 0 && (
+                <Select value={filterProfessor} onValueChange={setFilterProfessor}>
+                  <SelectTrigger className="h-7 text-xs w-[120px]">
+                    <Users className="h-3 w-3 mr-1" />
+                    <SelectValue placeholder="Professor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All professors</SelectItem>
+                    {professors.slice(0, 10).map(prof => (
+                      <SelectItem key={prof} value={prof}>
+                        {prof.length > 20 ? prof.slice(0, 20) + '...' : prof}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <SelectTrigger className="h-7 text-xs w-[110px]">
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="ects-asc">ECTS (low-high)</SelectItem>
+                  <SelectItem value="ects-desc">ECTS (high-low)</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Save all button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={handleSaveAllCourses}
+                disabled={isSavingAll === "courses" || unsavedCourses.length === 0}
+              >
+                {isSavingAll === "courses" ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <BookmarkPlus className="h-3 w-3" />
+                )}
+                Save all ({unsavedCourses.length})
+              </Button>
+            </div>
+          </div>
+
+          {/* Cards grid */}
           <div className="grid gap-2 sm:grid-cols-2">
-            {courses.slice(0, 6).map((course) => (
+            {filteredCourses.slice(0, 6).map((course) => (
               <AIResultCard key={course.id_course} type="course" data={course} />
             ))}
           </div>
-          {courses.length > 6 && (
+          {filteredCourses.length > 6 && (
             <p className="text-xs text-muted-foreground">
-              +{courses.length - 6} more courses in the response above
+              +{filteredCourses.length - 6} more courses in the response above
             </p>
           )}
         </div>
@@ -264,10 +447,28 @@ export const AIResultCards = ({ content, className }: AIResultCardsProps) => {
 
       {labs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <Beaker className="h-3 w-3" />
-            Labs found ({labs.length})
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Beaker className="h-3 w-3" />
+              Labs found ({labs.length})
+            </p>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={handleSaveAllLabs}
+              disabled={isSavingAll === "labs" || unsavedLabs.length === 0}
+            >
+              {isSavingAll === "labs" ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <BookmarkPlus className="h-3 w-3" />
+              )}
+              Save all ({unsavedLabs.length})
+            </Button>
+          </div>
+          
           <div className="grid gap-2 sm:grid-cols-2">
             {labs.slice(0, 6).map((lab) => (
               <AIResultCard key={lab.id_lab} type="lab" data={lab} />
