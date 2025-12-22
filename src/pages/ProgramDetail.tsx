@@ -61,14 +61,17 @@ const ProgramDetail = () => {
     queryKey: ["programInfo", program?.id],
     queryFn: async () => {
       if (!program?.id) return null;
-      
+
       const { data } = await supabase
         .from("bridge_up(U-P)")
         .select("*")
-        .eq("id_program", program.id)
-        .maybeSingle();
+        .eq("id_program", program.id);
 
-      return data;
+      if (!data || data.length === 0) return null;
+
+      // Some programs have both Bachelor + Master rows; prefer Master for this page.
+      const masterRow = data.find((r) => r.level?.toLowerCase?.().includes("master"));
+      return masterRow ?? data[0];
     },
     enabled: !!program?.id,
   });
@@ -159,7 +162,7 @@ const ProgramDetail = () => {
           </Button>
           
           {/* View Master's Structure button - only show for programs with structure pages */}
-          {hasMasterStructure && programInfo?.level?.toLowerCase().includes("master") && (
+          {hasMasterStructure && (
             <Button 
               onClick={() => navigate(`/programs/${slug}/structure`)}
               className="gap-2"

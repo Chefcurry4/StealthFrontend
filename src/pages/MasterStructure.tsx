@@ -97,7 +97,7 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
       { name: "Strategic management of innovation", credits: 4 },
     ],
   },
-  "Archi": {
+  "AR": {
     title: "Master of Science in Architecture",
     totalCredits: 120,
     duration: "2 years",
@@ -157,7 +157,7 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
       { name: "Habitat et typologie", credits: 3, specializations: ["B", "E"] },
     ],
   },
-  "CE": {
+  "CIV": {
     title: "Master of Science in Civil Engineering",
     totalCredits: 120,
     duration: "2 years",
@@ -219,7 +219,7 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
     ],
     minors: ["Computational science and engineering", "Data science", "Territorial engineering"],
   },
-  "US": {
+  "URB-SYS": {
     title: "Master of Science in Urban Systems",
     totalCredits: 120,
     duration: "2 years",
@@ -270,7 +270,7 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
       { name: "Indoor air quality and ventilation", credits: 4, specializations: ["C"] },
     ],
   },
-  "SIE": {
+  "ENV-Sc": {
     title: "Master of Science in Environmental Sciences and Engineering",
     totalCredits: 120,
     duration: "2 years",
