@@ -12,16 +12,18 @@ const databaseTools = [
     type: "function",
     function: {
       name: "search_courses",
-      description: "Search for courses in the database by various criteria. Use this when the user asks about courses taught by a specific professor, courses on a topic, courses requiring specific software/tools, courses with a specific exam type, or courses at a university.",
+      description: "Search for courses in the database. This is a SMART search that checks ALL relevant columns including: name_course, code, description, topics, programs, ba_ma (level), professor_name, software_equipment, type_exam, language. Use this for ANY course-related query.",
       parameters: {
         type: "object",
         properties: {
+          query: { type: "string", description: "General search query - will search across name, description, topics, programs, code (e.g., 'life sciences', 'machine learning', 'robotics')" },
           professor_name: { type: "string", description: "Professor/teacher name to filter by (partial match)" },
           course_name: { type: "string", description: "Course name to search for (partial match)" },
           course_code: { type: "string", description: "Course code to search for (e.g., 'CS-101', 'MATH', partial match)" },
           university_slug: { type: "string", description: "University slug to filter by (e.g., 'epfl', 'eth-zurich')" },
           language: { type: "string", description: "Course language (English, French, German, etc.)" },
-          level: { type: "string", description: "Ba for Bachelor, Ma for Master" },
+          level: { type: "string", description: "Ba for Bachelor, Ma for Master - also searches the programs column for bachelor/master keywords" },
+          program: { type: "string", description: "Program name to filter by - searches the programs column (e.g., 'Life Sciences', 'Computer Science', 'Mechanical Engineering')" },
           topic: { type: "string", description: "Topic or keyword to search in course topics/description/name (e.g., 'machine learning', 'thermodynamics', 'robotics')" },
           software_equipment: { type: "string", description: "Software, programming language, or equipment required (e.g., 'C++', 'Python', 'MATLAB', 'CAD')" },
           exam_type: { type: "string", description: "Type of examination (e.g., 'oral', 'written', 'project', 'presentation')" },
@@ -135,6 +137,12 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       // Select ALL columns from Courses table for comprehensive access
       let query = supabase.from("Courses(C)").select("*");
       
+      // SMART QUERY: searches across multiple relevant columns
+      if (args.query) {
+        const q = args.query;
+        query = query.or(`name_course.ilike.%${q}%,description.ilike.%${q}%,topics.ilike.%${q}%,programs.ilike.%${q}%,code.ilike.%${q}%,professor_name.ilike.%${q}%`);
+      }
+      
       if (args.professor_name) {
         query = query.ilike("professor_name", `%${args.professor_name}%`);
       }
@@ -147,11 +155,23 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       if (args.language) {
         query = query.ilike("language", `%${args.language}%`);
       }
+      // Level filter: check both ba_ma column AND programs column for bachelor/master keywords
       if (args.level) {
-        query = query.eq("ba_ma", args.level);
+        const levelLower = args.level.toLowerCase();
+        if (levelLower === "ba" || levelLower === "bachelor") {
+          query = query.or(`ba_ma.ilike.%Ba%,ba_ma.ilike.%bachelor%,programs.ilike.%bachelor%`);
+        } else if (levelLower === "ma" || levelLower === "master") {
+          query = query.or(`ba_ma.ilike.%Ma%,ba_ma.ilike.%master%,programs.ilike.%master%`);
+        } else {
+          query = query.ilike("ba_ma", `%${args.level}%`);
+        }
+      }
+      // Program filter: search in the programs column
+      if (args.program) {
+        query = query.ilike("programs", `%${args.program}%`);
       }
       if (args.topic) {
-        query = query.or(`topics.ilike.%${args.topic}%,description.ilike.%${args.topic}%,name_course.ilike.%${args.topic}%`);
+        query = query.or(`topics.ilike.%${args.topic}%,description.ilike.%${args.topic}%,name_course.ilike.%${args.topic}%,programs.ilike.%${args.topic}%`);
       }
       if (args.software_equipment) {
         query = query.ilike("software_equipment", `%${args.software_equipment}%`);
@@ -573,7 +593,7 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - stats: Course statistics
 
 **Database Tools:**
-- search_courses: Find courses by professor, name, code, language, level (Ba/Ma), topic, software/equipment, exam type, or university
+- search_courses: SMART search that checks ALL relevant columns (name, description, topics, programs, ba_ma, professor, software, exam type, language). Use the "query" parameter for general searches, or specific parameters for filtering.
 - search_labs: Find research labs by university, topic, professor, or faculty area
 - search_teachers: Find professors by name, research topics, or university
 - get_courses_by_teacher: Get ALL courses taught by a specific professor
@@ -581,15 +601,32 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - get_programs_by_university: Get all programs offered by a university
 - search_universities: Find universities by name or country
 
-**IMPORTANT: When to use tools:**
-- "What courses does Professor Dubach teach?" → Use get_courses_by_teacher
-- "Find cybersecurity labs at EPFL" → Use get_labs_by_university with topic_filter="cybersecurity"
-- "Show me AI courses in English" → Use search_courses with topic="AI" and language="English"
-- "Which courses use Python?" → Use search_courses with software_equipment="Python"
-- "Find courses with oral exams" → Use search_courses with exam_type="oral"
-- "What is the course description for CS-101?" → Use search_courses with course_code="CS-101"
-- "What software is needed for the robotics course?" → Search for the course and check software_equipment field
-- "Find 6 ECTS courses in French" → Use search_courses with ects_min=6, ects_max=6, language="French"
+**CRITICAL - How to search intelligently:**
+When users ask about courses, you MUST understand what columns to search:
+- "life sciences bachelor courses" → Use search_courses with program="life sciences" AND level="Ba"
+- "EPFL bachelor courses in life sciences" → Use search_courses with university_slug="epfl", program="life sciences", level="Ba"
+- "computer science courses" → Use search_courses with query="computer science" OR program="Computer Science"
+- "courses that use Python" → Use search_courses with software_equipment="Python"
+- "machine learning courses" → Use search_courses with query="machine learning"
+- "courses by Professor Smith" → Use search_courses with professor_name="Smith"
+- "master level robotics courses" → Use search_courses with level="Ma", topic="robotics"
+
+**IMPORTANT: Understanding database columns:**
+- ba_ma: Contains "Ba" for Bachelor or "Ma" for Master level
+- programs: Contains the program name(s) the course belongs to (e.g., "Life Sciences Engineering", "Computer Science")
+- topics: Contains subject topics covered in the course
+- description: Contains the full course description
+- Use the "level" parameter to filter by Bachelor/Master
+- Use the "program" parameter to filter by program name
+
+**Example tool calls:**
+- "Find EPFL life science bachelor courses" → search_courses(university_slug="epfl", program="life science", level="Ba")
+- "What courses does Professor X teach?" → get_courses_by_teacher(teacher_name="X")
+- "Find cybersecurity labs at EPFL" → get_labs_by_university(university_slug="epfl", topic_filter="cybersecurity")
+- "Show me AI courses in English" → search_courses(query="AI", language="English")
+- "Which courses use Python?" → search_courses(software_equipment="Python")
+- "Find courses with oral exams" → search_courses(exam_type="oral")
+- "What software is needed for the robotics course?" → search_courses(query="robotics")
 
 **University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
@@ -602,8 +639,7 @@ ${userSpecificContext || "No user-specific data available"}
 - Reference the user's saved courses, labs, and learning agreements when providing personalized advice
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
-- If a query returns no results, suggest alternative search terms or related options
-- When users share documents (CVs, transcripts, etc.), use that context to personalize recommendations
+- If a query returns no results, try a broader search or suggest alternative search terms
 
 **CRITICAL OUTPUT FORMAT:**
 When you return courses or labs from database queries, you MUST append the raw data at the END of your response using these exact HTML comment formats (the user won't see these, but the app will parse them to show interactive cards):

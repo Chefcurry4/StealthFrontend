@@ -187,13 +187,16 @@ const Workbench = () => {
   const updateConversation = useUpdateConversation();
   const { data: loadedMessages } = useAIMessages(currentConversationId || null);
 
-  // Auto-load the most recent conversation when entering workbench
+  // Track if user explicitly started a new chat
+  const [isNewChatMode, setIsNewChatMode] = useState(false);
+
+  // Auto-load the most recent conversation when entering workbench (only if not in new chat mode)
   useEffect(() => {
-    if (!currentConversationId && recentConversations && recentConversations.length > 0 && messages.length === 0) {
+    if (!isNewChatMode && !currentConversationId && recentConversations && recentConversations.length > 0 && messages.length === 0) {
       // Load the most recent conversation
       setCurrentConversationId(recentConversations[0].id);
     }
-  }, [recentConversations, currentConversationId, messages.length]);
+  }, [recentConversations, currentConversationId, messages.length, isNewChatMode]);
 
   // Load messages when switching conversations
   useEffect(() => {
@@ -212,12 +215,14 @@ const Workbench = () => {
   const handleNewChat = () => {
     setMessages([]);
     setCurrentConversationId(undefined);
+    setIsNewChatMode(true);
     setInput("");
     setAttachments([]);
   };
 
   const handleSelectConversation = (id: string) => {
     setCurrentConversationId(id);
+    setIsNewChatMode(false);
     setInput("");
     setAttachments([]);
   };
@@ -419,6 +424,7 @@ const Workbench = () => {
         const conv = await createConversation.mutateAsync(title);
         conversationId = conv.id;
         setCurrentConversationId(conversationId);
+        setIsNewChatMode(false); // Reset after creating conversation
       }
 
       // Save user message to database
