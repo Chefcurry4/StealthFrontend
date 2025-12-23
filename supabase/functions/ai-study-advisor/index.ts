@@ -12,7 +12,7 @@ const databaseTools = [
     type: "function",
     function: {
       name: "search_courses",
-      description: "Search for courses in the database. This is a SMART search that checks ALL relevant columns including: name_course, code, description, topics, programs, ba_ma (level), professor_name, software_equipment, type_exam, language. Use this for ANY course-related query.",
+      description: "INTELLIGENT search for courses. Searches across ALL columns: name_course, code, description, topics, programs, ba_ma, professor_name, software_equipment, type_exam, language, term, mandatory_optional, ects. Use 'query' for general text search across all columns, or specific parameters for targeted filtering.",
       parameters: {
         type: "object",
         properties: {
@@ -137,10 +137,10 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       // Select ALL columns from Courses table for comprehensive access
       let query = supabase.from("Courses(C)").select("*");
       
-      // SMART QUERY: searches across multiple relevant columns
+      // SMART QUERY: searches across ALL relevant columns intelligently
       if (args.query) {
         const q = args.query;
-        query = query.or(`name_course.ilike.%${q}%,description.ilike.%${q}%,topics.ilike.%${q}%,programs.ilike.%${q}%,code.ilike.%${q}%,professor_name.ilike.%${q}%`);
+        query = query.or(`name_course.ilike.%${q}%,description.ilike.%${q}%,topics.ilike.%${q}%,programs.ilike.%${q}%,code.ilike.%${q}%,professor_name.ilike.%${q}%,software_equipment.ilike.%${q}%,type_exam.ilike.%${q}%,language.ilike.%${q}%,term.ilike.%${q}%,mandatory_optional.ilike.%${q}%,ba_ma.ilike.%${q}%`);
       }
       
       if (args.professor_name) {
@@ -593,7 +593,7 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - stats: Course statistics
 
 **Database Tools:**
-- search_courses: SMART search that checks ALL relevant columns (name, description, topics, programs, ba_ma, professor, software, exam type, language). Use the "query" parameter for general searches, or specific parameters for filtering.
+- search_courses: INTELLIGENT search across ALL columns (name_course, description, topics, programs, code, professor_name, software_equipment, type_exam, language, term, mandatory_optional, ba_ma, ects). Use "query" for general text search, or specific parameters (level, program, language, exam_type, software, term, mandatory, ects_min, ects_max) for targeted filtering.
 - search_labs: Find research labs by university, topic, professor, or faculty area
 - search_teachers: Find professors by name, research topics, or university
 - get_courses_by_teacher: Get ALL courses taught by a specific professor
