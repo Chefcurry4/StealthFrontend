@@ -132,7 +132,8 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
   
   switch (toolName) {
     case "search_courses": {
-      let query = supabase.from("Courses(C)").select("id_course, name_course, code, ects, ba_ma, professor_name, language, topics, description, software_equipment, type_exam, term");
+      // Select ALL columns from Courses table for comprehensive access
+      let query = supabase.from("Courses(C)").select("*");
       
       if (args.professor_name) {
         query = query.ilike("professor_name", `%${args.professor_name}%`);
@@ -299,10 +300,10 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         .limit(5);
       
       if (teacherError || !teachers?.length) {
-        // Fallback: search directly in courses by professor_name
+        // Fallback: search directly in courses by professor_name - select ALL columns
         const { data: courses } = await supabase
           .from("Courses(C)")
-          .select("id_course, name_course, code, ects, ba_ma, professor_name, language")
+          .select("*")
           .ilike("professor_name", `%${args.teacher_name}%`)
           .limit(30);
         
@@ -321,10 +322,10 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         .in("id_teacher", teacherIds);
       
       if (!bridgeData?.length) {
-        // Fallback to direct search
+        // Fallback to direct search - select ALL columns
         const { data: courses } = await supabase
           .from("Courses(C)")
-          .select("id_course, name_course, code, ects, ba_ma, professor_name, language")
+          .select("*")
           .ilike("professor_name", `%${args.teacher_name}%`)
           .limit(30);
         
@@ -336,9 +337,10 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       }
       
       const courseIds = bridgeData.map((b: any) => b.id_course);
+      // Select ALL columns for comprehensive course information
       const { data: courses, error: courseError } = await supabase
         .from("Courses(C)")
-        .select("id_course, name_course, code, ects, ba_ma, professor_name, language")
+        .select("*")
         .in("id_course", courseIds);
       
       if (courseError) {
@@ -546,9 +548,32 @@ serve(async (req) => {
     const systemPrompt = `You are hubAI, an intelligent Study Advisor for university students planning study abroad and exchange semesters. You have FULL ACCESS to query the university database to find specific information.
 
 **Your Database Query Capabilities:**
-You have tools to query the complete database with 1,420+ courses, 424+ labs, 966+ teachers, and 33+ programs across multiple universities. USE THESE TOOLS when users ask specific questions:
+You have tools to query the complete database with 1,420+ courses, 424+ labs, 966+ teachers, and 33+ programs across multiple universities. USE THESE TOOLS when users ask specific questions.
 
-- search_courses: Find courses by professor, name, language, level (Ba/Ma), topic, or university
+**FULL Course Data Access - You can retrieve ALL of these columns:**
+- id_course: Unique course identifier
+- name_course: Course name/title
+- code: Course code (e.g., "CS-101", "MATH-201")
+- description: Detailed course description (content, objectives, what students will learn)
+- ects: Number of ECTS credits
+- language: Course language (English, French, German, Italian, etc.)
+- language_code: Language code
+- ba_ma: Bachelor (Ba) or Master (Ma) level
+- which_year: Which year of study
+- term: Semester/term when offered (Fall, Spring, etc.)
+- year: Academic year
+- professor_name: Teaching professor(s)
+- topics: Course topics and subjects covered
+- type_exam: Type of examination (oral, written, project, etc.)
+- mandatory_optional: Whether course is mandatory or optional
+- programs: Associated programs
+- software_equipment: Required software, programming languages, tools, and equipment (Python, MATLAB, CAD, etc.)
+- material_url: Link to course materials
+- media: Media resources
+- stats: Course statistics
+
+**Database Tools:**
+- search_courses: Find courses by professor, name, code, language, level (Ba/Ma), topic, software/equipment, exam type, or university
 - search_labs: Find research labs by university, topic, professor, or faculty area
 - search_teachers: Find professors by name, research topics, or university
 - get_courses_by_teacher: Get ALL courses taught by a specific professor
@@ -560,8 +585,11 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - "What courses does Professor Dubach teach?" → Use get_courses_by_teacher
 - "Find cybersecurity labs at EPFL" → Use get_labs_by_university with topic_filter="cybersecurity"
 - "Show me AI courses in English" → Use search_courses with topic="AI" and language="English"
-- "What universities are in Switzerland?" → Use search_universities with country="Switzerland"
-- "Find professors working on machine learning" → Use search_teachers with topic="machine learning"
+- "Which courses use Python?" → Use search_courses with software_equipment="Python"
+- "Find courses with oral exams" → Use search_courses with exam_type="oral"
+- "What is the course description for CS-101?" → Use search_courses with course_code="CS-101"
+- "What software is needed for the robotics course?" → Search for the course and check software_equipment field
+- "Find 6 ECTS courses in French" → Use search_courses with ects_min=6, ects_max=6, language="French"
 
 **University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
@@ -570,6 +598,7 @@ ${userSpecificContext || "No user-specific data available"}
 
 **General Guidelines:**
 - ALWAYS use database query tools when users ask about specific courses, professors, labs, or universities
+- When showing course information, include relevant details like description, ECTS, professor, language, exam type, required software
 - Reference the user's saved courses, labs, and learning agreements when providing personalized advice
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
@@ -578,7 +607,7 @@ ${userSpecificContext || "No user-specific data available"}
 
 **CRITICAL OUTPUT FORMAT:**
 When you return courses or labs from database queries, you MUST append the raw data at the END of your response using these exact HTML comment formats (the user won't see these, but the app will parse them to show interactive cards):
-- For courses: <!--COURSES:[{"id_course":"...","name_course":"...","code":"...","ects":...,"ba_ma":"...","professor_name":"...","language":"...","topics":"..."}]-->
+- For courses: <!--COURSES:[{"id_course":"...","name_course":"...","code":"...","ects":...,"ba_ma":"...","professor_name":"...","language":"...","topics":"...","description":"...","software_equipment":"...","type_exam":"..."}]-->
 - For labs: <!--LABS:[{"id_lab":"...","name":"...","slug":"...","topics":"...","professors":"...","faculty_match":"..."}]-->
 Include ALL fields that are available. Place these at the very end of your response after all text content.`;
 
