@@ -14,6 +14,7 @@ import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { SwipeIndicator } from "@/components/SwipeIndicator";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Statistics from "./pages/Statistics";
@@ -99,6 +100,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <ScrollToTop />
                 <ErrorBoundary>
                   <AppContent />
                 </ErrorBoundary>

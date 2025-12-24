@@ -15,7 +15,6 @@ export const Footer = () => {
     ],
     resources: [
       { name: "Help Center", href: "/help-center" },
-      { name: "Documentation", href: "/help-center" },
       { name: "Statistics", href: "/statistics" },
     ],
     legal: [
