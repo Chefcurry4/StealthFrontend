@@ -118,7 +118,8 @@ const Universities = () => {
                 {filteredUniversities && filteredUniversities.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                     {filteredUniversities.map((university) => (
-                      <Card key={university.uuid} className="flex flex-col overflow-hidden backdrop-blur-md">
+                      <Link to={`/universities/${university.slug}`} key={university.uuid} className="block">
+                      <Card className="flex flex-col overflow-hidden backdrop-blur-md cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all duration-200">
                         <UniversityCardImage 
                           universityId={university.uuid}
                           universityName={university.name}
@@ -137,11 +138,9 @@ const Universities = () => {
                             </div>
                           )}
                           <div className="flex items-center gap-2">
-                            <Link to={`/universities/${university.slug}`} className="flex-1">
-                              <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm">
-                                View Details
-                              </Button>
-                            </Link>
+                            <Button variant="secondary" size="sm" className="flex-1 theme-btn-secondary text-xs sm:text-sm" onClick={(e) => e.stopPropagation()}>
+                              View Details
+                            </Button>
                             {university.website && (
                               <a 
                                 href={university.website} 
@@ -157,6 +156,7 @@ const Universities = () => {
                           </div>
                         </CardContent>
                       </Card>
+                      </Link>
                     ))}
                   </div>
                 )}
