@@ -68,20 +68,65 @@ interface Message {
   timestamp: Date;
 }
 
-type ModelType = "fast" | "thinking";
+type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar" | "sonar-pro" | "sonar-reasoning";
 
-const models: { id: ModelType; name: string; description: string; icon: React.ReactNode }[] = [
+interface ModelInfo {
+  id: ModelType;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  provider: "chatgpt" | "perplexity";
+}
+
+const models: ModelInfo[] = [
   { 
-    id: "fast", 
-    name: "studentAI Fast", 
-    description: "Quick responses for simple questions",
-    icon: <Zap className="h-4 w-4" />
+    id: "gemini-flash", 
+    name: "Gemini Flash", 
+    description: "Fast, balanced responses (default)",
+    icon: <Zap className="h-4 w-4" />,
+    provider: "chatgpt"
   },
   { 
-    id: "thinking", 
-    name: "studentAI Pro", 
-    description: "Deep reasoning for complex problems",
-    icon: <Brain className="h-4 w-4" />
+    id: "gemini-pro", 
+    name: "Gemini Pro", 
+    description: "Advanced reasoning for complex questions",
+    icon: <Brain className="h-4 w-4" />,
+    provider: "chatgpt"
+  },
+  { 
+    id: "gpt-5", 
+    name: "GPT-5", 
+    description: "OpenAI's most powerful model",
+    icon: <Sparkles className="h-4 w-4" />,
+    provider: "chatgpt"
+  },
+  { 
+    id: "gpt-5-mini", 
+    name: "GPT-5 Mini", 
+    description: "Fast and cost-effective OpenAI model",
+    icon: <Zap className="h-4 w-4" />,
+    provider: "chatgpt"
+  },
+  { 
+    id: "sonar", 
+    name: "Perplexity Sonar", 
+    description: "Web-grounded search answers",
+    icon: <Search className="h-4 w-4" />,
+    provider: "perplexity"
+  },
+  { 
+    id: "sonar-pro", 
+    name: "Sonar Pro", 
+    description: "Multi-step reasoning with citations",
+    icon: <Brain className="h-4 w-4" />,
+    provider: "perplexity"
+  },
+  { 
+    id: "sonar-reasoning", 
+    name: "Sonar Reasoning", 
+    description: "Deep reasoning with real-time search",
+    icon: <Sparkles className="h-4 w-4" />,
+    provider: "perplexity"
   },
 ];
 
@@ -105,7 +150,7 @@ const Workbench = () => {
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState<ModelType>("fast");
+  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-flash");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -378,6 +423,7 @@ const Workbench = () => {
       await streamAIStudyAdvisor({
         messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
         userContext,
+        model: selectedModel,
         onDelta: (delta) => {
           assistantContent += delta;
           setMessages(prev => prev.map(m => 
@@ -495,6 +541,7 @@ const Workbench = () => {
       await streamAIStudyAdvisor({
         messages: messagesForAI,
         userContext,
+        model: selectedModel,
         onDelta: (delta) => {
           assistantContent += delta;
           setMessages(prev => prev.map(m => 
@@ -579,7 +626,7 @@ const Workbench = () => {
           </div>
         </div>
 
-        {/* Model Selector */}
+        {/* Model Selector with Provider Groups */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
@@ -591,8 +638,36 @@ const Workbench = () => {
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            {models.map(model => (
+          <DropdownMenuContent align="end" className="w-72">
+            {/* ChatGPT/Lovable AI Models */}
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" className="h-4 w-4" />
+              ChatGPT / Gemini
+            </div>
+            {models.filter(m => m.provider === "chatgpt").map(model => (
+              <DropdownMenuItem
+                key={model.id}
+                onClick={() => setSelectedModel(model.id)}
+                className="flex items-start gap-3 p-3 cursor-pointer"
+              >
+                <div className="mt-0.5 text-primary">{model.icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-xs opacity-70">{model.description}</div>
+                </div>
+                {selectedModel === model.id && (
+                  <Check className="h-4 w-4 text-primary mt-0.5" />
+                )}
+              </DropdownMenuItem>
+            ))}
+            
+            {/* Perplexity Models */}
+            <div className="border-t border-border my-1" />
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-2">
+              <img src="https://www.perplexity.ai/favicon.ico" alt="Perplexity" className="h-4 w-4" />
+              Perplexity AI
+            </div>
+            {models.filter(m => m.provider === "perplexity").map(model => (
               <DropdownMenuItem
                 key={model.id}
                 onClick={() => setSelectedModel(model.id)}
@@ -863,9 +938,33 @@ const Workbench = () => {
           </div>
         </div>
 
-        <p className="text-xs text-center text-foreground/40 dark:text-muted-foreground/70 mt-3">
-          hubAI can make mistakes. Consider checking important information.
-        </p>
+        <div className="flex flex-col items-center gap-2 mt-3">
+          <p className="text-xs text-foreground/40 dark:text-muted-foreground/70">
+            hubAI can make mistakes. Consider checking important information.
+          </p>
+          
+          {/* Powered By Section */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
+            <span>Powered by</span>
+            <div className="flex items-center gap-2">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" 
+                alt="ChatGPT" 
+                className="h-4 w-4"
+              />
+              <span className="font-medium">ChatGPT</span>
+            </div>
+            <span>&</span>
+            <div className="flex items-center gap-2">
+              <img 
+                src="https://www.perplexity.ai/favicon.ico" 
+                alt="Perplexity" 
+                className="h-4 w-4"
+              />
+              <span className="font-medium">Perplexity</span>
+            </div>
+          </div>
+        </div>
       </div>
       </div>
       
