@@ -495,8 +495,12 @@ export const DiaryNotebook = ({
                 </div>
               )}
 
-              {/* Render page items with absolute positioning */}
-              <div className="relative" style={{ minHeight: 'calc(100% - 50px)' }} onClick={() => setSelectedItemId(null)}>
+              {/* Render page items with absolute positioning - large area for free placement */}
+              <div 
+                className="relative" 
+                style={{ minHeight: '2000px' }} 
+                onClick={() => setSelectedItemId(null)}
+              >
                 {currentPageItemsFiltered.map(renderItem)}
               </div>
             </div>
@@ -705,10 +709,17 @@ const DraggableItem = ({
   const [pendingUpdate, setPendingUpdate] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; itemX: number; itemY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number; startLeft: number; startTop: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Get page dimensions (approximate)
-  const pageWidth = 800;
-  const pageHeight = 600;
+  // Get dynamic page dimensions from container - allow unlimited vertical space
+  const getPageDimensions = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      // Use actual width, but allow virtually unlimited height for vertical scrolling
+      return { width: Math.max(rect.width, 800), height: 10000 };
+    }
+    return { width: 800, height: 10000 };
+  };
 
   // Build other items position data for edge snapping
   const otherItemsX = otherItems
@@ -741,7 +752,10 @@ const DraggableItem = ({
         setHasMoved(true);
       }
       
-      // Apply edge snapping with fallback to grid snapping
+      // Get dynamic page dimensions
+      const { width: pageWidth, height: pageHeight } = getPageDimensions();
+      
+      // Apply edge snapping with fallback to grid snapping - allow free positioning
       const rawX = Math.max(0, dragRef.current.itemX + dx);
       const rawY = Math.max(0, dragRef.current.itemY + dy);
       const newX = snapToEdge(rawX, size.width, pageWidth, otherItemsX);
