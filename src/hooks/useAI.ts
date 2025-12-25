@@ -38,6 +38,7 @@ export const useAIStudyAdvisor = () => {
 export const streamAIStudyAdvisor = async ({
   messages,
   userContext,
+  model = "gemini-flash",
   onDelta,
   onDone,
   onSearchingDatabase,
@@ -45,6 +46,7 @@ export const streamAIStudyAdvisor = async ({
 }: {
   messages: { role: string; content: string }[];
   userContext?: any;
+  model?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onSearchingDatabase?: (searching: boolean) => void;
@@ -58,7 +60,7 @@ export const streamAIStudyAdvisor = async ({
       "Content-Type": "application/json",
       Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiZ2N2dW9jdXB4ZnVndGZqaWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzE2NjgsImV4cCI6MjA3OTQwNzY2OH0.FbAlFRNtIKBapKuqp-f3CeHo3bbp_a2VThgHHqp1rwc`,
     },
-    body: JSON.stringify({ messages, userContext, stream: true }),
+    body: JSON.stringify({ messages, userContext, stream: true, model }),
   });
 
   if (!resp.ok) {

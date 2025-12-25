@@ -481,20 +481,60 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
   }
 }
 
+// Provider configuration
+type AIProvider = "lovable" | "perplexity";
+
+interface ModelConfig {
+  provider: AIProvider;
+  model: string;
+  name: string;
+}
+
+const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  // Lovable AI models (Gemini/OpenAI)
+  "gemini-flash": { provider: "lovable", model: "google/gemini-2.5-flash", name: "Gemini Flash" },
+  "gemini-pro": { provider: "lovable", model: "google/gemini-2.5-pro", name: "Gemini Pro" },
+  "gpt-5": { provider: "lovable", model: "openai/gpt-5", name: "GPT-5" },
+  "gpt-5-mini": { provider: "lovable", model: "openai/gpt-5-mini", name: "GPT-5 Mini" },
+  // Perplexity models
+  "sonar": { provider: "perplexity", model: "sonar", name: "Perplexity Sonar" },
+  "sonar-pro": { provider: "perplexity", model: "sonar-pro", name: "Perplexity Sonar Pro" },
+  "sonar-reasoning": { provider: "perplexity", model: "sonar-reasoning", name: "Perplexity Reasoning" },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, userContext, stream = false } = await req.json();
-    console.log("Received request with messages:", messages?.length, "stream:", stream);
+    const { messages, userContext, stream = false, model: requestedModel = "gemini-flash" } = await req.json();
+    console.log("Received request with messages:", messages?.length, "stream:", stream, "model:", requestedModel);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const modelConfig = MODEL_CONFIGS[requestedModel] || MODEL_CONFIGS["gemini-flash"];
+    const provider = modelConfig.provider;
+    
+    // Get appropriate API key based on provider
+    let apiKey: string;
+    let apiEndpoint: string;
+    
+    if (provider === "perplexity") {
+      apiKey = Deno.env.get("PERPLEXITY_API_KEY") || "";
+      apiEndpoint = "https://api.perplexity.ai/chat/completions";
+      if (!apiKey) {
+        console.error("PERPLEXITY_API_KEY is not configured");
+        throw new Error("PERPLEXITY_API_KEY is not configured");
+      }
+    } else {
+      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+      apiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
+      if (!apiKey) {
+        console.error("LOVABLE_API_KEY is not configured");
+        throw new Error("LOVABLE_API_KEY is not configured");
+      }
     }
+    
+    console.log(`Using provider: ${provider}, model: ${modelConfig.model}`);
 
     // Get Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -649,12 +689,18 @@ Include ALL fields that are available. Place these at the very end of your respo
 
     console.log("Making initial AI call with tools...");
     
-    // First AI call with tools
+    // For tool calling, always use Lovable AI (Gemini) - then switch to requested model for final response
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableApiKey) {
+      throw new Error("LOVABLE_API_KEY is required for tool calling");
+    }
+    
+    // First AI call with tools (always uses Gemini for reliable tool calling)
     const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${lovableApiKey}`,
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
@@ -715,16 +761,16 @@ Include ALL fields that are available. Place these at the very end of your respo
         });
       }
       
-      // Second AI call with tool results
-      console.log("Making second AI call with tool results...");
-      const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      // Second AI call with tool results - use requested model/provider
+      console.log(`Making second AI call with tool results using ${provider}/${modelConfig.model}...`);
+      const finalResponse = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: modelConfig.model,
           messages: [
             { role: "system", content: systemPrompt },
             ...messages,
@@ -780,18 +826,17 @@ Include ALL fields that are available. Place these at the very end of your respo
       });
     }
 
-    // No tool calls - return direct response
+    // No tool calls - return direct response using requested model/provider
     if (stream) {
-      // For streaming without tool calls, we need to make a new streaming request
-      console.log("No tools needed, making streaming request...");
-      const streamResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      console.log(`No tools needed, making streaming request with ${provider}/${modelConfig.model}...`);
+      const streamResponse = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: modelConfig.model,
           messages: [
             { role: "system", content: systemPrompt },
             ...messages,
@@ -801,6 +846,8 @@ Include ALL fields that are available. Place these at the very end of your respo
       });
 
       if (!streamResponse.ok) {
+        const errorText = await streamResponse.text();
+        console.error(`Stream error from ${provider}:`, streamResponse.status, errorText);
         throw new Error(`Stream error: ${streamResponse.status}`);
       }
 
