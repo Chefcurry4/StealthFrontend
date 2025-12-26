@@ -15,6 +15,8 @@ import {
   useAIConversations 
 } from "@/hooks/useAIConversations";
 import { useConversationSearch } from "@/hooks/useConversationSearch";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,7 +24,9 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
@@ -48,7 +52,13 @@ import {
   GraduationCap,
   PanelLeft,
   Database,
-  Search
+  Search,
+  Mic,
+  MicOff,
+  Download,
+  FileText,
+  FileJson,
+  FileDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -70,46 +80,51 @@ interface Message {
 
 type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar" | "sonar-pro" | "sonar-reasoning";
 
+type ProviderType = "gemini" | "openai" | "perplexity";
+
 interface ModelInfo {
   id: ModelType;
   name: string;
   description: string;
   icon: React.ReactNode;
-  provider: "chatgpt" | "perplexity";
+  provider: ProviderType;
 }
 
 const models: ModelInfo[] = [
+  // Gemini Models
   { 
     id: "gemini-flash", 
     name: "Gemini Flash", 
     description: "Fast, balanced responses (default)",
     icon: <Zap className="h-4 w-4" />,
-    provider: "chatgpt"
+    provider: "gemini"
   },
   { 
     id: "gemini-pro", 
     name: "Gemini Pro", 
     description: "Advanced reasoning for complex questions",
     icon: <Brain className="h-4 w-4" />,
-    provider: "chatgpt"
+    provider: "gemini"
   },
+  // OpenAI Models
   { 
     id: "gpt-5", 
     name: "GPT-5", 
     description: "OpenAI's most powerful model",
     icon: <Sparkles className="h-4 w-4" />,
-    provider: "chatgpt"
+    provider: "openai"
   },
   { 
     id: "gpt-5-mini", 
     name: "GPT-5 Mini", 
     description: "Fast and cost-effective OpenAI model",
     icon: <Zap className="h-4 w-4" />,
-    provider: "chatgpt"
+    provider: "openai"
   },
+  // Perplexity Models
   { 
     id: "sonar", 
-    name: "Perplexity Sonar", 
+    name: "Sonar", 
     description: "Web-grounded search answers",
     icon: <Search className="h-4 w-4" />,
     provider: "perplexity"
@@ -129,6 +144,22 @@ const models: ModelInfo[] = [
     provider: "perplexity"
   },
 ];
+
+// Provider logos and labels
+const providerInfo: Record<ProviderType, { name: string; logo: string }> = {
+  gemini: {
+    name: "Google Gemini",
+    logo: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+  },
+  openai: {
+    name: "OpenAI",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg"
+  },
+  perplexity: {
+    name: "Perplexity",
+    logo: "https://www.perplexity.ai/favicon.ico"
+  }
+};
 
 // Helper to format tool names for display
 const formatToolName = (toolName: string): string => {
@@ -572,6 +603,30 @@ const Workbench = () => {
 
   const selectedModelData = models.find(m => m.id === selectedModel)!;
 
+  // Voice input hook
+  const { 
+    isListening, 
+    isSupported: voiceSupported, 
+    startListening, 
+    stopListening, 
+    transcript 
+  } = useVoiceInput({
+    onTranscript: (text) => {
+      setInput(prev => prev + (prev ? ' ' : '') + text);
+    }
+  });
+
+  // Handle export
+  const handleExport = (format: 'markdown' | 'text' | 'json') => {
+    if (messages.length === 0) {
+      toast.error("No messages to export");
+      return;
+    }
+    const title = recentConversations?.find(c => c.id === currentConversationId)?.title;
+    exportConversation(messages, format, title || undefined);
+    toast.success(`Conversation exported as ${format.toUpperCase()}`);
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Sidebar */}
@@ -639,12 +694,35 @@ const Workbench = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">
-            {/* ChatGPT/Lovable AI Models */}
-            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" className="h-4 w-4" />
-              ChatGPT / Gemini
-            </div>
-            {models.filter(m => m.provider === "chatgpt").map(model => (
+            {/* Google Gemini Models */}
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
+              {providerInfo.gemini.name}
+            </DropdownMenuLabel>
+            {models.filter(m => m.provider === "gemini").map(model => (
+              <DropdownMenuItem
+                key={model.id}
+                onClick={() => setSelectedModel(model.id)}
+                className="flex items-start gap-3 p-3 cursor-pointer"
+              >
+                <div className="mt-0.5 text-primary">{model.icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-xs opacity-70">{model.description}</div>
+                </div>
+                {selectedModel === model.id && (
+                  <Check className="h-4 w-4 text-primary mt-0.5" />
+                )}
+              </DropdownMenuItem>
+            ))}
+            
+            {/* OpenAI Models */}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <img src={providerInfo.openai.logo} alt="OpenAI" className="h-4 w-4" />
+              {providerInfo.openai.name}
+            </DropdownMenuLabel>
+            {models.filter(m => m.provider === "openai").map(model => (
               <DropdownMenuItem
                 key={model.id}
                 onClick={() => setSelectedModel(model.id)}
@@ -662,11 +740,11 @@ const Workbench = () => {
             ))}
             
             {/* Perplexity Models */}
-            <div className="border-t border-border my-1" />
-            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-2">
-              <img src="https://www.perplexity.ai/favicon.ico" alt="Perplexity" className="h-4 w-4" />
-              Perplexity AI
-            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
+              {providerInfo.perplexity.name}
+            </DropdownMenuLabel>
             {models.filter(m => m.provider === "perplexity").map(model => (
               <DropdownMenuItem
                 key={model.id}
@@ -913,15 +991,72 @@ const Workbench = () => {
             <Paperclip className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
           </Button>
 
+          {/* Voice Input Button */}
+          {voiceSupported && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`shrink-0 h-11 w-11 rounded-xl transition-colors ${
+                isListening 
+                  ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' 
+                  : 'bg-transparent hover:bg-accent/30'
+              }`}
+              onClick={isListening ? stopListening : startListening}
+              disabled={isStreaming}
+              title={isListening ? "Stop recording" : "Start voice input"}
+            >
+              {isListening ? (
+                <MicOff className="h-5 w-5 animate-pulse" />
+              ) : (
+                <Mic className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
+              )}
+            </Button>
+          )}
+
+          {/* Export Button */}
+          {messages.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
+                  disabled={isStreaming}
+                  title="Export conversation"
+                >
+                  <Download className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Export as</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExport('markdown')} className="cursor-pointer">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Markdown (.md)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('text')} className="cursor-pointer">
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Plain Text (.txt)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
+                  <FileJson className="h-4 w-4 mr-2" />
+                  JSON (.json)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Text Input */}
           <div className="flex-1 relative">
             <Input
-              placeholder="Message hubAI..."
+              placeholder={isListening ? "Listening..." : "Message hubAI..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               disabled={isStreaming}
-              className="pr-14 py-6 rounded-xl border border-foreground/20 dark:border-border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground"
+              className={`pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground ${
+                isListening ? 'border-destructive/50' : 'border-foreground/20 dark:border-border'
+              }`}
             />
             <Button
               size="icon"
@@ -938,29 +1073,31 @@ const Workbench = () => {
           </div>
         </div>
 
+        {/* Voice transcript indicator */}
+        {isListening && transcript && (
+          <div className="mt-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+            <span className="font-medium">Listening:</span> {transcript}
+          </div>
+        )}
+
         <div className="flex flex-col items-center gap-2 mt-3">
           <p className="text-xs text-foreground/40 dark:text-muted-foreground/70">
             hubAI can make mistakes. Consider checking important information.
           </p>
           
           {/* Powered By Section */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
             <span>Powered by</span>
-            <div className="flex items-center gap-2">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" 
-                alt="ChatGPT" 
-                className="h-4 w-4"
-              />
+            <div className="flex items-center gap-1.5">
+              <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
+              <span className="font-medium">Gemini</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <img src={providerInfo.openai.logo} alt="ChatGPT" className="h-4 w-4" />
               <span className="font-medium">ChatGPT</span>
             </div>
-            <span>&</span>
-            <div className="flex items-center gap-2">
-              <img 
-                src="https://www.perplexity.ai/favicon.ico" 
-                alt="Perplexity" 
-                className="h-4 w-4"
-              />
+            <div className="flex items-center gap-1.5">
+              <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
               <span className="font-medium">Perplexity</span>
             </div>
           </div>
