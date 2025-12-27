@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,8 @@ import {
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authDialogFeature, setAuthDialogFeature] = useState("");
   const { user, signOut } = useAuth();
   const { mode, modeConfig, toggleMode } = useBackgroundTheme();
   const { data: profile } = useUserProfile();
@@ -38,6 +41,15 @@ export const Header = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleProtectedNavClick = (name: string, href: string) => {
+    if (user) {
+      navigate(href);
+    } else {
+      setAuthDialogFeature(name);
+      setAuthDialogOpen(true);
+    }
   };
 
   const userInitial = profile?.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
@@ -69,15 +81,15 @@ export const Header = () => {
               {item.name}
             </Link>
           ))}
-          {user && userNavigation.map((item) => (
-            <Link
+          {userNavigation.map((item) => (
+            <button
               key={item.name}
-              to={item.href}
+              onClick={() => handleProtectedNavClick(item.name, item.href)}
               className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1"
             >
               <item.icon className="h-4 w-4" />
               {item.name}
-            </Link>
+            </button>
           ))}
           
           {/* Global Search */}
@@ -244,20 +256,20 @@ export const Header = () => {
               {item.name}
             </Link>
           ))}
-          {user && (
-            <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
-          )}
-          {user && userNavigation.map((item) => (
-            <Link
+          <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
+          {userNavigation.map((item) => (
+            <button
               key={item.name}
-              to={item.href}
-              className="text-base font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 py-3 px-2 rounded-lg active:scale-98"
+              className="text-base font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 py-3 px-2 rounded-lg active:scale-98 w-full text-left"
               style={{ color: modeConfig.textColor }}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleProtectedNavClick(item.name, item.href);
+              }}
             >
               <item.icon className="h-5 w-5" />
               {item.name}
-            </Link>
+            </button>
           ))}
           <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
           {user ? (
@@ -313,6 +325,12 @@ export const Header = () => {
           )}
         </div>
       </div>
+
+      <AuthRequiredDialog 
+        open={authDialogOpen} 
+        onOpenChange={setAuthDialogOpen}
+        feature={authDialogFeature}
+      />
     </header>
   );
 };
