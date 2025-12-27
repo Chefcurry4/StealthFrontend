@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Wrench, Info } from "lucide-react";
+import { User, Wrench, Info, BookOpen, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeacherLink } from "@/components/TeacherLink";
@@ -38,63 +37,69 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
   
   return (
     <Card className="h-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <CardTitle className="text-xl font-bold text-primary">Course Information</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-8">
+      <CardContent className="space-y-6">
         {/* Description Section */}
         <div>
-          <h3 className="font-semibold text-base text-primary mb-3 uppercase tracking-wide">
-            Description
+          <h3 className="font-semibold text-base text-primary mb-2 uppercase tracking-wide">
+            📝 Description
           </h3>
           {course.description ? (
-            <p className="text-base leading-relaxed">{course.description}</p>
+            <p className="text-sm leading-relaxed">{course.description}</p>
           ) : (
-            <p className="text-base text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground italic">
               Course description is not available yet.
             </p>
           )}
         </div>
 
-        {/* Schedule/Term/Language Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        {/* Schedule/Term/Language/ECTS Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <h4 className="font-semibold text-sm text-primary uppercase tracking-wide">Term</h4>
-            <p className="text-lg font-medium">
-              {course.term || <span className="text-muted-foreground italic text-base">Not specified</span>}
+            <h4 className="font-semibold text-xs text-primary uppercase tracking-wide">Term</h4>
+            <p className="text-sm font-medium">
+              {course.term || <span className="text-muted-foreground italic">Not specified</span>}
             </p>
           </div>
           <div className="space-y-1">
-            <h4 className="font-semibold text-sm text-primary uppercase tracking-wide">Language</h4>
-            <p className="text-lg font-medium">
-              {course.language || <span className="text-muted-foreground italic text-base">Not specified</span>}
+            <h4 className="font-semibold text-xs text-primary uppercase tracking-wide">Language</h4>
+            <p className="text-sm font-medium">
+              {course.language || <span className="text-muted-foreground italic">Not specified</span>}
             </p>
           </div>
           <div className="space-y-1">
-            <h4 className="font-semibold text-sm text-primary uppercase tracking-wide">Level</h4>
-            <p className="text-lg font-medium">
-              {course.ba_ma === "Ma" ? "Master" : course.ba_ma === "Ba" ? "Bachelor" : course.ba_ma || <span className="text-muted-foreground italic text-base">Not specified</span>}
+            <h4 className="font-semibold text-xs text-primary uppercase tracking-wide">Level</h4>
+            <p className="text-sm font-medium">
+              {course.ba_ma === "Ma" ? "Master" : course.ba_ma === "Ba" ? "Bachelor" : course.ba_ma || <span className="text-muted-foreground italic">Not specified</span>}
             </p>
           </div>
           <div className="space-y-1">
-            <h4 className="font-semibold text-sm text-primary uppercase tracking-wide">Year of Study</h4>
-            <p className="text-lg font-medium">
-              {course.which_year || <span className="text-muted-foreground italic text-base">Not specified</span>}
+            <h4 className="font-semibold text-xs text-primary uppercase tracking-wide">ECTS</h4>
+            <p className="text-sm font-medium">
+              {course.ects ? `${course.ects} credits` : <span className="text-muted-foreground italic">Not specified</span>}
             </p>
           </div>
           <div className="space-y-1">
-            <h4 className="font-semibold text-sm text-primary uppercase tracking-wide">Type</h4>
-            <p className="text-lg font-medium">
-              {course.mandatory_optional || <span className="text-muted-foreground italic text-base">Not specified</span>}
+            <h4 className="font-semibold text-xs text-primary uppercase tracking-wide">Year of Study</h4>
+            <p className="text-sm font-medium">
+              {course.which_year || <span className="text-muted-foreground italic">Not specified</span>}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <h4 className="font-semibold text-xs text-primary uppercase tracking-wide">Type</h4>
+            <p className="text-sm font-medium">
+              {course.mandatory_optional || <span className="text-muted-foreground italic">Not specified</span>}
             </p>
           </div>
         </div>
 
         {/* Examination Section */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-2">
             <h3 className="font-semibold text-base text-primary uppercase tracking-wide">
-              Examination
+              📋 Examination
             </h3>
             <TooltipProvider delayDuration={200}>
               <Tooltip>
@@ -116,17 +121,17 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
           </div>
           {course.type_exam ? (
             <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="text-base px-4 py-2 font-medium">
+              <Badge variant="secondary" className="text-sm px-3 py-1.5 font-medium">
                 {course.type_exam}
               </Badge>
               {examExplanation && (
-                <p className="text-sm text-muted-foreground hidden sm:block">
+                <p className="text-xs text-muted-foreground hidden sm:block">
                   {examExplanation}
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-base text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground italic">
               Examination details are not available yet.
             </p>
           )}
@@ -134,8 +139,8 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
 
         {/* Topics Section */}
         <div>
-          <h3 className="font-semibold text-base text-primary mb-4 uppercase tracking-wide">
-            Topics
+          <h3 className="font-semibold text-base text-primary mb-3 uppercase tracking-wide">
+            🏷️ Topics
           </h3>
           {topics.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -147,7 +152,7 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
                 >
                   <Badge 
                     variant="secondary" 
-                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-sm px-3 py-1.5"
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs px-2.5 py-1"
                   >
                     {topic}
                   </Badge>
@@ -155,7 +160,7 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
               ))}
             </div>
           ) : (
-            <p className="text-base text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground italic">
               Topic information is not available yet.
             </p>
           )}
@@ -163,14 +168,13 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
 
         {/* Software & Equipment */}
         <div>
-          <h3 className="font-semibold text-base text-primary mb-3 uppercase tracking-wide flex items-center gap-2">
-            <Wrench className="h-5 w-5" />
-            Software & Equipment
+          <h3 className="font-semibold text-base text-primary mb-2 uppercase tracking-wide">
+            🔧 Software & Equipment
           </h3>
           {course.software_equipment ? (
-            <p className="text-base leading-relaxed">{course.software_equipment}</p>
+            <p className="text-sm leading-relaxed">{course.software_equipment}</p>
           ) : (
-            <p className="text-base text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground italic">
               Software & equipment information is not available yet.
             </p>
           )}
@@ -178,15 +182,15 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
 
         {/* Teachers Section */}
         <div>
-          <h3 className="font-semibold text-base text-primary mb-4 uppercase tracking-wide">
-            Teaching Staff
+          <h3 className="font-semibold text-base text-primary mb-3 uppercase tracking-wide">
+            👨‍🏫 Teaching Staff
           </h3>
           {course.professor_name ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {course.professor_name.split(';').map((name, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                  <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
+                <div key={index} className="flex items-center gap-3 p-2 rounded-lg">
+                  <div className="h-9 w-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <TeacherLink teacherName={name.trim()} />
@@ -195,7 +199,7 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
               ))}
             </div>
           ) : (
-            <p className="text-base text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground italic">
               Teaching staff information is not available yet.
             </p>
           )}
