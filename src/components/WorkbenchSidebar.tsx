@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAIConversations, useDeleteConversation, useUpdateConversation } from "@/hooks/useAIConversations";
-import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
+import { useSavedCourses, useSavedLabs } from "@/hooks/useSavedItems";
 import { useEmailDrafts, useCreateEmailDraft, useDeleteEmailDraft } from "@/hooks/useEmailDrafts";
-import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,9 +21,7 @@ import {
   MessageSquare,
   BookOpen,
   Beaker,
-  GraduationCap,
   Mail,
-  FileText,
   FolderOpen,
   ChevronRight,
   Trash2,
@@ -33,6 +30,7 @@ import {
   Check,
   X,
   Search,
+  GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -48,7 +46,37 @@ interface WorkbenchSidebarProps {
   onReferenceCourse?: (courseName: string, courseId: string) => void;
   onReferenceLab?: (labName: string, labSlug: string) => void;
   onReferenceDocument?: (docName: string, docUrl: string) => void;
+  onReferenceEmailDraft?: (subject: string, body: string) => void;
 }
+
+// Draggable item component for sidebar items
+const DraggableItem = ({
+  children,
+  onDragStart,
+  dragData,
+  className,
+}: {
+  children: React.ReactNode;
+  onDragStart?: () => void;
+  dragData: { type: string; data: any };
+  className?: string;
+}) => {
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("application/json", JSON.stringify(dragData));
+    e.dataTransfer.effectAllowed = "copy";
+    onDragStart?.();
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      className={cn("cursor-grab active:cursor-grabbing", className)}
+    >
+      {children}
+    </div>
+  );
+};
 
 export const WorkbenchSidebar = ({
   isOpen,
@@ -61,6 +89,7 @@ export const WorkbenchSidebar = ({
   onReferenceCourse,
   onReferenceLab,
   onReferenceDocument,
+  onReferenceEmailDraft,
 }: WorkbenchSidebarProps) => {
   const [openSections, setOpenSections] = useState<string[]>(["chats"]);
   const [showDraftForm, setShowDraftForm] = useState(false);
@@ -107,9 +136,7 @@ export const WorkbenchSidebar = ({
   const { data: conversations } = useAIConversations();
   const { data: savedCourses } = useSavedCourses();
   const { data: savedLabs } = useSavedLabs();
-  const { data: savedPrograms } = useSavedPrograms();
   const { data: emailDrafts } = useEmailDrafts();
-  const { data: agreements } = useLearningAgreements();
   const { data: userDocuments } = useUserDocuments();
   const deleteConversation = useDeleteConversation();
   const updateConversation = useUpdateConversation();
@@ -172,6 +199,13 @@ export const WorkbenchSidebar = ({
     }
   };
 
+  const handleEmailDraftClick = (draft: any) => {
+    if (onReferenceEmailDraft) {
+      onReferenceEmailDraft(draft.subject || "Untitled", draft.body || "");
+      if (isMobile) onToggle();
+    }
+  };
+
   // Filter data based on search query
   const query = searchQuery.toLowerCase().trim();
   
@@ -205,13 +239,6 @@ export const WorkbenchSidebar = ({
   const filteredDocuments = query 
     ? userDocuments?.filter(d => (d.name || '').toLowerCase().includes(query))
     : userDocuments;
-    
-  const filteredAgreements = query 
-    ? agreements?.filter(a => 
-        (a.title || '').toLowerCase().includes(query) ||
-        (a.agreement_type || '').toLowerCase().includes(query)
-      )
-    : agreements;
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
@@ -242,6 +269,11 @@ export const WorkbenchSidebar = ({
             className="pl-8 h-8 text-sm"
           />
         </div>
+        
+        {/* Drag hint */}
+        <p className="text-[10px] text-muted-foreground text-center">
+          Drag items to chat to reference them
+        </p>
       </div>
 
       <ScrollArea className="flex-1">
@@ -365,7 +397,7 @@ export const WorkbenchSidebar = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Saved Courses Section - Click to reference in chat */}
+          {/* Saved Courses Section - Draggable */}
           <Collapsible
             open={openSections.includes("courses")}
             onOpenChange={() => toggleSection("courses")}
@@ -393,21 +425,39 @@ export const WorkbenchSidebar = ({
                   {searchQuery ? "No matching courses" : "No saved courses"}
                 </p>
               ) : (
-                filteredCourses?.slice(0, 5).map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleCourseClick(item)}
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
-                  >
-                    <BookOpen className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="flex-1 truncate">
-                      {item["Courses(C)"]?.name_course}
-                    </span>
-                    <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))
+                filteredCourses?.slice(0, 8).map((item) => {
+                  const course = item["Courses(C)"];
+                  return (
+                    <DraggableItem
+                      key={item.id}
+                      dragData={{ 
+                        type: "course", 
+                        data: { 
+                          id: course?.id_course, 
+                          name: course?.name_course,
+                          code: course?.code,
+                          description: course?.description,
+                          ects: course?.ects,
+                          professor: course?.professor_name
+                        } 
+                      }}
+                    >
+                      <button
+                        onClick={() => handleCourseClick(item)}
+                        className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                      >
+                        <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
+                        <BookOpen className="h-3 w-3 shrink-0 text-blue-500" />
+                        <span className="flex-1 truncate">
+                          {course?.name_course}
+                        </span>
+                        <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    </DraggableItem>
+                  );
+                })
               )}
-              {(savedCourses?.length || 0) > 5 && (
+              {(savedCourses?.length || 0) > 8 && (
                 <Link
                   to="/profile?tab=workbench&section=saved"
                   className="block text-xs text-primary px-2 py-1 hover:underline"
@@ -418,7 +468,7 @@ export const WorkbenchSidebar = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Saved Labs Section - Click to reference in chat */}
+          {/* Saved Labs Section - Draggable */}
           <Collapsible
             open={openSections.includes("labs")}
             onOpenChange={() => toggleSection("labs")}
@@ -446,24 +496,50 @@ export const WorkbenchSidebar = ({
                   {searchQuery ? "No matching labs" : "No saved labs"}
                 </p>
               ) : (
-                filteredLabs?.slice(0, 5).map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleLabClick(item)}
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
-                  >
-                    <Beaker className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="flex-1 truncate">
-                      {item["Labs(L)"]?.name}
-                    </span>
-                    <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))
+                filteredLabs?.slice(0, 8).map((item) => {
+                  const lab = item["Labs(L)"];
+                  return (
+                    <DraggableItem
+                      key={item.id}
+                      dragData={{ 
+                        type: "lab", 
+                        data: { 
+                          id: lab?.id_lab, 
+                          name: lab?.name,
+                          slug: lab?.slug,
+                          topics: lab?.topics,
+                          description: lab?.description,
+                          professors: lab?.professors
+                        } 
+                      }}
+                    >
+                      <button
+                        onClick={() => handleLabClick(item)}
+                        className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                      >
+                        <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
+                        <Beaker className="h-3 w-3 shrink-0 text-green-500" />
+                        <span className="flex-1 truncate">
+                          {lab?.name}
+                        </span>
+                        <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    </DraggableItem>
+                  );
+                })
+              )}
+              {(savedLabs?.length || 0) > 8 && (
+                <Link
+                  to="/profile?tab=workbench&section=saved"
+                  className="block text-xs text-primary px-2 py-1 hover:underline"
+                >
+                  View all {savedLabs?.length} labs →
+                </Link>
               )}
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Email Drafts Section */}
+          {/* Email Drafts Section - Draggable */}
           <Collapsible
             open={openSections.includes("drafts")}
             onOpenChange={() => toggleSection("drafts")}
@@ -561,35 +637,47 @@ export const WorkbenchSidebar = ({
                 </p>
               ) : (
                 filteredDrafts?.slice(0, 5).map((draft) => (
-                  <div
+                  <DraggableItem
                     key={draft.id}
-                    className="group flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
+                    dragData={{ 
+                      type: "emailDraft", 
+                      data: { 
+                        id: draft.id,
+                        subject: draft.subject,
+                        body: draft.body,
+                        recipient: draft.recipient
+                      } 
+                    }}
                   >
-                    <Mail className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <Link
-                      to="/profile?tab=workbench&section=drafts"
-                      className="flex-1 truncate"
+                    <div
+                      className="group flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors cursor-pointer"
+                      onClick={() => handleEmailDraftClick(draft)}
                     >
-                      {draft.subject || "Untitled"}
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteEmailDraft.mutate(draft.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </Button>
-                  </div>
+                      <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
+                      <Mail className="h-3 w-3 shrink-0 text-orange-500" />
+                      <span className="flex-1 truncate">
+                        {draft.subject || "Untitled"}
+                      </span>
+                      <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteEmailDraft.mutate(draft.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </DraggableItem>
                 ))
               )}
             </CollapsibleContent>
           </Collapsible>
 
-          {/* My Documents Section - Click to add to AI context */}
+          {/* My Documents Section - Draggable */}
           <Collapsible
             open={openSections.includes("documents")}
             onOpenChange={() => toggleSection("documents")}
@@ -617,21 +705,34 @@ export const WorkbenchSidebar = ({
                   {searchQuery ? "No matching documents" : "No documents uploaded"}
                 </p>
               ) : (
-                filteredDocuments?.slice(0, 5).map((doc) => (
-                  <button
+                filteredDocuments?.slice(0, 8).map((doc) => (
+                  <DraggableItem
                     key={doc.id}
-                    onClick={() => handleDocumentClick(doc)}
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                    dragData={{ 
+                      type: "document", 
+                      data: { 
+                        id: doc.id,
+                        name: doc.name,
+                        url: doc.file_url,
+                        type: doc.file_type
+                      } 
+                    }}
                   >
-                    <FolderOpen className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="flex-1 truncate">
-                      {doc.name}
-                    </span>
-                    <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
+                    <button
+                      onClick={() => handleDocumentClick(doc)}
+                      className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                    >
+                      <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
+                      <FolderOpen className="h-3 w-3 shrink-0 text-cyan-500" />
+                      <span className="flex-1 truncate">
+                        {doc.name}
+                      </span>
+                      <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  </DraggableItem>
                 ))
               )}
-              {(userDocuments?.length || 0) > 5 && (
+              {(userDocuments?.length || 0) > 8 && (
                 <Link
                   to="/profile?tab=workbench&section=documents"
                   className="block text-xs text-primary px-2 py-1 hover:underline"
@@ -641,194 +742,99 @@ export const WorkbenchSidebar = ({
               )}
             </CollapsibleContent>
           </Collapsible>
-
-          {/* Learning Agreements Section */}
-          <Collapsible
-            open={openSections.includes("agreements")}
-            onOpenChange={() => toggleSection("agreements")}
-          >
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-accent/50 transition-colors">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-purple-500" />
-                <span className="text-sm font-medium">Agreements</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  {filteredAgreements?.length || 0}
-                </Badge>
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    openSections.includes("agreements") && "rotate-90"
-                  )}
-                />
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1 space-y-1">
-              {filteredAgreements?.length === 0 ? (
-                <p className="text-xs text-muted-foreground px-2 py-1">
-                  {searchQuery ? "No matching agreements" : "No learning agreements"}
-                </p>
-              ) : (
-                filteredAgreements?.slice(0, 5).map((agreement) => (
-                  <Link
-                    key={agreement.id}
-                    to={`/learning-agreements/${agreement.id}`}
-                    className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors"
-                  >
-                    <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="flex-1 truncate">
-                      {agreement.title || "Untitled Agreement"}
-                    </span>
-                    <Badge
-                      variant={
-                        agreement.status === "approved"
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="text-[10px] px-1"
-                    >
-                      {agreement.status}
-                    </Badge>
-                  </Link>
-                ))
-              )}
-            </CollapsibleContent>
-          </Collapsible>
         </div>
       </ScrollArea>
     </div>
   );
 
-  // Helper to open sidebar and jump to section
-  const openToSection = (section: string) => {
-    if (!openSections.includes(section)) {
-      setOpenSections(prev => [...prev, section]);
-    }
-    onToggle();
-  };
-
-  // Collapsed state (desktop only)
+  // Collapsed sidebar view (PC only) - shows icons and hover to expand
   if (!isOpen && !isMobile) {
     return (
       <div 
-        className="h-full flex flex-col items-center py-4 px-2 border-r border-border/30 bg-card/30 backdrop-blur-sm w-14"
+        className="w-14 border-r border-border/30 bg-background/50 flex flex-col items-center py-4 gap-4"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <Button
-          variant="ghost"
-          size="icon"
+        <Button 
+          variant="ghost" 
+          size="icon" 
           onClick={onNewChat}
-          className="mb-2"
+          className="hover:bg-accent/50"
           title="New Chat"
         >
           <Plus className="h-5 w-5" />
         </Button>
-        <div className="flex flex-col gap-1 mt-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-primary hover:bg-primary/10"
-            onClick={() => openToSection("chats")}
-            title="AI Chats"
-          >
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-blue-500 hover:bg-blue-500/10"
-            onClick={() => openToSection("courses")}
-            title="Saved Courses"
-          >
-            <BookOpen className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-green-500 hover:bg-green-500/10"
-            onClick={() => openToSection("labs")}
-            title="Saved Labs"
-          >
-            <Beaker className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-orange-500 hover:bg-orange-500/10"
-            onClick={() => openToSection("drafts")}
-            title="Email Drafts"
-          >
-            <Mail className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-cyan-500 hover:bg-cyan-500/10"
-            onClick={() => openToSection("documents")}
-            title="My Documents"
-          >
-            <FolderOpen className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-purple-500 hover:bg-purple-500/10"
-            onClick={() => openToSection("agreements")}
-            title="Learning Agreements"
-          >
-            <FileText className="h-4 w-4" />
-          </Button>
-        </div>
+        <div className="w-8 border-t border-border/30" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="hover:bg-accent/50"
+          title={`AI Chats (${conversations?.length || 0})`}
+          onClick={() => { onOpen?.(); setOpenSections(["chats"]); }}
+        >
+          <MessageSquare className="h-4 w-4 text-primary" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="hover:bg-accent/50"
+          title={`Saved Courses (${savedCourses?.length || 0})`}
+          onClick={() => { onOpen?.(); setOpenSections(["courses"]); }}
+        >
+          <BookOpen className="h-4 w-4 text-blue-500" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="hover:bg-accent/50"
+          title={`Saved Labs (${savedLabs?.length || 0})`}
+          onClick={() => { onOpen?.(); setOpenSections(["labs"]); }}
+        >
+          <Beaker className="h-4 w-4 text-green-500" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="hover:bg-accent/50"
+          title={`Email Drafts (${emailDrafts?.length || 0})`}
+          onClick={() => { onOpen?.(); setOpenSections(["drafts"]); }}
+        >
+          <Mail className="h-4 w-4 text-orange-500" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="hover:bg-accent/50"
+          title={`My Documents (${userDocuments?.length || 0})`}
+          onClick={() => { onOpen?.(); setOpenSections(["documents"]); }}
+        >
+          <FolderOpen className="h-4 w-4 text-cyan-500" />
+        </Button>
       </div>
     );
   }
 
-  // Mobile drawer
+  // Mobile: Sheet
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onToggle}>
-        <SheetContent side="left" className="w-80 p-0 bg-card/95 backdrop-blur-md">
+        <SheetContent side="left" className="w-80 p-0">
           <SidebarContent />
         </SheetContent>
       </Sheet>
     );
   }
 
-  // Desktop expanded sidebar
+  // Desktop: Fixed sidebar
   return (
     <div 
-      className="h-full w-72 flex flex-col border-r border-border/30 bg-card/30 backdrop-blur-sm relative"
+      className="w-72 border-r border-border/30 bg-background/50 flex flex-col"
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <SidebarContent />
-      {/* Resize Handle */}
-      <div 
-        className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary/30 transition-colors group"
-        onMouseDown={(e) => {
-          e.preventDefault();
-          const startX = e.clientX;
-          const sidebar = e.currentTarget.parentElement;
-          if (!sidebar) return;
-          const startWidth = sidebar.offsetWidth;
-          
-          const onMouseMove = (moveEvent: MouseEvent) => {
-            const newWidth = Math.max(200, Math.min(400, startWidth + moveEvent.clientX - startX));
-            sidebar.style.width = `${newWidth}px`;
-          };
-          
-          const onMouseUp = () => {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-          };
-          
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-        }}
-      >
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-border/50 group-hover:bg-primary/50 transition-colors" />
-      </div>
     </div>
   );
 };
+
+export default WorkbenchSidebar;

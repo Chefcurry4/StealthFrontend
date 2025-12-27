@@ -511,31 +511,37 @@ const Workbench = () => {
         content: userMessageContent
       });
 
-      // Build comprehensive user context for AI
+      // Build comprehensive user context for AI with FULL details
       const userContext = {
         savedCourses: savedCourses?.map(c => ({
           name: c.Courses?.name_course,
           code: c.Courses?.code,
           ects: c.Courses?.ects,
-          level: c.Courses?.ba_ma
+          level: c.Courses?.ba_ma,
+          description: c.Courses?.description,
+          topics: c.Courses?.topics,
+          professor: c.Courses?.professor_name
         })).filter(c => c.name) || [],
         savedLabs: savedLabs?.map(l => ({
           name: l.Labs?.name,
-          topics: l.Labs?.topics
+          topics: l.Labs?.topics,
+          description: l.Labs?.description,
+          professors: l.Labs?.professors,
+          facultyMatch: l.Labs?.faculty_match,
+          link: l.Labs?.link
         })).filter(l => l.name) || [],
         savedPrograms: savedPrograms?.map(p => ({
           name: p.Programs?.name
         })).filter(p => p.name) || [],
-        learningAgreements: agreements?.map(a => ({
-          title: a.title,
-          status: a.status,
-          type: a.agreement_type
-        })) || [],
         emailDrafts: emailDrafts?.map(d => ({
           subject: d.subject,
-          recipient: d.recipient
+          recipient: d.recipient,
+          body: d.body
         })) || [],
-        documents: documents?.map(d => d.name) || [],
+        documents: documents?.map(d => ({
+          name: d.name,
+          url: d.file_url
+        })) || [],
         recentConversations: recentConversations?.slice(0, 5).map(c => ({
           title: c.title
         })) || [],

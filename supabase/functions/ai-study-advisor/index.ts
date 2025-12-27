@@ -39,7 +39,7 @@ const databaseTools = [
     type: "function",
     function: {
       name: "search_labs",
-      description: "Search for research labs by university, topic, or professor. Use this when the user asks about research labs, laboratories, or research groups.",
+      description: "Search for research labs by university, topic, or professor. Returns ALL lab information including id_lab, name, slug, description, topics, professors, faculty_match, link, image. Use this when the user asks about research labs, laboratories, or research groups.",
       parameters: {
         type: "object",
         properties: {
@@ -47,6 +47,7 @@ const databaseTools = [
           topic: { type: "string", description: "Research topic to search (e.g., 'cybersecurity', 'AI', 'machine learning')" },
           professor_name: { type: "string", description: "Professor name to search" },
           faculty_area: { type: "string", description: "Faculty/department area" },
+          lab_name: { type: "string", description: "Lab name to search for (partial match)" },
           limit: { type: "number", description: "Maximum results (default 20, max 50)" }
         }
       }
@@ -223,7 +224,8 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
     }
     
     case "search_labs": {
-      let query = supabase.from("Labs(L)").select("id_lab, name, slug, topics, description, professors, faculty_match");
+      // Select ALL columns from Labs table for comprehensive access
+      let query = supabase.from("Labs(L)").select("*");
       
       if (args.topic) {
         query = query.or(`topics.ilike.%${args.topic}%,description.ilike.%${args.topic}%,faculty_match.ilike.%${args.topic}%,name.ilike.%${args.topic}%`);
@@ -233,6 +235,9 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       }
       if (args.faculty_area) {
         query = query.ilike("faculty_match", `%${args.faculty_area}%`);
+      }
+      if (args.lab_name) {
+        query = query.ilike("name", `%${args.lab_name}%`);
       }
       
       // Handle university filter via bridge table
@@ -395,9 +400,10 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         return { results: [], message: `No labs found for ${uniData.name}` };
       }
       
+      // Select ALL columns from Labs table
       let query = supabase
         .from("Labs(L)")
-        .select("id_lab, name, slug, topics, description, professors, faculty_match")
+        .select("*")
         .in("id_lab", labIds.map((l: any) => l.id_lab));
       
       if (args.topic_filter) {
@@ -545,20 +551,32 @@ serve(async (req) => {
     let userSpecificContext = "";
     
     if (userContext) {
+      // FULL course details with all info
       if (userContext.savedCourses?.length) {
-        userSpecificContext += `\n\n**User's Saved Courses (${userContext.savedCourses.length} total):**\n`;
-        userContext.savedCourses.slice(0, 15).forEach((c: any) => {
-          userSpecificContext += `- ${c.name} (${c.code || 'no code'}, ${c.ects || '?'} ECTS, ${c.level || 'N/A'})\n`;
+        userSpecificContext += `\n\n**User's Saved Courses (${userContext.savedCourses.length} total) - FULL DETAILS:**\n`;
+        userContext.savedCourses.slice(0, 20).forEach((c: any) => {
+          userSpecificContext += `\n- **${c.name}** (${c.code || 'no code'}):\n`;
+          if (c.ects) userSpecificContext += `  - ECTS: ${c.ects}\n`;
+          if (c.level) userSpecificContext += `  - Level: ${c.level}\n`;
+          if (c.description) userSpecificContext += `  - Description: ${c.description.slice(0, 300)}...\n`;
+          if (c.topics) userSpecificContext += `  - Topics: ${c.topics}\n`;
+          if (c.professor) userSpecificContext += `  - Professor: ${c.professor}\n`;
         });
-        if (userContext.savedCourses.length > 15) {
-          userSpecificContext += `... and ${userContext.savedCourses.length - 15} more courses\n`;
+        if (userContext.savedCourses.length > 20) {
+          userSpecificContext += `... and ${userContext.savedCourses.length - 20} more courses\n`;
         }
       }
       
+      // FULL lab details with all info
       if (userContext.savedLabs?.length) {
-        userSpecificContext += `\n\n**User's Saved Research Labs (${userContext.savedLabs.length} total):**\n`;
-        userContext.savedLabs.slice(0, 10).forEach((l: any) => {
-          userSpecificContext += `- ${l.name}${l.topics ? ` - Topics: ${l.topics}` : ''}\n`;
+        userSpecificContext += `\n\n**User's Saved Research Labs (${userContext.savedLabs.length} total) - FULL DETAILS:**\n`;
+        userContext.savedLabs.slice(0, 15).forEach((l: any) => {
+          userSpecificContext += `\n- **${l.name}**:\n`;
+          if (l.topics) userSpecificContext += `  - Topics: ${l.topics}\n`;
+          if (l.description) userSpecificContext += `  - Description: ${l.description.slice(0, 300)}...\n`;
+          if (l.professors) userSpecificContext += `  - Professors: ${l.professors}\n`;
+          if (l.facultyMatch) userSpecificContext += `  - Faculty: ${l.facultyMatch}\n`;
+          if (l.link) userSpecificContext += `  - Website: ${l.link}\n`;
         });
       }
       
@@ -569,24 +587,26 @@ serve(async (req) => {
         });
       }
       
-      if (userContext.learningAgreements?.length) {
-        userSpecificContext += `\n\n**User's Learning Agreements:**\n`;
-        userContext.learningAgreements.forEach((a: any) => {
-          userSpecificContext += `- ${a.title || 'Untitled'} (${a.status || 'draft'}, ${a.type})\n`;
-        });
-      }
-      
+      // FULL email draft details
       if (userContext.emailDrafts?.length) {
-        userSpecificContext += `\n\n**User's Email Drafts:**\n`;
-        userContext.emailDrafts.slice(0, 5).forEach((d: any) => {
-          userSpecificContext += `- To: ${d.recipient || 'unknown'} - Subject: ${d.subject || 'no subject'}\n`;
+        userSpecificContext += `\n\n**User's Email Drafts (${userContext.emailDrafts.length} total) - FULL CONTENT:**\n`;
+        userContext.emailDrafts.slice(0, 10).forEach((d: any) => {
+          userSpecificContext += `\n- **Subject:** ${d.subject || 'no subject'}\n`;
+          userSpecificContext += `  **To:** ${d.recipient || 'unknown'}\n`;
+          if (d.body) userSpecificContext += `  **Content:** ${d.body.slice(0, 500)}${d.body.length > 500 ? '...' : ''}\n`;
         });
       }
       
+      // Document details with content if available
       if (userContext.documents?.length) {
-        userSpecificContext += `\n\n**User's Uploaded Documents:**\n`;
-        userContext.documents.forEach((d: string) => {
-          userSpecificContext += `- ${d}\n`;
+        userSpecificContext += `\n\n**User's Uploaded Documents (${userContext.documents.length} total):**\n`;
+        userContext.documents.forEach((d: any) => {
+          if (typeof d === 'string') {
+            userSpecificContext += `- ${d}\n`;
+          } else {
+            userSpecificContext += `\n- **${d.name}**:\n`;
+            if (d.content) userSpecificContext += `  Content: ${d.content.slice(0, 2000)}${d.content.length > 2000 ? '...' : ''}\n`;
+          }
         });
       }
       
@@ -606,6 +626,14 @@ serve(async (req) => {
     }
 
     const systemPrompt = `You are hubAI, an intelligent Study Advisor for university students planning study abroad and exchange semesters. You have FULL ACCESS to query the university database to find specific information.
+
+**IMPORTANT: User Content Access**
+You have access to ALL of the user's saved content including:
+- Full course details (descriptions, ECTS, professors, topics)
+- Full lab details (descriptions, professors, topics, websites)
+- Full email draft content (subject, recipient, body)
+- Document content (when referenced or mentioned)
+When a user asks about "my saved courses", "my CV", "my email drafts", etc., refer to the User-Specific Context section below.
 
 **Your Database Query Capabilities:**
 You have tools to query the complete database with 1,420+ courses, 424+ labs, 966+ teachers, and 33+ programs across multiple universities. USE THESE TOOLS when users ask specific questions.
@@ -632,41 +660,26 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - media: Media resources
 - stats: Course statistics
 
+**FULL Lab Data Access - You can retrieve ALL of these columns:**
+- id_lab: Unique lab identifier
+- name: Lab name
+- slug: URL-friendly lab identifier
+- description: Detailed lab description
+- topics: Research topics and areas
+- professors: Lab professors/directors
+- faculty_match: Faculty/department
+- link: Lab website
+- image: Lab image URL
+- created_at, updated_at: Timestamps
+
 **Database Tools:**
-- search_courses: INTELLIGENT search across ALL columns (name_course, description, topics, programs, code, professor_name, software_equipment, type_exam, language, term, mandatory_optional, ba_ma, ects). Use "query" for general text search, or specific parameters (level, program, language, exam_type, software, term, mandatory, ects_min, ects_max) for targeted filtering.
-- search_labs: Find research labs by university, topic, professor, or faculty area
+- search_courses: INTELLIGENT search across ALL columns
+- search_labs: Find research labs with ALL columns (id_lab, name, slug, description, topics, professors, faculty_match, link, image)
 - search_teachers: Find professors by name, research topics, or university
 - get_courses_by_teacher: Get ALL courses taught by a specific professor
-- get_labs_by_university: Get all labs at a specific university, optionally filtered by topic
+- get_labs_by_university: Get all labs at a specific university
 - get_programs_by_university: Get all programs offered by a university
 - search_universities: Find universities by name or country
-
-**CRITICAL - How to search intelligently:**
-When users ask about courses, you MUST understand what columns to search:
-- "life sciences bachelor courses" → Use search_courses with program="life sciences" AND level="Ba"
-- "EPFL bachelor courses in life sciences" → Use search_courses with university_slug="epfl", program="life sciences", level="Ba"
-- "computer science courses" → Use search_courses with query="computer science" OR program="Computer Science"
-- "courses that use Python" → Use search_courses with software_equipment="Python"
-- "machine learning courses" → Use search_courses with query="machine learning"
-- "courses by Professor Smith" → Use search_courses with professor_name="Smith"
-- "master level robotics courses" → Use search_courses with level="Ma", topic="robotics"
-
-**IMPORTANT: Understanding database columns:**
-- ba_ma: Contains "Ba" for Bachelor or "Ma" for Master level
-- programs: Contains the program name(s) the course belongs to (e.g., "Life Sciences Engineering", "Computer Science")
-- topics: Contains subject topics covered in the course
-- description: Contains the full course description
-- Use the "level" parameter to filter by Bachelor/Master
-- Use the "program" parameter to filter by program name
-
-**Example tool calls:**
-- "Find EPFL life science bachelor courses" → search_courses(university_slug="epfl", program="life science", level="Ba")
-- "What courses does Professor X teach?" → get_courses_by_teacher(teacher_name="X")
-- "Find cybersecurity labs at EPFL" → get_labs_by_university(university_slug="epfl", topic_filter="cybersecurity")
-- "Show me AI courses in English" → search_courses(query="AI", language="English")
-- "Which courses use Python?" → search_courses(software_equipment="Python")
-- "Find courses with oral exams" → search_courses(exam_type="oral")
-- "What software is needed for the robotics course?" → search_courses(query="robotics")
 
 **University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
@@ -676,15 +689,19 @@ ${userSpecificContext || "No user-specific data available"}
 **General Guidelines:**
 - ALWAYS use database query tools when users ask about specific courses, professors, labs, or universities
 - When showing course information, include relevant details like description, ECTS, professor, language, exam type, required software
-- Reference the user's saved courses, labs, and learning agreements when providing personalized advice
+- When showing lab information, include ALL details: name, description, topics, professors, faculty, website link
+- Reference the user's saved courses, labs, email drafts, and documents when they ask about "my" content
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
 - If a query returns no results, try a broader search or suggest alternative search terms
 
+**EMAIL GENERATION:**
+When generating emails for the user, format them clearly with Subject, To, and Body sections. The user can save these as drafts.
+
 **CRITICAL OUTPUT FORMAT:**
 When you return courses or labs from database queries, you MUST append the raw data at the END of your response using these exact HTML comment formats (the user won't see these, but the app will parse them to show interactive cards):
 - For courses: <!--COURSES:[{"id_course":"...","name_course":"...","code":"...","ects":...,"ba_ma":"...","professor_name":"...","language":"...","topics":"...","description":"...","software_equipment":"...","type_exam":"..."}]-->
-- For labs: <!--LABS:[{"id_lab":"...","name":"...","slug":"...","topics":"...","professors":"...","faculty_match":"..."}]-->
+- For labs: <!--LABS:[{"id_lab":"...","name":"...","slug":"...","topics":"...","description":"...","professors":"...","faculty_match":"...","link":"..."}]-->
 Include ALL fields that are available. Place these at the very end of your response after all text content.`;
 
     console.log("Making initial AI call with tools...");
@@ -856,17 +873,16 @@ Include ALL fields that are available. Place these at the very end of your respo
       });
     }
 
-    // Non-streaming response without tool calls
+    // Non-streaming response
     return new Response(JSON.stringify({ 
       message: assistantMessage.content 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-    
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in ai-study-advisor:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
