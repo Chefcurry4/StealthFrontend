@@ -103,13 +103,21 @@ export const WorkbenchSidebar = ({
   const isMobile = useIsMobile();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-open sidebar on hover (PC only, 0.2s delay)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open sidebar on hover (PC only, 0.5s delay for calmer transition)
   const handleMouseEnter = () => {
     if (isMobile) return;
+    // Cancel any pending close
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
     if (!isOpen) {
       hoverTimeoutRef.current = setTimeout(() => {
         onOpen?.();
-      }, 200);
+      }, 500);
     }
   };
 
@@ -118,17 +126,22 @@ export const WorkbenchSidebar = ({
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
     }
-    // Auto-close sidebar when mouse leaves (PC only)
+    // Auto-close sidebar when mouse leaves (PC only, with delay)
     if (!isMobile && isOpen) {
-      onClose?.();
+      closeTimeoutRef.current = setTimeout(() => {
+        onClose?.();
+      }, 600);
     }
   };
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
+      }
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
       }
     };
   }, []);
@@ -176,7 +189,8 @@ export const WorkbenchSidebar = ({
     cancelEditing();
   };
 
-  const handleCourseClick = (item: any) => {
+  const handleCourseClick = (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
     const course = item["Courses(C)"];
     if (course && onReferenceCourse) {
       onReferenceCourse(course.name_course, course.id_course);
@@ -184,7 +198,8 @@ export const WorkbenchSidebar = ({
     }
   };
 
-  const handleLabClick = (item: any) => {
+  const handleLabClick = (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
     const lab = item["Labs(L)"];
     if (lab && onReferenceLab) {
       onReferenceLab(lab.name, lab.slug);
@@ -192,14 +207,16 @@ export const WorkbenchSidebar = ({
     }
   };
 
-  const handleDocumentClick = (doc: any) => {
+  const handleDocumentClick = (e: React.MouseEvent, doc: any) => {
+    e.preventDefault();
     if (onReferenceDocument) {
       onReferenceDocument(doc.name, doc.file_url);
       if (isMobile) onToggle();
     }
   };
 
-  const handleEmailDraftClick = (draft: any) => {
+  const handleEmailDraftClick = (e: React.MouseEvent, draft: any) => {
+    e.preventDefault();
     if (onReferenceEmailDraft) {
       onReferenceEmailDraft(draft.subject || "Untitled", draft.body || "");
       if (isMobile) onToggle();
@@ -443,13 +460,13 @@ export const WorkbenchSidebar = ({
                       }}
                     >
                       <button
-                        onClick={() => handleCourseClick(item)}
+                        onClick={(e) => handleCourseClick(e, item)}
                         className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                       >
                         <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                         <BookOpen className="h-3 w-3 shrink-0 text-blue-500" />
-                        <span className="flex-1 truncate">
-                          {course?.name_course}
+                        <span className="flex-1 truncate text-foreground">
+                          {course?.name_course || "Untitled Course"}
                         </span>
                         <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
@@ -514,13 +531,13 @@ export const WorkbenchSidebar = ({
                       }}
                     >
                       <button
-                        onClick={() => handleLabClick(item)}
+                        onClick={(e) => handleLabClick(e, item)}
                         className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                       >
                         <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                         <Beaker className="h-3 w-3 shrink-0 text-green-500" />
-                        <span className="flex-1 truncate">
-                          {lab?.name}
+                        <span className="flex-1 truncate text-foreground">
+                          {lab?.name || "Untitled Lab"}
                         </span>
                         <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
@@ -651,11 +668,11 @@ export const WorkbenchSidebar = ({
                   >
                     <div
                       className="group flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors cursor-pointer"
-                      onClick={() => handleEmailDraftClick(draft)}
+                      onClick={(e) => handleEmailDraftClick(e, draft)}
                     >
                       <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                       <Mail className="h-3 w-3 shrink-0 text-orange-500" />
-                      <span className="flex-1 truncate">
+                      <span className="flex-1 truncate text-foreground">
                         {draft.subject || "Untitled"}
                       </span>
                       <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -719,13 +736,13 @@ export const WorkbenchSidebar = ({
                     }}
                   >
                     <button
-                      onClick={() => handleDocumentClick(doc)}
+                      onClick={(e) => handleDocumentClick(e, doc)}
                       className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                     >
                       <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                       <FolderOpen className="h-3 w-3 shrink-0 text-cyan-500" />
-                      <span className="flex-1 truncate">
-                        {doc.name}
+                      <span className="flex-1 truncate text-foreground">
+                        {doc.name || "Untitled Document"}
                       </span>
                       <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
