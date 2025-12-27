@@ -1,55 +1,33 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, GraduationCap, User, Globe, Calendar, Wrench, Bookmark, Star, Pencil, Trash2, ThumbsUp } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+import { useRef, useEffect } from "react";
+import { ChevronRight, BookOpen, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useCourse } from "@/hooks/useCourses";
-import { useTeacherIdByCourse } from "@/hooks/useTeachers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
-import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote } from "@/hooks/useCourseReviews";
-import { TeacherLink } from "@/components/TeacherLink";
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { SEO, generateCourseSchema, generateBreadcrumbSchema } from "@/components/SEO";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { SEO, generateCourseSchema, generateBreadcrumbSchema } from "@/components/SEO";
+import { 
+  CourseInfoCard, 
+  UserDetailsCard, 
+  CourseReviewSection, 
+  SimilarCoursesSection,
+  type CourseReviewSectionHandle 
+} from "@/components/course-detail";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: course, isLoading, error } = useCourse(id!);
-  const { data: teacherId } = useTeacherIdByCourse(id!);
   const { user } = useAuth();
   const { data: savedCourses } = useSavedCourses();
   const toggleSave = useToggleSaveCourse();
-  const { data: reviews } = useCourseReviews(id!);
-  const createReview = useCreateCourseReview();
-  const updateReview = useUpdateCourseReview();
-  const deleteReview = useDeleteCourseReview();
-  const toggleUpvote = useToggleReviewUpvote();
   const { addItem } = useRecentlyViewed();
+  const reviewSectionRef = useRef<CourseReviewSectionHandle>(null);
 
-  const [rating, setRating] = useState(5);
-  const [difficulty, setDifficulty] = useState("");
-  const [workload, setWorkload] = useState("");
-  const [organization, setOrganization] = useState("");
-  const [comment, setComment] = useState("");
-  const [validationError, setValidationError] = useState("");
-  
-  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
-  const [editRating, setEditRating] = useState(5);
-  const [editDifficulty, setEditDifficulty] = useState("");
-  const [editWorkload, setEditWorkload] = useState("");
-  const [editOrganization, setEditOrganization] = useState("");
-  const [editComment, setEditComment] = useState("");
-  const [editValidationError, setEditValidationError] = useState("");
+  const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
 
   // Track recently viewed course
   useEffect(() => {
@@ -65,12 +43,6 @@ const CourseDetail = () => {
     }
   }, [course, addItem]);
 
-  const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
-
-  const averageRating = reviews?.length
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
-
   const handleSave = () => {
     if (!user) {
       navigate("/auth");
@@ -79,251 +51,62 @@ const CourseDetail = () => {
     toggleSave.mutate(id!);
   };
 
-  const handleSubmitReview = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    
-    // Validate required fields
-    const missingFields = [];
-    if (!difficulty) missingFields.push("Difficulty");
-    if (!workload) missingFields.push("Workload");
-    if (!organization) missingFields.push("Organization");
-    
-    if (missingFields.length > 0) {
-      setValidationError(`Please select: ${missingFields.join(", ")}`);
-      return;
-    }
-    
-    setValidationError("");
-    createReview.mutate(
-      {
-        course_id: id!,
-        rating,
-        difficulty,
-        workload,
-        organization,
-        comment,
-      },
-      {
-        onSuccess: () => {
-          setRating(5);
-          setDifficulty("");
-          setWorkload("");
-          setOrganization("");
-          setComment("");
-          setValidationError("");
-        },
-      }
-    );
+  const handleOpenReview = () => {
+    reviewSectionRef.current?.scrollToForm();
   };
 
-  const handleEditReview = (review: any) => {
-    setEditingReviewId(review.id);
-    setEditRating(review.rating);
-    setEditDifficulty(review.difficulty || "");
-    setEditWorkload(review.workload || "");
-    setEditOrganization(review.organization || "");
-    setEditComment(review.comment || "");
-  };
-
-  const handleUpdateReview = () => {
-    if (!editingReviewId) return;
-    
-    // Validate required fields
-    const missingFields = [];
-    if (!editDifficulty) missingFields.push("Difficulty");
-    if (!editWorkload) missingFields.push("Workload");
-    if (!editOrganization) missingFields.push("Organization");
-    
-    if (missingFields.length > 0) {
-      setEditValidationError(`Please select: ${missingFields.join(", ")}`);
-      return;
-    }
-    
-    setEditValidationError("");
-    updateReview.mutate(
-      {
-        id: editingReviewId,
-        rating: editRating,
-        difficulty: editDifficulty,
-        workload: editWorkload,
-        organization: editOrganization,
-        comment: editComment,
-      },
-      {
-        onSuccess: () => {
-          setEditingReviewId(null);
-          setEditValidationError("");
-        },
-      }
-    );
-  };
-
-  const handleDeleteReview = (reviewId: string) => {
-    deleteReview.mutate(reviewId);
-  };
-
-  const handleUpvote = (reviewId: string, hasUpvoted: boolean) => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    toggleUpvote.mutate({ reviewId, hasUpvoted });
-  };
-
+  // Loading State
   if (isLoading) {
     return (
-      <div className="min-h-screen py-12">
-        <div className="container mx-auto px-4">
-          <Skeleton className="h-10 w-32 mb-6" />
-          <Skeleton className="h-12 w-3/4 mb-4" />
-          <Skeleton className="h-64 w-full" />
+      <div className="min-h-screen py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Header Skeleton */}
+          <div className="mb-8">
+            <Skeleton className="h-5 w-48 mb-4" />
+            <Skeleton className="h-10 w-2/3 mb-3" />
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          </div>
+          
+          {/* Two Column Layout Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Skeleton className="h-[400px] w-full rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-[300px] w-full rounded-lg" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Not Found State
   if (error || !course) {
     return (
-      <div className="min-h-screen py-12">
-        <div className="container mx-auto px-4">
-          <Link to="/courses">
-            <Button variant="ghost" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Courses
-            </Button>
+      <div className="min-h-screen py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <Link to="/courses" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+            <ChevronRight className="h-4 w-4 rotate-180 mr-1" />
+            Back to Courses
           </Link>
-          <p className="text-muted-foreground">Course not found</p>
+          <div className="text-center py-16">
+            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Course Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              The course you're looking for doesn't exist or has been removed.
+            </p>
+            <Link to="/courses">
+              <Button>Browse All Courses</Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
-
-  const topics = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
-
-  const renderStars = (ratingValue: number, size: "sm" | "md" = "sm") => {
-    const sizeClass = size === "sm" ? "h-4 w-4" : "h-5 w-5";
-    return (
-      <div className="flex">
-        {Array.from({ length: 5 }).map((_, i) => {
-          const starValue = i + 1;
-          const isFull = ratingValue >= starValue;
-          const isHalf = !isFull && ratingValue >= starValue - 0.5;
-          return (
-            <Star
-              key={i}
-              className={`${sizeClass} ${
-                isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
-              }`}
-            />
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderReviewForm = (
-    formRating: number,
-    setFormRating: (v: number) => void,
-    formDifficulty: string,
-    setFormDifficulty: (v: string) => void,
-    formWorkload: string,
-    setFormWorkload: (v: string) => void,
-    formOrganization: string,
-    setFormOrganization: (v: string) => void,
-    formComment: string,
-    setFormComment: (v: string) => void,
-    onSubmit: () => void,
-    isPending: boolean,
-    submitText: string,
-    onCancel?: () => void,
-    validationError?: string
-  ) => (
-    <div className="space-y-4">
-      {validationError && (
-        <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
-          {validationError}
-        </div>
-      )}
-      <div>
-        <Label className="mb-3 block">Rating: {formRating} Star{formRating !== 1 && "s"}</Label>
-        <div className="flex items-center gap-3">
-          {renderStars(formRating, "md")}
-          <Slider
-            value={[formRating]}
-            onValueChange={(v) => setFormRating(v[0])}
-            min={1}
-            max={5}
-            step={0.5}
-            className="flex-1"
-          />
-        </div>
-      </div>
-      <div>
-        <Label>Exam/Projects Difficulty <span className="text-destructive">*</span></Label>
-        <Select value={formDifficulty} onValueChange={setFormDifficulty}>
-          <SelectTrigger className={!formDifficulty && validationError ? "border-destructive" : ""}>
-            <SelectValue placeholder="Select difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Easy">Easy</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="Difficult">Difficult</SelectItem>
-            <SelectItem value="Very Difficult">Very Difficult</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Workload <span className="text-destructive">*</span></Label>
-        <Select value={formWorkload} onValueChange={setFormWorkload}>
-          <SelectTrigger className={!formWorkload && validationError ? "border-destructive" : ""}>
-            <SelectValue placeholder="Select workload" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Light">Light</SelectItem>
-            <SelectItem value="Moderate">Moderate</SelectItem>
-            <SelectItem value="Balanced">Balanced</SelectItem>
-            <SelectItem value="Heavy">Heavy</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Course Structure & Organization <span className="text-destructive">*</span></Label>
-        <Select value={formOrganization} onValueChange={setFormOrganization}>
-          <SelectTrigger className={!formOrganization && validationError ? "border-destructive" : ""}>
-            <SelectValue placeholder="Select organization" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Poor">Poor</SelectItem>
-            <SelectItem value="Fair">Fair</SelectItem>
-            <SelectItem value="Good">Good</SelectItem>
-            <SelectItem value="Great">Great</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Comment (optional)</Label>
-        <Textarea
-          value={formComment}
-          onChange={(e) => setFormComment(e.target.value)}
-          placeholder="Share your experience..."
-          rows={4}
-        />
-      </div>
-      <div className="flex gap-2">
-        <Button onClick={onSubmit} disabled={isPending}>
-          {submitText}
-        </Button>
-        {onCancel && (
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-      </div>
-    </div>
-  );
 
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Home", url: typeof window !== "undefined" ? window.location.origin : "" },
@@ -343,316 +126,101 @@ const CourseDetail = () => {
     <>
       <SEO 
         title={course.name_course}
-        description={course.description || `${course.name_course} - ${course.ects || 0} ECTS course. ${course.ba_ma === "Ma" ? "Master" : "Bachelor"} level.`}
+        description={course.description || `${course.name_course} - ${course.ects || "?"} ECTS course. ${course.ba_ma === "Ma" ? "Master" : "Bachelor"} level.`}
         keywords={[course.name_course, course.code || "", course.ba_ma === "Ma" ? "master course" : "bachelor course", "university course", "ECTS"]}
         structuredData={{ "@graph": [breadcrumbSchema, courseSchema] }}
       />
-      <div className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
-        <Link to="/courses">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Courses
-          </Button>
-        </Link>
+      
+      <div className="min-h-screen py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Header Section */}
+          <header className="mb-8">
+            {/* Breadcrumb */}
+            <nav className="flex items-center text-sm text-muted-foreground mb-4">
+              <Link to="/courses" className="hover:text-foreground transition-colors">
+                Courses
+              </Link>
+              <ChevronRight className="h-4 w-4 mx-2" />
+              <span className="text-foreground truncate max-w-[300px]">{course.name_course}</span>
+            </nav>
 
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            {course.code && <Badge variant="secondary">{course.code}</Badge>}
-            {course.ba_ma && <Badge variant="outline">{course.ba_ma}</Badge>}
-          </div>
-          <h1 className="text-4xl font-bold mb-4">{course.name_course}</h1>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {course.description && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Description</h3>
-                    <p className="text-muted-foreground">{course.description}</p>
-                  </div>
-                )}
-
-                {topics.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Topics Covered</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {topics.map((topic, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {topic}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {course.type_exam && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Examination</h3>
-                    <p className="text-muted-foreground">{course.type_exam}</p>
-                  </div>
-                )}
-
-                {course.software_equipment && (
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Wrench className="h-4 w-4" />
-                      Software & Equipment
-                    </h3>
-                    <p className="text-muted-foreground">{course.software_equipment}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {course.professor_name && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Teaching Staff</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    {course.professor_name.split(';').map((name, index, arr) => (
-                      <span key={index} className="inline-flex items-center">
-                        <TeacherLink teacherName={name.trim()} />
-                        {index < arr.length - 1 && <span className="text-muted-foreground">;</span>}
-                      </span>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5" />
-                  Course Reviews {averageRating && `(${averageRating}/5)`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {user && (
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <h3 className="font-semibold">Write a Review</h3>
-                    {renderReviewForm(
-                      rating,
-                      setRating,
-                      difficulty,
-                      setDifficulty,
-                      workload,
-                      setWorkload,
-                      organization,
-                      setOrganization,
-                      comment,
-                      setComment,
-                      handleSubmitReview,
-                      createReview.isPending,
-                      "Submit Review",
-                      undefined,
-                      validationError
-                    )}
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  {reviews?.length === 0 ? (
-                    <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
-                  ) : (
-                    reviews?.map((review: any) => (
-                      <div key={review.id} className="p-4 border rounded-lg">
-                        {editingReviewId === review.id ? (
-                          <div>
-                            <h4 className="font-semibold mb-4">Edit Review</h4>
-                            {renderReviewForm(
-                              editRating,
-                              setEditRating,
-                              editDifficulty,
-                              setEditDifficulty,
-                              editWorkload,
-                              setEditWorkload,
-                              editOrganization,
-                              setEditOrganization,
-                              editComment,
-                              setEditComment,
-                              handleUpdateReview,
-                              updateReview.isPending,
-                              "Update Review",
-                              () => setEditingReviewId(null),
-                              editValidationError
-                            )}
-                          </div>
-                        ) : (
-                          <>
-                            {/* Reviewer Info */}
-                            <div className="flex items-center justify-between mb-3">
-                              <Link 
-                                to={`/user/${review.user_id}`}
-                                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                              >
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={review.user?.profile_photo_url || undefined} />
-                                  <AvatarFallback className="text-xs">
-                                    {review.user?.username?.charAt(0).toUpperCase() || "U"}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <span className="font-medium text-sm hover:underline">
-                                    {review.user?.username || "Anonymous"}
-                                  </span>
-                                  <p className="text-xs text-muted-foreground">
-                                    {format(new Date(review.created_at), "MMM d, yyyy")}
-                                  </p>
-                                </div>
-                              </Link>
-                              
-                              {/* Edit/Delete buttons for own reviews */}
-                              {user && review.user_id === user.id && (
-                                <div className="flex gap-1">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    onClick={() => handleEditReview(review)}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete Review</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Are you sure you want to delete this review? This action cannot be undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteReview(review.id)}>
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                              {renderStars(review.rating)}
-                              {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
-                              {review.workload && <Badge variant="outline">{review.workload}</Badge>}
-                              {review.organization && <Badge variant="outline">{review.organization}</Badge>}
-                            </div>
-                            {review.comment && <p className="text-sm mb-3">{review.comment}</p>}
-                            
-                            {/* Upvote Button */}
-                            <div className="flex items-center gap-2 mt-2">
-                              <Button
-                                variant={review.hasUpvoted ? "default" : "outline"}
-                                size="sm"
-                                className="gap-1.5"
-                                onClick={() => handleUpvote(review.id, review.hasUpvoted)}
-                                disabled={toggleUpvote.isPending}
-                              >
-                                <ThumbsUp className={`h-4 w-4 ${review.hasUpvoted ? "fill-current" : ""}`} />
-                                <span>{review.upvote_count || 0}</span>
-                              </Button>
-                              <span className="text-xs text-muted-foreground">Helpful</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))
+            {/* Title and Actions Row */}
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                {/* Title */}
+                <h1 className="text-3xl lg:text-4xl font-bold mb-3 break-words">
+                  {course.name_course}
+                </h1>
+                
+                {/* Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {course.code && (
+                    <Badge variant="secondary" className="font-mono">
+                      {course.code}
+                    </Badge>
+                  )}
+                  <Badge variant="outline">
+                    {course.ects ? `${course.ects} ECTS` : "ECTS: ?"}
+                  </Badge>
+                  {course.ba_ma && (
+                    <Badge variant="outline">
+                      {course.ba_ma === "Ma" ? "Master" : course.ba_ma === "Ba" ? "Bachelor" : course.ba_ma}
+                    </Badge>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {course.ects && (
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      <strong>{course.ects}</strong> ECTS Credits
-                    </span>
-                  </div>
-                )}
-
-                {course.language && (
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{course.language}</span>
-                  </div>
-                )}
-
-                {course.term && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{course.term}</span>
-                  </div>
-                )}
-
-                {course.year && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{course.year}</span>
-                  </div>
-                )}
-
-                {course.ba_ma && (
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{course.ba_ma}</span>
-                  </div>
-                )}
-
-                {course.mandatory_optional && (
-                  <div className="text-sm">
-                    <strong>Type:</strong> {course.mandatory_optional}
-                  </div>
-                )}
-
-                {course.which_year && (
-                  <div className="text-sm">
-                    <strong>Year of Study:</strong> {course.which_year}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="space-y-2">
-              <Button className="w-full" onClick={handleSave} disabled={toggleSave.isPending}>
-                <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+              {/* Save Button (Header) */}
+              <Button
+                size="lg"
+                variant={isSaved ? "secondary" : "default"}
+                onClick={handleSave}
+                disabled={toggleSave.isPending}
+                className="shrink-0 gap-2"
+                aria-label={isSaved ? "Remove from saved courses" : "Save course"}
+              >
+                <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
                 {isSaved ? 'Saved' : 'Save Course'}
               </Button>
-              <Button variant="outline" className="w-full">
-                Add to Learning Agreement
-              </Button>
             </div>
+          </header>
+
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Left Column - Course Info */}
+            <div className="lg:col-span-2">
+              <CourseInfoCard course={course} />
+            </div>
+
+            {/* Right Column - User Details */}
+            <div className="lg:col-span-1">
+              <div className="lg:sticky lg:top-24">
+                <UserDetailsCard 
+                  courseId={id!} 
+                  courseName={course.name_course}
+                  onOpenReview={handleOpenReview}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Reviews Section - Full Width */}
+          <div className="mb-8">
+            <CourseReviewSection 
+              ref={reviewSectionRef}
+              courseId={id!} 
+            />
+          </div>
+
+          {/* Similar Courses Section */}
+          <div className="mb-8">
+            <SimilarCoursesSection 
+              courseId={id!} 
+              topics={course.topics} 
+            />
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 };
