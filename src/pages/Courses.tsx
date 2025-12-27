@@ -165,7 +165,10 @@ const Courses = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Select onValueChange={(value) => updateFilter("universityId", value)}>
+              <Select 
+                value={filters.universityId || "all"} 
+                onValueChange={(value) => updateFilter("universityId", value)}
+              >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="University" />
                 </SelectTrigger>
@@ -179,7 +182,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("programId", value)}>
+              <Select 
+                value={filters.programId || "all"} 
+                onValueChange={(value) => updateFilter("programId", value)}
+              >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Program" />
                 </SelectTrigger>
@@ -193,7 +199,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("language", value)}>
+              <Select 
+                value={filters.language || "all"} 
+                onValueChange={(value) => updateFilter("language", value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Language" />
                 </SelectTrigger>
@@ -206,7 +215,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("level", value)}>
+              <Select 
+                value={filters.level || "all"} 
+                onValueChange={(value) => updateFilter("level", value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
@@ -217,7 +229,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("term", value)}>
+              <Select 
+                value={filters.term || "all"} 
+                onValueChange={(value) => updateFilter("term", value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Term" />
                 </SelectTrigger>
@@ -232,7 +247,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("examType", value)}>
+              <Select 
+                value={filters.examType || "all"} 
+                onValueChange={(value) => updateFilter("examType", value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Exam Type" />
                 </SelectTrigger>
@@ -244,7 +262,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("mandatoryOptional", value)}>
+              <Select 
+                value={filters.mandatoryOptional || "all"} 
+                onValueChange={(value) => updateFilter("mandatoryOptional", value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
@@ -255,7 +276,10 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("whichYear", value)}>
+              <Select 
+                value={filters.whichYear || "all"} 
+                onValueChange={(value) => updateFilter("whichYear", value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
@@ -349,7 +373,10 @@ const Courses = () => {
                               variant="secondary" 
                               size="sm" 
                               className={`flex-1 theme-btn-secondary ${isSmall ? 'text-[10px] h-6' : 'text-xs sm:text-sm'}`}
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/courses/${course.id_course}`);
+                              }}
                             >
                               View
                             </Button>

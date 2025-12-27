@@ -41,6 +41,7 @@ const Labs = () => {
     setFilters({});
     setResearchDomain('');
     setSortBy('name-asc');
+    setDisplaySize('5');
   };
 
   const getGridCols = () => {
@@ -176,7 +177,10 @@ const Labs = () => {
               )}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Select onValueChange={(value) => updateFilter("universityId", value)}>
+              <Select 
+                value={filters.universityId || "all"} 
+                onValueChange={(value) => updateFilter("universityId", value)}
+              >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="University" />
                 </SelectTrigger>
@@ -190,7 +194,10 @@ const Labs = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("facultyArea", value)}>
+              <Select 
+                value={filters.facultyArea || "all"} 
+                onValueChange={(value) => updateFilter("facultyArea", value)}
+              >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Faculty Area" />
                 </SelectTrigger>
@@ -300,7 +307,10 @@ const Labs = () => {
                               variant="secondary" 
                               size="sm" 
                               className={`flex-1 theme-btn-secondary ${displaySize === '10' ? 'text-xs h-7' : 'text-xs sm:text-sm'}`}
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/labs/${lab.slug || lab.id_lab}`);
+                              }}
                             >
                               View
                             </Button>

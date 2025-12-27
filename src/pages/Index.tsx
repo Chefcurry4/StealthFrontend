@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked } from "lucide-react";
@@ -8,9 +9,13 @@ import { useCourses } from "@/hooks/useCourses";
 import { useLabs } from "@/hooks/useLabs";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { SEO } from "@/components/SEO";
+import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
 
 const Index = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authDialogFeature, setAuthDialogFeature] = useState("");
   const { data: universities } = useUniversities();
   const { data: courses } = useCourses({});
   const { data: labs } = useLabs();
@@ -55,6 +60,15 @@ const Index = () => {
     },
   ];
 
+  const handleHubClick = (hub: typeof hubs[0]) => {
+    if (hub.authRequired && !user) {
+      setAuthDialogFeature(hub.title);
+      setAuthDialogOpen(true);
+    } else {
+      navigate(hub.href);
+    }
+  };
+
   return (
     <>
       <SEO 
@@ -93,12 +107,14 @@ const Index = () => {
 
             {/* Navigation Hubs */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-              {hubs
-                .filter((hub) => !hub.authRequired || user)
-                .map((hub) => {
+              {hubs.map((hub) => {
                 const Icon = hub.icon;
                 return (
-                  <Link key={hub.title} to={hub.href}>
+                  <div 
+                    key={hub.title} 
+                    onClick={() => handleHubClick(hub)}
+                    className="cursor-pointer"
+                  >
                     <Card className="backdrop-blur-md transition-all hover:scale-[1.02] hover:shadow-lg h-full">
                       <CardContent className="p-4 md:p-6 flex flex-col items-center text-center">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 bg-primary/10 ${hub.color}`}>
@@ -108,7 +124,7 @@ const Index = () => {
                         <p className="text-xs opacity-70">{hub.description}</p>
                       </CardContent>
                     </Card>
-                  </Link>
+                  </div>
                 );
               })}
             </div>
@@ -144,6 +160,12 @@ const Index = () => {
         </div>
       </section>
     </div>
+
+    <AuthRequiredDialog 
+      open={authDialogOpen} 
+      onOpenChange={setAuthDialogOpen}
+      feature={authDialogFeature}
+    />
     </>
   );
 };

@@ -54,14 +54,30 @@ export const useTeacherCourses = (teacherId: string) => {
   return useQuery({
     queryKey: ["courses", "teacher", teacherId],
     queryFn: async () => {
+      // First get teacher name to use for matching
+      const { data: teacher, error: teacherError } = await supabase
+        .from("Teachers(T)")
+        .select("full_name, name")
+        .eq("id_teacher", teacherId)
+        .maybeSingle();
+
+      if (teacherError) throw teacherError;
+      if (!teacher) return [];
+
+      // Get the teacher's last name for matching in bridge table
+      const teacherName = teacher.name || teacher.full_name?.split(' ').pop() || '';
+      
+      if (!teacherName) return [];
+
+      // Query bridge table by professor_name matching the teacher's name
       const { data: bridgeData, error: bridgeError } = await supabase
         .from("bridge_tc(T-C)")
         .select("id_course")
-        .eq("id_teacher", teacherId);
+        .ilike("professor_name", `%${teacherName}%`);
 
       if (bridgeError) throw bridgeError;
 
-      const courseIds = bridgeData.map((b) => b.id_course);
+      const courseIds = [...new Set(bridgeData.map((b) => b.id_course))];
 
       if (courseIds.length === 0) return [];
 
