@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
-import { useEmailDrafts } from "@/hooks/useEmailDrafts";
+import { useEmailDrafts, useCreateEmailDraft } from "@/hooks/useEmailDrafts";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { 
@@ -58,7 +58,9 @@ import {
   Download,
   FileText,
   FileJson,
-  FileDown
+  FileDown,
+  Square,
+  Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -157,7 +159,7 @@ const providerInfo: Record<ProviderType, { name: string; logo: string }> = {
   },
   perplexity: {
     name: "Perplexity",
-    logo: "https://www.perplexity.ai/favicon.ico"
+    logo: "https://pbs.twimg.com/profile_images/1798110641414443008/XP8gyBaY_400x400.jpg"
   }
 };
 
@@ -187,10 +189,12 @@ const Workbench = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Conversation search hook
@@ -253,6 +257,7 @@ const Workbench = () => {
   const { data: savedPrograms } = useSavedPrograms();
   const { data: agreements } = useLearningAgreements();
   const { data: emailDrafts } = useEmailDrafts();
+  const createEmailDraft = useCreateEmailDraft();
   const { data: documents } = useUserDocuments();
   const { data: userProfile } = useUserProfile();
   const { data: recentConversations } = useAIConversations();
@@ -332,12 +337,25 @@ const Workbench = () => {
     }
   };
 
+  // Stop ongoing AI response
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsStreaming(false);
+      setIsThinking(false);
+      setIsSearchingDatabase(false);
+      setActiveSearchTools([]);
+      toast.info("Response stopped");
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isStreaming]);
+  }, [messages, isStreaming, isThinking]);
 
   if (!user) {
     navigate("/auth");
@@ -383,7 +401,9 @@ const Workbench = () => {
 
   const handleCopy = async (content: string, messageId: string) => {
     try {
-      await navigator.clipboard.writeText(content);
+      // Strip HTML comments (metadata like <!--COURSES:[...]-->) before copying
+      const cleanContent = content.replace(/<!--[\s\S]*?-->/g, '').trim();
+      await navigator.clipboard.writeText(cleanContent);
       setCopiedId(messageId);
       setTimeout(() => setCopiedId(null), 2000);
       toast.success("Copied to clipboard");
@@ -492,6 +512,10 @@ const Workbench = () => {
     setInput("");
     setAttachments([]);
     setIsStreaming(true);
+    setIsThinking(true);
+    
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
 
     try {
       // Create conversation on first message if none exists
@@ -579,7 +603,9 @@ const Workbench = () => {
         messages: messagesForAI,
         userContext,
         model: selectedModel,
+        signal: abortControllerRef.current?.signal,
         onDelta: (delta) => {
+          setIsThinking(false);
           assistantContent += delta;
           setMessages(prev => prev.map(m => 
             m.id === assistantMessageId ? { ...m, content: assistantContent } : m
@@ -587,8 +613,10 @@ const Workbench = () => {
         },
         onDone: async () => {
           setIsStreaming(false);
+          setIsThinking(false);
           setIsSearchingDatabase(false);
           setActiveSearchTools([]);
+          abortControllerRef.current = null;
           // Save assistant message to database after streaming is done
           if (conversationId && assistantContent) {
             await saveMessage.mutateAsync({
@@ -598,11 +626,20 @@ const Workbench = () => {
             });
           }
         },
-        onSearchingDatabase: setIsSearchingDatabase,
+        onSearchingDatabase: (searching) => {
+          setIsSearchingDatabase(searching);
+          if (searching) setIsThinking(false);
+        },
         onToolsUsed: setActiveSearchTools
       });
     } catch (err) {
       setIsStreaming(false);
+      setIsThinking(false);
+      abortControllerRef.current = null;
+      if (err instanceof Error && err.name === 'AbortError') {
+        // User stopped the request, don't show error
+        return;
+      }
       toast.error("Failed to get response from hubAI");
     }
   };
@@ -894,7 +931,7 @@ const Workbench = () => {
                       </div>
 
                       {/* Message Actions */}
-                      {message.role === "assistant" && (
+                      {message.role === "assistant" && message.content && (
                         <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
                             variant="ghost"
@@ -917,6 +954,28 @@ const Workbench = () => {
                           >
                             <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
+                          {/* Save to Email Drafts - show if message looks like an email */}
+                          {(message.content.toLowerCase().includes('subject:') || 
+                            message.content.toLowerCase().includes('dear ') ||
+                            message.content.toLowerCase().includes('email')) && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                              title="Save to Email Drafts"
+                              onClick={async () => {
+                                const cleanContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                await createEmailDraft.mutateAsync({
+                                  subject: "AI Generated Email",
+                                  body: cleanContent,
+                                  recipient: "",
+                                });
+                                toast.success("Email saved to drafts");
+                              }}
+                            >
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
                             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
                           </Button>
@@ -930,6 +989,26 @@ const Workbench = () => {
                 </div>
               ))}
               
+              {/* Thinking Indicator (before any streaming starts) */}
+              {isThinking && !isSearchingDatabase && (
+                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
+                    <Brain className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Thinking...</span>
+                    <div className="flex gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Database Searching Indicator */}
               {isSearchingDatabase && (
                 <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
@@ -1064,18 +1143,26 @@ const Workbench = () => {
                 isListening ? 'border-destructive/50' : 'border-foreground/20 dark:border-border'
               }`}
             />
-            <Button
-              size="icon"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
-              onClick={handleSend}
-              disabled={isStreaming || (!input.trim() && attachments.length === 0)}
-            >
-              {isStreaming ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+            {isStreaming ? (
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                onClick={handleStop}
+                title="Stop generating"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                onClick={handleSend}
+                disabled={!input.trim() && attachments.length === 0}
+              >
                 <Send className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
 
