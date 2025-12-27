@@ -24,7 +24,14 @@ export const useSavedCourses = () => {
             name_course,
             code,
             ects,
-            ba_ma
+            ba_ma,
+            description,
+            topics,
+            professor_name,
+            language,
+            term,
+            type_exam,
+            mandatory_optional
           )
         `)
         .eq("user_id", user.id)
@@ -115,7 +122,11 @@ export const useSavedLabs = () => {
             id_lab,
             name,
             slug,
-            topics
+            topics,
+            description,
+            professors,
+            faculty_match,
+            link
           )
         `)
         .eq("user_id", user.id)
