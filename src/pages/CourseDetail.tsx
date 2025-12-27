@@ -16,9 +16,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote } from "@/hooks/useCourseReviews";
 import { TeacherLink } from "@/components/TeacherLink";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { SEO, generateCourseSchema, generateBreadcrumbSchema } from "@/components/SEO";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ const CourseDetail = () => {
   const updateReview = useUpdateCourseReview();
   const deleteReview = useDeleteCourseReview();
   const toggleUpvote = useToggleReviewUpvote();
+  const { addItem } = useRecentlyViewed();
 
   const [rating, setRating] = useState(5);
   const [difficulty, setDifficulty] = useState("");
@@ -48,6 +50,20 @@ const CourseDetail = () => {
   const [editOrganization, setEditOrganization] = useState("");
   const [editComment, setEditComment] = useState("");
   const [editValidationError, setEditValidationError] = useState("");
+
+  // Track recently viewed course
+  useEffect(() => {
+    if (course) {
+      addItem({
+        id: course.id_course,
+        type: 'course',
+        name: course.name_course,
+        href: `/courses/${course.id_course}`,
+        ects: course.ects || undefined,
+        code: course.code || undefined,
+      });
+    }
+  }, [course, addItem]);
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
 
