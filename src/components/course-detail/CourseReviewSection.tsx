@@ -355,16 +355,16 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <Label className="flex items-center">
-              Difficulty <span className="text-destructive">*</span>
+          <div className="space-y-1.5">
+            <Label className="flex items-center text-sm">
+              Difficulty <span className="text-destructive ml-0.5">*</span>
               <FieldInfoTooltip 
                 title="Difficulty" 
                 description="How challenging was the course content and exams? Consider the complexity of concepts, pace of learning, and exam difficulty."
               />
             </Label>
             <Select value={formDifficulty} onValueChange={setFormDifficulty}>
-              <SelectTrigger className={!formDifficulty && error ? "border-destructive" : ""}>
+              <SelectTrigger className={`h-10 ${!formDifficulty && error ? "border-destructive" : ""}`}>
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
@@ -375,16 +375,16 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="flex items-center">
-              Workload <span className="text-destructive">*</span>
+          <div className="space-y-1.5">
+            <Label className="flex items-center text-sm">
+              Workload <span className="text-destructive ml-0.5">*</span>
               <FieldInfoTooltip 
                 title="Workload" 
                 description="How much time and effort did the course require? Consider homework, projects, readings, and study time relative to ECTS credits."
               />
             </Label>
             <Select value={formWorkload} onValueChange={setFormWorkload}>
-              <SelectTrigger className={!formWorkload && error ? "border-destructive" : ""}>
+              <SelectTrigger className={`h-10 ${!formWorkload && error ? "border-destructive" : ""}`}>
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
@@ -394,16 +394,16 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="flex items-center">
-              Organization <span className="text-destructive">*</span>
+          <div className="space-y-1.5">
+            <Label className="flex items-center text-sm">
+              Organization <span className="text-destructive ml-0.5">*</span>
               <FieldInfoTooltip 
                 title="Organization" 
                 description="How well-structured was the course? Consider clarity of materials, scheduling, professor communication, and overall course management."
               />
             </Label>
             <Select value={formOrganization} onValueChange={setFormOrganization}>
-              <SelectTrigger className={!formOrganization && error ? "border-destructive" : ""}>
+              <SelectTrigger className={`h-10 ${!formOrganization && error ? "border-destructive" : ""}`}>
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
