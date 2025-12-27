@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Filter, Bookmark, ArrowUpDown, RotateCcw, LayoutGrid } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,9 +72,19 @@ const Labs = () => {
     }));
   };
 
-  const uniqueFacultyAreas = Array.from(
-    new Set(labs?.map(l => l.faculty_match).filter(Boolean))
-  ) as string[];
+  // Parse all individual faculties from comma-separated strings
+  const uniqueFacultyAreas = useMemo(() => {
+    const allFaculties = new Set<string>();
+    labs?.forEach(lab => {
+      if (lab.faculty_match) {
+        lab.faculty_match.split(',').forEach(faculty => {
+          const trimmed = faculty.trim();
+          if (trimmed) allFaculties.add(trimmed);
+        });
+      }
+    });
+    return Array.from(allFaculties).sort();
+  }, [labs]);
 
   // Filter labs by research domain (client-side filtering based on category detection)
   const filteredLabs = labs?.filter(lab => {
@@ -203,7 +213,7 @@ const Labs = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Faculty Areas</SelectItem>
-                  {uniqueFacultyAreas.slice(0, 20).sort().map((area) => (
+                  {uniqueFacultyAreas.map((area) => (
                     <SelectItem key={area} value={area}>
                       {area}
                     </SelectItem>
