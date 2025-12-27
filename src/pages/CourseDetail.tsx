@@ -185,22 +185,20 @@ const CourseDetail = () => {
             </div>
           </header>
 
-          {/* Two Column Layout */}
+          {/* Two Column Layout - Equal Height */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Left Column - Course Info */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 flex">
               <CourseInfoCard course={course} />
             </div>
 
             {/* Right Column - User Details */}
-            <div className="lg:col-span-1">
-              <div className="lg:sticky lg:top-24">
-                <UserDetailsCard 
-                  courseId={id!} 
-                  courseName={course.name_course}
-                  onOpenReview={handleOpenReview}
-                />
-              </div>
+            <div className="lg:col-span-1 flex">
+              <UserDetailsCard 
+                courseId={id!} 
+                courseName={course.name_course}
+                onOpenReview={handleOpenReview}
+              />
             </div>
           </div>
 

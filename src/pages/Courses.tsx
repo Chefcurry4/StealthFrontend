@@ -287,29 +287,6 @@ const Courses = () => {
                   </Button>
                 </div>
               </div>
-
-              {/* Mandatory/Optional */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium opacity-70">Type:</span>
-                <div className="flex gap-1">
-                  <Button
-                    variant={filters.mandatoryOptional === "Mandatory" ? "default" : "outline"}
-                    size="sm"
-                    className="h-7 px-3 text-xs"
-                    onClick={() => updateFilter("mandatoryOptional", filters.mandatoryOptional === "Mandatory" ? "all" : "Mandatory")}
-                  >
-                    Mandatory
-                  </Button>
-                  <Button
-                    variant={filters.mandatoryOptional === "Optional" ? "default" : "outline"}
-                    size="sm"
-                    className="h-7 px-3 text-xs"
-                    onClick={() => updateFilter("mandatoryOptional", filters.mandatoryOptional === "Optional" ? "all" : "Optional")}
-                  >
-                    Optional
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
         </section>
