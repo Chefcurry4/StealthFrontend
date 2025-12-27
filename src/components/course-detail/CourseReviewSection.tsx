@@ -22,6 +22,61 @@ export interface CourseReviewSectionHandle {
   scrollToForm: () => void;
 }
 
+// Star rating component with yellow fill and transitions
+const StarRating = ({ 
+  rating, 
+  size = "sm",
+  interactive = false,
+  onRatingChange,
+}: { 
+  rating: number; 
+  size?: "sm" | "md" | "lg";
+  interactive?: boolean;
+  onRatingChange?: (rating: number) => void;
+}) => {
+  const [hoverRating, setHoverRating] = useState(0);
+  
+  const sizeClasses = {
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
+  };
+  
+  const displayRating = hoverRating || rating;
+  
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const starValue = i + 1;
+        const isFull = displayRating >= starValue;
+        const isHalf = !isFull && displayRating >= starValue - 0.5;
+        
+        return (
+          <button
+            key={i}
+            type="button"
+            disabled={!interactive}
+            onClick={() => interactive && onRatingChange?.(starValue)}
+            onMouseEnter={() => interactive && setHoverRating(starValue)}
+            onMouseLeave={() => interactive && setHoverRating(0)}
+            className={`${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition-all duration-200`}
+          >
+            <Star
+              className={`${sizeClasses[size]} transition-all duration-200 ${
+                isFull 
+                  ? "fill-yellow-400 text-yellow-400 drop-shadow-sm" 
+                  : isHalf 
+                    ? "fill-yellow-400/50 text-yellow-400" 
+                    : "text-muted-foreground/40"
+              }`}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseReviewSectionProps>(
   ({ courseId }, ref) => {
     const { user } = useAuth();
@@ -75,27 +130,6 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
       }
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     }) : [];
-
-    const renderStars = (ratingValue: number, size: "sm" | "md" = "sm") => {
-      const sizeClass = size === "sm" ? "h-4 w-4" : "h-5 w-5";
-      return (
-        <div className="flex">
-          {Array.from({ length: 5 }).map((_, i) => {
-            const starValue = i + 1;
-            const isFull = ratingValue >= starValue;
-            const isHalf = !isFull && ratingValue >= starValue - 0.5;
-            return (
-              <Star
-                key={i}
-                className={`${sizeClass} ${
-                  isFull ? "fill-primary text-primary" : isHalf ? "fill-primary/50 text-primary" : "text-muted"
-                }`}
-              />
-            );
-          })}
-        </div>
-      );
-    };
 
     const handleSubmitReview = () => {
       const missingFields = [];
@@ -185,8 +219,13 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
         )}
         <div>
           <Label className="mb-3 block">Rating: {formRating} Star{formRating !== 1 && "s"}</Label>
-          <div className="flex items-center gap-3">
-            {renderStars(formRating, "md")}
+          <div className="flex items-center gap-4">
+            <StarRating 
+              rating={formRating} 
+              size="lg" 
+              interactive 
+              onRatingChange={setFormRating}
+            />
             <Slider
               value={[formRating]}
               onValueChange={(v) => setFormRating(v[0])}
@@ -260,16 +299,16 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Star className="h-5 w-5" />
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 Reviews
               </CardTitle>
               {averageRating && (
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{averageRating}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-bold">{averageRating}</span>
                   <div className="flex flex-col">
-                    {renderStars(parseFloat(averageRating))}
+                    <StarRating rating={parseFloat(averageRating)} size="md" />
                     <span className="text-xs text-muted-foreground">{reviews?.length} review{reviews?.length !== 1 && "s"}</span>
                   </div>
                 </div>
@@ -392,7 +431,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        {renderStars(review.rating)}
+                        <StarRating rating={review.rating} size="sm" />
                         {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
                         {review.workload && <Badge variant="outline">{review.workload}</Badge>}
                         {review.organization && <Badge variant="outline">{review.organization}</Badge>}

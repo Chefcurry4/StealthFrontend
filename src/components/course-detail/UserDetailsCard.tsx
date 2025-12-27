@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bookmark, Star, Mail, Link2, ListPlus, Save } from "lucide-react";
+import { Bookmark, Star, Mail, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
-import { useCourseNotes, useUpdateCourseNotes } from "@/hooks/useCourseNotes";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserDetailsCardProps {
@@ -22,35 +18,9 @@ export const UserDetailsCard = ({ courseId, courseName, onOpenReview }: UserDeta
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: savedCourses } = useSavedCourses();
-  const { data: courseNotes } = useCourseNotes(courseId);
   const toggleSave = useToggleSaveCourse();
-  const updateNotes = useUpdateCourseNotes();
-  
-  const [notes, setNotes] = useState("");
-  const [hasChanges, setHasChanges] = useState(false);
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === courseId);
-
-  useEffect(() => {
-    if (courseNotes?.note) {
-      setNotes(courseNotes.note);
-    }
-  }, [courseNotes]);
-
-  const handleNotesChange = (value: string) => {
-    setNotes(value);
-    setHasChanges(value !== (courseNotes?.note || ""));
-  };
-
-  const handleSaveNotes = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    updateNotes.mutate({ courseId, note: notes }, {
-      onSuccess: () => setHasChanges(false)
-    });
-  };
 
   const handleToggleSave = () => {
     if (!user) {
@@ -77,79 +47,73 @@ export const UserDetailsCard = ({ courseId, courseName, onOpenReview }: UserDeta
   // If not logged in, show CTA
   if (!user) {
     return (
-      <Card>
+      <Card className="h-full flex flex-col">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Your Notes</CardTitle>
+          <CardTitle className="text-xl font-bold text-primary">Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Sign in to save personal notes, bookmark courses, and write reviews.
+        <CardContent className="flex-1 flex flex-col justify-center space-y-6">
+          <p className="text-base text-muted-foreground text-center">
+            Sign in to save courses, write reviews, and more.
           </p>
-          <Button className="w-full" onClick={() => navigate("/auth")}>
+          <Button className="w-full" size="lg" onClick={() => navigate("/auth")}>
             Sign in to get started
           </Button>
+          
+          <Separator />
+          
+          {/* Share Options available to everyone */}
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground uppercase tracking-wide font-semibold text-center">Share this course</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={handleSendEmail}
+              >
+                <Mail className="h-4 w-4" />
+                Email
+              </Button>
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={handleCopyLink}
+              >
+                <Link2 className="h-4 w-4" />
+                Copy Link
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Your Notes</CardTitle>
+        <CardTitle className="text-xl font-bold text-primary">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Personal Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-sm text-muted-foreground">
-            My notes / what to know
-          </Label>
-          <Textarea
-            id="notes"
-            value={notes}
-            onChange={(e) => handleNotesChange(e.target.value)}
-            placeholder="Add your personal notes about this course..."
-            rows={4}
-            className="resize-none"
-          />
-          {hasChanges && (
-            <Button 
-              size="sm" 
-              onClick={handleSaveNotes}
-              disabled={updateNotes.isPending}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Save Notes
-            </Button>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Saved changes sync to your profile.
-          </p>
-        </div>
-
-        <Separator />
-
+      <CardContent className="flex-1 flex flex-col space-y-6">
         {/* Action Buttons */}
-        <div className="space-y-2">
+        <div className="space-y-3 flex-1">
           <Button 
-            className="w-full justify-start gap-2" 
+            className="w-full justify-start gap-3 h-14 text-base" 
             variant={isSaved ? "secondary" : "default"}
             onClick={handleToggleSave}
             disabled={toggleSave.isPending}
             aria-label={isSaved ? "Remove from saved courses" : "Save course"}
           >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+            <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
             {isSaved ? 'Saved to Collection' : 'Save to Collection'}
           </Button>
           
           <Button 
             variant="outline" 
-            className="w-full justify-start gap-2"
+            className="w-full justify-start gap-3 h-14 text-base"
             onClick={onOpenReview}
             aria-label="Write a review"
           >
-            <Star className="h-4 w-4" />
+            <Star className="h-5 w-5 text-yellow-500" />
             Write a Review
           </Button>
         </div>
@@ -157,12 +121,11 @@ export const UserDetailsCard = ({ courseId, courseName, onOpenReview }: UserDeta
         <Separator />
 
         {/* Share Options */}
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Share</p>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground uppercase tracking-wide font-semibold">Share</p>
+          <div className="grid grid-cols-2 gap-3">
             <Button 
               variant="outline" 
-              size="sm" 
               className="gap-2"
               onClick={handleSendEmail}
             >
@@ -171,7 +134,6 @@ export const UserDetailsCard = ({ courseId, courseName, onOpenReview }: UserDeta
             </Button>
             <Button 
               variant="outline" 
-              size="sm" 
               className="gap-2"
               onClick={handleCopyLink}
             >
