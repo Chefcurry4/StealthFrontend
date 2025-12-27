@@ -180,3 +180,61 @@ export const useToggleReviewUpvote = () => {
     },
   });
 };
+
+// Review replies hooks
+export const useReviewReplies = (reviewId: string) => {
+  return useQuery({
+    queryKey: ["reviewReplies", reviewId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_review_replies")
+        .select(`
+          *,
+          user:user_id (
+            id,
+            username,
+            profile_photo_url
+          )
+        `)
+        .eq("review_id", reviewId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!reviewId,
+  });
+};
+
+export const useCreateReviewReply = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ reviewId, content, courseId }: { reviewId: string; content: string; courseId: string }) => {
+      if (!user) throw new Error("Must be logged in");
+
+      const { error } = await supabase.from("course_review_replies").insert({
+        review_id: reviewId,
+        user_id: user.id,
+        content,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["reviewReplies", variables.reviewId] });
+      toast({
+        title: "Reply posted!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to post reply",
+        variant: "destructive",
+      });
+    },
+  });
+};

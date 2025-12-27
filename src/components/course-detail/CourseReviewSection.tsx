@@ -1,6 +1,6 @@
 import { useState, forwardRef, useImperativeHandle } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Star, Pencil, Trash2, ThumbsUp, ArrowUpDown } from "lucide-react";
+import { Star, Pencil, Trash2, ThumbsUp, ArrowUpDown, MessageCircle, Info, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote } from "@/hooks/useCourseReviews";
+import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote, useCreateReviewReply, useReviewReplies } from "@/hooks/useCourseReviews";
 import { format } from "date-fns";
 
 interface CourseReviewSectionProps {
@@ -73,6 +75,122 @@ const StarRating = ({
           </button>
         );
       })}
+    </div>
+  );
+};
+
+// Info tooltip component for review fields
+const FieldInfoTooltip = ({ title, description }: { title: string; description: string }) => (
+  <TooltipProvider delayDuration={200}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-primary cursor-help transition-colors inline ml-1" />
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs p-3">
+        <p className="font-semibold text-sm">{title}</p>
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
+// Reply component for individual review
+const ReviewReplies = ({ reviewId, courseId }: { reviewId: string; courseId: string }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { data: replies } = useReviewReplies(reviewId);
+  const createReply = useCreateReviewReply();
+  const [replyText, setReplyText] = useState("");
+  const [showReplyForm, setShowReplyForm] = useState(false);
+
+  const handleSubmitReply = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (!replyText.trim()) return;
+    
+    createReply.mutate(
+      { reviewId, content: replyText, courseId },
+      {
+        onSuccess: () => {
+          setReplyText("");
+          setShowReplyForm(false);
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border/50">
+      {/* Replies list */}
+      {replies && replies.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {replies.map((reply: any) => (
+            <div key={reply.id} className="pl-4 border-l-2 border-muted">
+              <div className="flex items-center gap-2 mb-1">
+                <Link to={`/user/${reply.user_id}`} className="flex items-center gap-1.5 hover:opacity-80">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={reply.user?.profile_photo_url || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {reply.user?.username?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium">{reply.user?.username || "Anonymous"}</span>
+                </Link>
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(reply.created_at), "MMM d, yyyy")}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{reply.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Reply button / form */}
+      {!showReplyForm ? (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="gap-1.5 text-xs h-7"
+          onClick={() => user ? setShowReplyForm(true) : navigate("/auth")}
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          Reply
+        </Button>
+      ) : (
+        <div className="flex gap-2">
+          <Textarea
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Write a reply..."
+            rows={2}
+            className="text-sm"
+          />
+          <div className="flex flex-col gap-1">
+            <Button 
+              size="sm" 
+              className="h-7 px-2"
+              onClick={handleSubmitReply}
+              disabled={createReply.isPending || !replyText.trim()}
+            >
+              <Send className="h-3.5 w-3.5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 px-2"
+              onClick={() => {
+                setShowReplyForm(false);
+                setReplyText("");
+              }}
+            >
+              ✕
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -238,7 +356,13 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <Label>Difficulty <span className="text-destructive">*</span></Label>
+            <Label className="flex items-center">
+              Difficulty <span className="text-destructive">*</span>
+              <FieldInfoTooltip 
+                title="Difficulty" 
+                description="How challenging was the course content and exams? Consider the complexity of concepts, pace of learning, and exam difficulty."
+              />
+            </Label>
             <Select value={formDifficulty} onValueChange={setFormDifficulty}>
               <SelectTrigger className={!formDifficulty && error ? "border-destructive" : ""}>
                 <SelectValue placeholder="Select" />
@@ -252,7 +376,13 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
             </Select>
           </div>
           <div>
-            <Label>Workload <span className="text-destructive">*</span></Label>
+            <Label className="flex items-center">
+              Workload <span className="text-destructive">*</span>
+              <FieldInfoTooltip 
+                title="Workload" 
+                description="How much time and effort did the course require? Consider homework, projects, readings, and study time relative to ECTS credits."
+              />
+            </Label>
             <Select value={formWorkload} onValueChange={setFormWorkload}>
               <SelectTrigger className={!formWorkload && error ? "border-destructive" : ""}>
                 <SelectValue placeholder="Select" />
@@ -265,7 +395,13 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
             </Select>
           </div>
           <div>
-            <Label>Organization <span className="text-destructive">*</span></Label>
+            <Label className="flex items-center">
+              Organization <span className="text-destructive">*</span>
+              <FieldInfoTooltip 
+                title="Organization" 
+                description="How well-structured was the course? Consider clarity of materials, scheduling, professor communication, and overall course management."
+              />
+            </Label>
             <Select value={formOrganization} onValueChange={setFormOrganization}>
               <SelectTrigger className={!formOrganization && error ? "border-destructive" : ""}>
                 <SelectValue placeholder="Select" />
@@ -438,7 +574,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                       </div>
                       {review.comment && <p className="text-sm mb-3">{review.comment}</p>}
                       
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2">
                         <Button
                           variant={review.hasUpvoted ? "default" : "outline"}
                           size="sm"
@@ -451,6 +587,9 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                         </Button>
                         <span className="text-xs text-muted-foreground">Helpful</span>
                       </div>
+
+                      {/* Replies Section */}
+                      <ReviewReplies reviewId={review.id} courseId={courseId} />
                     </>
                   )}
                 </div>
@@ -464,3 +603,50 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
 );
 
 CourseReviewSection.displayName = "CourseReviewSection";
+
+// Helper function to calculate review summary
+export const calculateReviewSummary = (reviews: any[] | undefined) => {
+  if (!reviews || reviews.length === 0) {
+    return {
+      avgDifficulty: null,
+      avgWorkload: null,
+      avgOrganization: null,
+      totalReviews: 0,
+    };
+  }
+
+  const difficultyMap: Record<string, number> = {
+    "Easy": 1, "Medium": 2, "Difficult": 3, "Very Difficult": 4
+  };
+  const workloadMap: Record<string, number> = {
+    "Light": 1, "Moderate": 2, "Heavy": 3
+  };
+  const organizationMap: Record<string, number> = {
+    "Poor": 1, "Fair": 2, "Good": 3, "Great": 4
+  };
+
+  const reverseDifficulty = ["Easy", "Medium", "Difficult", "Very Difficult"];
+  const reverseWorkload = ["Light", "Moderate", "Heavy"];
+  const reverseOrganization = ["Poor", "Fair", "Good", "Great"];
+
+  const difficulties = reviews.filter(r => r.difficulty).map(r => difficultyMap[r.difficulty] || 0);
+  const workloads = reviews.filter(r => r.workload).map(r => workloadMap[r.workload] || 0);
+  const organizations = reviews.filter(r => r.organization).map(r => organizationMap[r.organization] || 0);
+
+  const avgDifficultyNum = difficulties.length > 0 
+    ? Math.round(difficulties.reduce((a, b) => a + b, 0) / difficulties.length)
+    : 0;
+  const avgWorkloadNum = workloads.length > 0 
+    ? Math.round(workloads.reduce((a, b) => a + b, 0) / workloads.length)
+    : 0;
+  const avgOrganizationNum = organizations.length > 0 
+    ? Math.round(organizations.reduce((a, b) => a + b, 0) / organizations.length)
+    : 0;
+
+  return {
+    avgDifficulty: avgDifficultyNum > 0 ? reverseDifficulty[avgDifficultyNum - 1] : null,
+    avgWorkload: avgWorkloadNum > 0 ? reverseWorkload[avgWorkloadNum - 1] : null,
+    avgOrganization: avgOrganizationNum > 0 ? reverseOrganization[avgOrganizationNum - 1] : null,
+    totalReviews: reviews.length,
+  };
+};
