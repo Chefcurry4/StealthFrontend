@@ -10,6 +10,7 @@ import { useLabs } from "@/hooks/useLabs";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { SEO } from "@/components/SEO";
 import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
 
 const Index = () => {
   const { user } = useAuth();
@@ -131,6 +132,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Recently Viewed Section */}
+      <RecentlyViewed />
 
       {/* How It Works Section */}
       <section className="py-16 backdrop-blur-sm theme-section">

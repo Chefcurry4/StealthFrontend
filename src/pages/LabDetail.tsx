@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { TeacherLink } from "@/components/TeacherLink";
 import { SEO, generateLabSchema, generateBreadcrumbSchema } from "@/components/SEO";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 const LabDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -19,6 +20,7 @@ const LabDetail = () => {
   const { user } = useAuth();
   const { data: savedLabs } = useSavedLabs();
   const toggleSave = useToggleSaveLab();
+  const { addItem } = useRecentlyViewed();
   
   const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
   
@@ -26,6 +28,19 @@ const LabDetail = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
+
+  // Track recently viewed lab
+  useEffect(() => {
+    if (lab) {
+      addItem({
+        id: lab.id_lab,
+        type: 'lab',
+        name: lab.name,
+        href: `/labs/${lab.slug}`,
+        topics: lab.topics || undefined,
+      });
+    }
+  }, [lab, addItem]);
   
   const { data: relatedLabs } = useLabs(
     activeFilter?.type === 'faculty' ? { facultyArea: activeFilter.value } :
