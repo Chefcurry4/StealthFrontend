@@ -62,8 +62,13 @@ const UniversityMap = ({ universities }: UniversityMapProps) => {
         lat = university.coordinates.y;
       }
 
+      const logoHtml = university.logo_url 
+        ? `<img src="${university.logo_url}" alt="${university.name}" style="height: 40px; width: auto; margin-bottom: 8px; object-fit: contain;" />`
+        : '';
+
       const popupContent = `
         <div style="padding: 8px; min-width: 200px;">
+          ${logoHtml}
           <h3 style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${university.name}</h3>
           <p style="color: #666; font-size: 12px; margin-bottom: 8px;">${university.country || ''}</p>
           <a href="/universities/${university.slug}" style="color: #0066cc; text-decoration: underline; font-size: 12px;">View Details</a>
