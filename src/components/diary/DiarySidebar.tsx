@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { 
   Book, ChevronLeft, ChevronRight, GraduationCap, Beaker, 
-  Search, LayoutGrid, Calendar, Type
+  Search, LayoutGrid, Calendar, Type, Clock, Target, StickyNote, ListTodo
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,9 +46,13 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
   );
 
   const modules = [
-    { id: 'text', label: 'Add Text', icon: Type, color: 'bg-amber-50 text-amber-700 border-amber-200' },
-    { id: 'semester_planner', label: 'Semester Planner', icon: Calendar, color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    { id: 'lab_tracker', label: 'Lab Tracker', icon: Beaker, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { id: 'text', label: 'Add Text', icon: Type, color: 'bg-amber-50 text-amber-700 border-amber-200', description: 'Free-form text block' },
+    { id: 'semester_planner', label: 'Semester Planner', icon: Calendar, color: 'bg-blue-100 text-blue-700 border-blue-200', description: 'Plan courses by semester' },
+    { id: 'lab_tracker', label: 'Lab Tracker', icon: Beaker, color: 'bg-purple-100 text-purple-700 border-purple-200', description: 'Track lab applications' },
+    { id: 'weekly_schedule', label: 'Weekly Schedule', icon: Clock, color: 'bg-green-100 text-green-700 border-green-200', description: 'Organize your week' },
+    { id: 'deadline_tracker', label: 'Deadline Tracker', icon: Target, color: 'bg-red-100 text-red-700 border-red-200', description: 'Track due dates' },
+    { id: 'sticky_note', label: 'Sticky Note', icon: StickyNote, color: 'bg-yellow-100 text-yellow-700 border-yellow-200', description: 'Quick notes & reminders' },
+    { id: 'checklist', label: 'Checklist', icon: ListTodo, color: 'bg-cyan-100 text-cyan-700 border-cyan-200', description: 'To-do list' },
   ];
 
   return (
@@ -219,7 +223,7 @@ export const DiarySidebar = ({ isOpen, onToggle }: DiarySidebarProps) => {
   );
 };
 
-// Draggable Module Component
+// Draggable Module Component with improved styling
 const DraggableModule = ({ module }: { module: any }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `module-${module.id}`,
@@ -234,14 +238,21 @@ const DraggableModule = ({ module }: { module: any }) => {
       {...attributes}
       {...listeners}
       className={cn(
-        "p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-all",
+        "p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-all hover:shadow-md hover:scale-[1.02]",
         module.color,
-        isDragging && "opacity-50 scale-95"
+        isDragging && "opacity-50 scale-95 shadow-lg"
       )}
     >
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4" />
-        <span className="text-sm font-medium">{module.label}</span>
+      <div className="flex items-center gap-2.5">
+        <div className="p-1.5 rounded-md bg-white/50">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium block">{module.label}</span>
+          {module.description && (
+            <span className="text-[10px] opacity-70 block mt-0.5">{module.description}</span>
+          )}
+        </div>
       </div>
     </div>
   );

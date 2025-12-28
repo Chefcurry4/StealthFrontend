@@ -20,7 +20,7 @@ export interface DiaryPage {
 export interface DiaryPageItem {
   id: string;
   page_id: string;
-  item_type: 'course' | 'lab' | 'note' | 'email_draft' | 'todo' | 'semester_planner' | 'lab_tracker' | 'notes_module';
+  item_type: 'course' | 'lab' | 'note' | 'email_draft' | 'todo' | 'semester_planner' | 'lab_tracker' | 'notes_module' | 'text' | 'weekly_schedule' | 'deadline_tracker' | 'checklist';
   reference_id: string | null;
   content: string | null;
   position_x: number;
