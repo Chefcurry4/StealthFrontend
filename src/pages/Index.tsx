@@ -25,7 +25,8 @@ const Index = () => {
     {
       icon: GraduationCap,
       title: "Universities",
-      description: `${universities?.length || 12} partner universities`,
+      {/*description: `${universities?.length || 12} partner universities`,*/}
+      description: `1 partner university`,
       href: "/universities",
       color: "text-blue-500",
     },
