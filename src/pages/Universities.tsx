@@ -47,7 +47,7 @@ const Universities = () => {
               Explore Universities
             </h1>
             <p className="text-lg opacity-80 mb-8 max-w-2xl">
-              Discover {filteredUniversities?.length || 0} partner universities worldwide and find the perfect destination for your exchange semester
+              Discover all partner universities and plan your perfect semester
             </p>
 
             {/* Search Bar */}
@@ -116,49 +116,73 @@ const Universities = () => {
                 )}
 
                 {filteredUniversities && filteredUniversities.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
-                    {filteredUniversities.map((university) => (
-                      <Link to={`/universities/${university.slug}`} key={university.uuid} className="block">
-                      <Card className="flex flex-col overflow-hidden backdrop-blur-md cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all duration-200">
-                        <UniversityCardImage 
-                          universityId={university.uuid}
-                          universityName={university.name}
-                          logoUrl={university.logo_url}
-                          country={university.country_code}
-                          className="h-20 sm:h-24 lg:h-26"
-                        />
-                        <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
-                          <CardTitle className="text-base sm:text-lg lg:text-xl leading-tight line-clamp-2">{university.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
-                          {university.country && (
-                            <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm opacity-70">
-                              <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
-                              <span>{university.country}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Button variant="secondary" size="sm" className="flex-1 theme-btn-secondary text-xs sm:text-sm" onClick={(e) => e.stopPropagation()}>
-                              View Details
-                            </Button>
-                            {university.website && (
-                              <a 
-                                href={university.website} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Button variant="outline" size="sm" className="theme-btn-secondary p-2 sm:p-2.5">
-                                  <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <>
+                    {/* Beta notice */}
+                    <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                      <p className="text-sm text-foreground">
+                        <strong>Beta Version:</strong> This is the Beta version of Students Hub. For now only EPFL is covered, but more universities and features to come in next versions!
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+                      {filteredUniversities.map((university) => {
+                        const isEPFL = university.name.toLowerCase().includes('epfl') || university.slug.toLowerCase().includes('epfl');
+                        
+                        const cardContent = (
+                          <Card className={`flex flex-col overflow-hidden backdrop-blur-md transition-all duration-200 ${isEPFL ? 'cursor-pointer hover:scale-[1.02] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}>
+                            <UniversityCardImage 
+                              universityId={university.uuid}
+                              universityName={university.name}
+                              logoUrl={university.logo_url}
+                              country={university.country_code}
+                              className="h-20 sm:h-24 lg:h-26"
+                            />
+                            <CardHeader className="flex-1 p-3 sm:p-4 lg:p-6">
+                              <CardTitle className="text-base sm:text-lg lg:text-xl leading-tight line-clamp-2">{university.name}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6 pt-0">
+                              {university.country && (
+                                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm opacity-70">
+                                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span>{university.country}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <Button variant="secondary" size="sm" className="flex-1 theme-btn-secondary text-xs sm:text-sm" onClick={(e) => e.stopPropagation()} disabled={!isEPFL}>
+                                  {isEPFL ? 'View Details' : 'Coming Soon'}
                                 </Button>
-                              </a>
-                            )}
+                                {university.website && isEPFL && (
+                                  <a 
+                                    href={university.website} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Button variant="outline" size="sm" className="theme-btn-secondary p-2 sm:p-2.5">
+                                      <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </Button>
+                                  </a>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+
+                        if (isEPFL) {
+                          return (
+                            <Link to={`/universities/${university.slug}`} key={university.uuid} className="block">
+                              {cardContent}
+                            </Link>
+                          );
+                        }
+                        
+                        return (
+                          <div key={university.uuid}>
+                            {cardContent}
                           </div>
-                        </CardContent>
-                      </Card>
-                      </Link>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </TabsContent>
 

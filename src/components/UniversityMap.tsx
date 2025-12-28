@@ -1,9 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
+import { useEffect, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface University {
   uuid: string;
@@ -18,93 +15,83 @@ interface UniversityMapProps {
   universities: University[];
 }
 
+// Fix for default marker icons in Leaflet with Vite
+const defaultIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = defaultIcon;
+
 const UniversityMap = ({ universities }: UniversityMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState('');
-  const [isTokenSet, setIsTokenSet] = useState(false);
+  const map = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!mapContainer.current || !isTokenSet || !mapboxToken) return;
+    if (!mapContainer.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [10, 50],
-      zoom: 3,
+    // Initialize map centered on EPFL (Switzerland)
+    map.current = L.map(mapContainer.current, {
+      center: [46.5191, 6.5668], // EPFL coordinates
+      zoom: 10,
+      scrollWheelZoom: true,
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    // Add OpenStreetMap tiles (free, no API key needed)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map.current);
 
-    // Add markers for universities with coordinates
+    // Add markers for EPFL universities only
     universities.forEach((university) => {
+      const isEPFL = university.name.toLowerCase().includes('epfl') || university.slug.toLowerCase().includes('epfl');
+      
+      if (!isEPFL) return; // Only show EPFL on the map for now
+      
+      // Use EPFL coordinates if available, otherwise use default
+      let lat = 46.5191;
+      let lng = 6.5668;
+      
       if (university.coordinates && university.coordinates.x && university.coordinates.y) {
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div style="padding: 8px;">
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${university.name}</h3>
-            <p style="color: #666; font-size: 14px;">${university.country || ''}</p>
-            <a href="/universities/${university.slug}" style="color: #0066cc; text-decoration: underline; font-size: 14px;">View Details</a>
-          </div>
-        `);
-
-        new mapboxgl.Marker({ color: '#0066cc' })
-          .setLngLat([university.coordinates.x, university.coordinates.y])
-          .setPopup(popup)
-          .addTo(map.current!);
+        lng = university.coordinates.x;
+        lat = university.coordinates.y;
       }
+
+      const popupContent = `
+        <div style="padding: 8px; min-width: 200px;">
+          <h3 style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${university.name}</h3>
+          <p style="color: #666; font-size: 12px; margin-bottom: 8px;">${university.country || ''}</p>
+          <a href="/universities/${university.slug}" style="color: #0066cc; text-decoration: underline; font-size: 12px;">View Details</a>
+        </div>
+      `;
+
+      L.marker([lat, lng])
+        .addTo(map.current!)
+        .bindPopup(popupContent);
     });
 
+    // Cleanup
     return () => {
       map.current?.remove();
     };
-  }, [universities, isTokenSet, mapboxToken]);
-
-  if (!isTokenSet) {
-    return (
-      <Card className="p-6 bg-accent/50">
-        <div className="space-y-4 max-w-md">
-          <div>
-            <h3 className="font-semibold mb-2">Display Universities on Map</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              To view universities on an interactive map, please enter your Mapbox public token.
-              Get your free token at{' '}
-              <a 
-                href="https://mapbox.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                mapbox.com
-              </a>
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mapbox-token">Mapbox Public Token</Label>
-            <Input
-              id="mapbox-token"
-              type="text"
-              placeholder="pk.eyJ1..."
-              value={mapboxToken}
-              onChange={(e) => setMapboxToken(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={() => setIsTokenSet(true)}
-            disabled={!mapboxToken}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-          >
-            Show Map
-          </button>
-        </div>
-      </Card>
-    );
-  }
+  }, [universities]);
 
   return (
-    <div className="relative w-full h-[500px] rounded-lg overflow-hidden shadow-lg">
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div className="space-y-4">
+      {/* Beta notice for map */}
+      <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+        <p className="text-sm text-foreground">
+          <strong>Beta Version:</strong> Currently only EPFL is displayed on the map. More universities will be added in future updates!
+        </p>
+      </div>
+      <div className="relative w-full h-[500px] rounded-lg overflow-hidden shadow-lg">
+        <div ref={mapContainer} className="absolute inset-0" />
+      </div>
     </div>
   );
 };

@@ -113,7 +113,7 @@ const UserFlashcard = ({
               variant="secondary" 
               className="bg-white/20 backdrop-blur-sm border-white/30 text-white font-semibold px-3 py-1"
             >
-              {studentLevel === 'Bachelor' ? 'Ba' : 'Ma'}
+              {studentLevel === 'Bachelor' ? "Bachelor's" : "Master's"}
             </Badge>
           ) : (
             <div className="h-6" />

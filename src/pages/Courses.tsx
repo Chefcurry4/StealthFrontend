@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Filter, Bookmark, RotateCcw, LayoutGrid } from "lucide-react";
 import { CourseCardImage } from "@/components/CourseCardImage";
@@ -18,6 +18,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
 import { useCourseRatings } from "@/hooks/useCourseRatings";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 
 type DisplaySize = '5' | '7' | '10';
 
@@ -26,7 +27,8 @@ const Courses = () => {
   const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const [currentPage, setCurrentPage] = useState(1);
   const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
-  const itemsPerPage = 20;
+  const displayPrefs = useDisplayPreferences();
+  const itemsPerPage = displayPrefs.display_items_per_page;
   const queryClient = useQueryClient();
   
   const { data: allCourses, isLoading, error, refetch } = useCourses(filters);
@@ -83,6 +85,14 @@ const Courses = () => {
   const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '') || ectsRange[0] !== 0 || ectsRange[1] !== 30;
 
   const getGridCols = () => {
+    // If compact mode is enabled, show more items per row
+    if (displayPrefs.display_compact) {
+      switch (displaySize) {
+        case '10': return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 2xl:grid-cols-12';
+        case '7': return 'grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-9';
+        default: return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6';
+      }
+    }
     switch (displaySize) {
       case '10': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10';
       case '7': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7';
@@ -91,6 +101,7 @@ const Courses = () => {
   };
 
   const getCardSize = () => {
+    if (displayPrefs.display_compact) return 'small';
     return displaySize === '10' ? 'small' : 'default';
   };
 
