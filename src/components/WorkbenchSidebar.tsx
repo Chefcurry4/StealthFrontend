@@ -415,6 +415,11 @@ export const WorkbenchSidebar = ({
               ) : (
                 filteredCourses?.slice(0, 8).map((item) => {
                   const course = item.Courses;
+                  // Truncate course name to ~4 words with ellipsis
+                  const courseName = course?.name_course || "Untitled Course";
+                  const truncatedName = courseName.split(' ').length > 4 
+                    ? courseName.split(' ').slice(0, 4).join(' ') + '...'
+                    : courseName;
                   return (
                     <DraggableItem
                       key={item.id}
@@ -433,13 +438,17 @@ export const WorkbenchSidebar = ({
                       <button
                         onClick={(e) => handleCourseClick(e, item)}
                         className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                        title={courseName}
                       >
                         <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                         <BookOpen className="h-3 w-3 shrink-0 text-blue-500" />
-                        <span className="flex-1 truncate text-foreground">
-                          {course?.name_course || "Untitled Course"}
+                        <span className="flex-1 text-foreground">
+                          {course?.code && (
+                            <span className="text-primary font-medium mr-1.5">{course.code}</span>
+                          )}
+                          <span className="text-muted-foreground">{truncatedName}</span>
                         </span>
-                        <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </button>
                     </DraggableItem>
                   );
@@ -486,6 +495,11 @@ export const WorkbenchSidebar = ({
               ) : (
                 filteredLabs?.slice(0, 8).map((item) => {
                   const lab = item.Labs;
+                  // Truncate lab name to ~4 words with ellipsis
+                  const labName = lab?.name || "Untitled Lab";
+                  const truncatedLabName = labName.split(' ').length > 4 
+                    ? labName.split(' ').slice(0, 4).join(' ') + '...'
+                    : labName;
                   return (
                     <DraggableItem
                       key={item.id}
@@ -504,13 +518,14 @@ export const WorkbenchSidebar = ({
                       <button
                         onClick={(e) => handleLabClick(e, item)}
                         className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
+                        title={labName}
                       >
                         <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                         <Beaker className="h-3 w-3 shrink-0 text-green-500" />
-                        <span className="flex-1 truncate text-foreground">
-                          {lab?.name || "Untitled Lab"}
+                        <span className="flex-1 text-foreground text-muted-foreground">
+                          {truncatedLabName}
                         </span>
-                        <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <MessageCirclePlus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </button>
                     </DraggableItem>
                   );
@@ -754,16 +769,6 @@ export const WorkbenchSidebar = ({
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={onNewChat}
-          className="hover:bg-accent/50"
-          title="New Chat"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-        <div className="w-8 border-t border-border/30" />
-        <Button 
-          variant="ghost" 
-          size="icon" 
           className="hover:bg-accent/50"
           title={`AI Chats (${conversations?.length || 0})`}
           onClick={() => { onOpen?.(); setOpenSections(["chats"]); }}
@@ -821,10 +826,10 @@ export const WorkbenchSidebar = ({
     );
   }
 
-  // Desktop: Fixed sidebar
+  // Desktop: Fixed sidebar - wider for better readability
   return (
     <div 
-      className="w-72 border-r border-border/30 bg-background/50 flex flex-col"
+      className="w-80 border-r border-border/30 bg-background/50 flex flex-col"
     >
       <SidebarContent />
     </div>

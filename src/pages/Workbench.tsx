@@ -750,29 +750,7 @@ const Workbench = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            {/* Toggle button - show when sidebar closed */}
-            {!sidebarOpen && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarOpen(true)}
-                className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
-                title="Open sidebar"
-              >
-                <PanelLeft className="h-5 w-5" />
-              </Button>
-            )}
-            <Button
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate(-1)}
-            className="hover:bg-accent/50 transition-colors text-foreground/60 dark:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -782,7 +760,6 @@ const Workbench = () => {
               <h1 className="font-bold text-xl text-foreground/80 dark:text-foreground leading-none">hubAI</h1>
             </div>
           </div>
-        </div>
 
         {/* Model Selector with Provider Groups */}
         <DropdownMenu>
@@ -1099,47 +1076,73 @@ const Workbench = () => {
         </div>
       </ScrollArea>
 
-      {/* Input Area - Fixed bottom with drop zone */}
+      {/* Input Area - Fixed bottom with animated drop zone */}
       <div 
         ref={inputAreaRef}
-        className={`border-t border-border/50 bg-transparent p-4 transition-colors ${
-          isDragOver ? 'bg-primary/5 border-primary/50' : ''
+        className={`border-t border-border/50 bg-transparent p-4 transition-all duration-300 ${
+          isDragOver 
+            ? 'bg-primary/10 border-primary shadow-[0_-4px_24px_-4px_rgba(var(--primary),0.25)] scale-[1.01]' 
+            : ''
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Drop zone indicator */}
+        {/* Animated drop zone indicator */}
         {isDragOver && (
-          <div className="mb-3 p-3 border-2 border-dashed border-primary/50 rounded-lg bg-primary/5 text-center">
-            <p className="text-sm text-primary">Drop to add as context</p>
+          <div className="mb-3 p-4 border-2 border-dashed border-primary rounded-xl bg-primary/10 text-center animate-pulse">
+            <div className="flex items-center justify-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary animate-bounce" />
+              <p className="text-sm font-medium text-primary">Drop to add as context</p>
+              <Beaker className="h-5 w-5 text-primary animate-bounce" style={{ animationDelay: '0.1s' }} />
+            </div>
+            <p className="text-xs text-primary/70 mt-1">The AI will reference these items in its response</p>
           </div>
         )}
 
-        {/* Referenced Items (Context Chips) */}
+        {/* Referenced Items (Context Chips) with count summary */}
         {referencedItems.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {referencedItems.map((item, index) => (
-              <div
-                key={`${item.type}-${item.data.id || index}`}
-                className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-1.5 text-sm"
-              >
-                {item.type === 'course' ? (
-                  <BookOpen className="h-3.5 w-3.5 text-primary" />
-                ) : (
-                  <Beaker className="h-3.5 w-3.5 text-primary" />
-                )}
-                <span className="max-w-40 truncate text-foreground font-medium">
-                  {item.data.code || item.data.name}
+          <div className="mb-3">
+            {/* Summary badge when multiple items */}
+            {referencedItems.length > 1 && (
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  {referencedItems.length} items referenced
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ({referencedItems.filter(i => i.type === 'course').length} courses, {referencedItems.filter(i => i.type === 'lab').length} labs)
                 </span>
                 <button
-                  onClick={() => removeReferencedItem(index)}
-                  className="text-primary/70 hover:text-destructive transition-colors"
+                  onClick={() => setReferencedItems([])}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors ml-auto"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  Clear all
                 </button>
               </div>
-            ))}
+            )}
+            <div className="flex flex-wrap gap-2">
+              {referencedItems.map((item, index) => (
+                <div
+                  key={`${item.type}-${item.data.id || index}`}
+                  className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-1.5 text-sm animate-scale-in"
+                >
+                  {item.type === 'course' ? (
+                    <BookOpen className="h-3.5 w-3.5 text-primary" />
+                  ) : (
+                    <Beaker className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  <span className="max-w-40 truncate text-foreground font-medium">
+                    {item.data.code || item.data.name}
+                  </span>
+                  <button
+                    onClick={() => removeReferencedItem(index)}
+                    className="text-primary/70 hover:text-destructive transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
