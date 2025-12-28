@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { UniversityCardImage } from "@/components/UniversityCardImage";
-import { Search, MapPin, Globe, Map as MapIcon, List } from "lucide-react";
+import { Search, MapPin, Map as MapIcon, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -146,23 +146,9 @@ const Universities = () => {
                                   <span>{university.country}</span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-2">
-                                <Button variant="secondary" size="sm" className="flex-1 theme-btn-secondary text-xs sm:text-sm" onClick={(e) => e.stopPropagation()} disabled={!isEPFL}>
-                                  {isEPFL ? 'View Details' : 'Coming Soon'}
-                                </Button>
-                                {university.website && isEPFL && (
-                                  <a 
-                                    href={university.website} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Button variant="outline" size="sm" className="theme-btn-secondary p-2 sm:p-2.5">
-                                      <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
-                                    </Button>
-                                  </a>
-                                )}
-                              </div>
+                              <Button variant="secondary" size="sm" className="w-full theme-btn-secondary text-xs sm:text-sm" onClick={(e) => e.stopPropagation()} disabled={!isEPFL}>
+                                {isEPFL ? 'View Details' : 'Coming Soon'}
+                              </Button>
                             </CardContent>
                           </Card>
                         );

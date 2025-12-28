@@ -106,6 +106,13 @@ const Index = () => {
               </Button>
             )}
 
+            {/* Beta notice */}
+            <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-center max-w-2xl mx-auto">
+              <p className="text-sm text-foreground">
+                <strong>Beta Version:</strong> This is the Beta version of Students Hub. For now only EPFL is covered, but more universities and features to come in next versions!
+              </p>
+            </div>
+
             {/* Navigation Hubs */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
               {hubs.map((hub) => {
