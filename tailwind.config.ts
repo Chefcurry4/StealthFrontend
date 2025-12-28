@@ -95,13 +95,88 @@ export default {
 				'100%': {
 					boxShadow: '0 10px 40px -10px hsl(var(--primary) / 0.4)'
 				}
+			},
+			'page-flip-right': {
+				'0%': {
+					transform: 'rotateY(0deg)',
+					transformOrigin: 'left center'
+				},
+				'100%': {
+					transform: 'rotateY(-15deg)',
+					transformOrigin: 'left center'
+				}
+			},
+			'page-flip-left': {
+				'0%': {
+					transform: 'rotateY(0deg)',
+					transformOrigin: 'right center'
+				},
+				'100%': {
+					transform: 'rotateY(15deg)',
+					transformOrigin: 'right center'
+				}
+			},
+			'page-slide-in': {
+				'0%': {
+					opacity: '0',
+					transform: 'translateX(20px)'
+				},
+				'100%': {
+					opacity: '1',
+					transform: 'translateX(0)'
+				}
+			},
+			'page-slide-out': {
+				'0%': {
+					opacity: '1',
+					transform: 'translateX(0)'
+				},
+				'100%': {
+					opacity: '0',
+					transform: 'translateX(-20px)'
+				}
+			},
+			'item-pop-in': {
+				'0%': {
+					opacity: '0',
+					transform: 'scale(0.9)'
+				},
+				'100%': {
+					opacity: '1',
+					transform: 'scale(1)'
+				}
+			},
+			'fade-in-up': {
+				'0%': {
+					opacity: '0',
+					transform: 'translateY(10px)'
+				},
+				'100%': {
+					opacity: '1',
+					transform: 'translateY(0)'
+				}
+			},
+			'pulse-subtle': {
+				'0%, 100%': {
+					opacity: '1'
+				},
+				'50%': {
+					opacity: '0.7'
+				}
 			}
 		},
 		animation: {
 			'accordion-down': 'accordion-down 0.2s ease-out',
 			'accordion-up': 'accordion-up 0.2s ease-out',
 			'hover-lift': 'hover-lift 0.3s ease-out forwards',
-			'hover-glow': 'hover-glow 0.3s ease-out forwards'
+			'hover-glow': 'hover-glow 0.3s ease-out forwards',
+			'page-flip-right': 'page-flip-right 0.3s ease-out forwards',
+			'page-flip-left': 'page-flip-left 0.3s ease-out forwards',
+			'page-slide-in': 'page-slide-in 0.3s ease-out forwards',
+			'page-slide-out': 'page-slide-out 0.3s ease-out forwards',
+			'item-pop-in': 'item-pop-in 0.2s ease-out forwards',
+			'fade-in-up': 'fade-in-up 0.3s ease-out forwards',
+			'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite'
 		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',

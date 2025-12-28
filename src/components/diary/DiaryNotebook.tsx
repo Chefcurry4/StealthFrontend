@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2, Type } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2, Type, BookOpen, Clock, Target, CheckSquare, Square, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +101,13 @@ export const DiaryNotebook = ({
   const [showGrid, setShowGrid] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [copiedItem, setCopiedItem] = useState<DiaryPageItem | null>(null);
+  const [pageEntered, setPageEntered] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+
+  // Minimum swipe distance for page turn (in pixels)
+  const minSwipeDistance = 50;
 
   const pageSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -109,6 +116,57 @@ export const DiaryNotebook = ({
   const { setNodeRef, isOver } = useDroppable({
     id: 'diary-page-canvas',
   });
+
+  // Handle page turn with animation
+  const handlePageTurn = useCallback((direction: 'left' | 'right') => {
+    if (isFlipping) return;
+
+    const newIndex = direction === 'right' 
+      ? Math.min(pages.length - 1, currentPageIndex + 1)
+      : Math.max(0, currentPageIndex - 1);
+
+    if (newIndex !== currentPageIndex) {
+      setFlipDirection(direction);
+      setIsFlipping(true);
+      
+      setTimeout(() => {
+        onPageChange(newIndex);
+        setIsFlipping(false);
+        setFlipDirection(null);
+      }, 300);
+    }
+  }, [isFlipping, pages.length, currentPageIndex, onPageChange]);
+
+  // Touch event handlers for swipe navigation
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && currentPageIndex < pages.length - 1) {
+      handlePageTurn('right');
+    }
+    if (isRightSwipe && currentPageIndex > 0) {
+      handlePageTurn('left');
+    }
+  }, [touchStart, touchEnd, currentPageIndex, pages.length, handlePageTurn]);
+
+  // Page enter animation trigger
+  useEffect(() => {
+    setPageEntered(false);
+    const timer = setTimeout(() => setPageEntered(true), 50);
+    return () => clearTimeout(timer);
+  }, [currentPageIndex]);
 
   // Keyboard shortcuts for copy/paste
   useEffect(() => {
@@ -163,25 +221,6 @@ export const DiaryNotebook = ({
 
     fetchData();
   }, [pageItems]);
-
-  const handlePageTurn = (direction: 'left' | 'right') => {
-    if (isFlipping) return;
-
-    const newIndex = direction === 'right' 
-      ? Math.min(pages.length - 1, currentPageIndex + 1)
-      : Math.max(0, currentPageIndex - 1);
-
-    if (newIndex !== currentPageIndex) {
-      setFlipDirection(direction);
-      setIsFlipping(true);
-      
-      setTimeout(() => {
-        onPageChange(newIndex);
-        setIsFlipping(false);
-        setFlipDirection(null);
-      }, 300);
-    }
-  };
 
   const currentPage = pages[currentPageIndex];
 
@@ -330,6 +369,62 @@ export const DiaryNotebook = ({
       );
     }
 
+    // New modules: Weekly Schedule
+    if (item.item_type === 'weekly_schedule' as any) {
+      return (
+        <DraggableItem key={item.id} {...commonProps}>
+          <ModuleWrapper 
+            item={item} 
+            onRemove={onRemoveItem}
+            onUpdate={onUpdateItem}
+            title="Weekly Schedule"
+            icon={<Clock className="h-3 w-3" />}
+            color="bg-green-50 border-green-200"
+          >
+            <WeeklyScheduleModule 
+              item={item}
+              onUpdate={onUpdateItem}
+            />
+          </ModuleWrapper>
+        </DraggableItem>
+      );
+    }
+
+    // New modules: Deadline Tracker
+    if (item.item_type === 'deadline_tracker' as any) {
+      return (
+        <DraggableItem key={item.id} {...commonProps}>
+          <ModuleWrapper 
+            item={item} 
+            onRemove={onRemoveItem}
+            onUpdate={onUpdateItem}
+            title="Deadline Tracker"
+            icon={<Target className="h-3 w-3" />}
+            color="bg-red-50 border-red-200"
+          >
+            <DeadlineTrackerModule 
+              item={item}
+              onUpdate={onUpdateItem}
+            />
+          </ModuleWrapper>
+        </DraggableItem>
+      );
+    }
+
+    // New modules: Checklist
+    if (item.item_type === 'checklist' as any) {
+      return (
+        <DraggableItem key={item.id} {...commonProps}>
+          <ChecklistCard 
+            item={item} 
+            onRemove={onRemoveItem}
+            onUpdate={onUpdateItem}
+            onDuplicate={onDuplicateItem}
+          />
+        </DraggableItem>
+      );
+    }
+
     return null;
   };
 
@@ -369,10 +464,14 @@ export const DiaryNotebook = ({
               if (pageRef) (pageRef as any).current = node;
             }}
             id="diary-page-content"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
             className={cn(
               "flex-1 rounded-r-lg shadow-2xl overflow-auto relative",
-              isFlipping && flipDirection === 'right' && "animate-[flipRight_0.3s_ease-in-out]",
-              isFlipping && flipDirection === 'left' && "animate-[flipLeft_0.3s_ease-in-out]",
+              isFlipping && flipDirection === 'right' && "animate-page-flip-right",
+              isFlipping && flipDirection === 'left' && "animate-page-flip-left",
+              !isFlipping && pageEntered && "animate-page-slide-in",
               isOver && "ring-2 ring-amber-400 ring-offset-2"
             )}
             style={{ 
@@ -536,19 +635,26 @@ export const DiaryNotebook = ({
             <ChevronRight className="h-4 w-4 text-gray-600" />
           </Button>
 
-          {/* Draggable Page dots */}
+          {/* Draggable Page dots with improved styling */}
           <DndContext sensors={pageSensors} collisionDetection={closestCenter} onDragEnd={handlePageReorder}>
             <SortableContext items={pages.map(p => p.id)} strategy={horizontalListSortingStrategy}>
-              <div className="absolute -bottom-4 sm:bottom-1 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-20 bg-white/80 px-2 py-1 rounded-full shadow-sm">
-                {pages.map((page, index) => (
-                  <SortablePageDot
-                    key={page.id}
-                    page={page}
-                    index={index}
-                    isActive={index === currentPageIndex}
-                    onClick={() => onPageChange(index)}
-                  />
-                ))}
+              <div className="absolute -bottom-6 sm:bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 bg-white/95 px-3 py-1.5 rounded-full shadow-md border border-gray-200/50 backdrop-blur-sm">
+                {/* Page indicator */}
+                <span className="text-[10px] font-medium text-gray-500 mr-1">
+                  {currentPageIndex + 1} / {pages.length}
+                </span>
+                <div className="flex gap-1.5">
+                  {pages.map((page, index) => (
+                    <SortablePageDot
+                      key={page.id}
+                      page={page}
+                      index={index}
+                      isActive={index === currentPageIndex}
+                      onClick={() => onPageChange(index)}
+                      totalPages={pages.length}
+                    />
+                  ))}
+                </div>
               </div>
             </SortableContext>
           </DndContext>
@@ -640,17 +746,19 @@ export const DiaryNotebook = ({
   );
 };
 
-// Sortable Page Dot Component
+// Sortable Page Dot Component with improved styling
 const SortablePageDot = ({ 
   page, 
   index, 
   isActive, 
-  onClick 
+  onClick,
+  totalPages
 }: { 
   page: DiaryPage; 
   index: number; 
   isActive: boolean; 
   onClick: () => void;
+  totalPages: number;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: page.id,
@@ -658,9 +766,12 @@ const SortablePageDot = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 150ms ease',
+    transition: transition || 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
     zIndex: isDragging ? 10 : 1,
   };
+
+  // For many pages, use smaller dots
+  const isCompact = totalPages > 8;
 
   return (
     <button
@@ -670,15 +781,21 @@ const SortablePageDot = ({
       {...listeners}
       onClick={onClick}
       className={cn(
-        "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full cursor-grab active:cursor-grabbing",
+        "rounded-full cursor-grab active:cursor-grabbing relative group",
+        isCompact ? "w-1.5 h-1.5 sm:w-2 sm:h-2" : "w-2.5 h-2.5 sm:w-3 sm:h-3",
         isActive 
-          ? "bg-gray-700 scale-125 shadow-sm" 
-          : "bg-gray-300 hover:bg-gray-500 hover:scale-110",
-        isDragging && "opacity-70 scale-150",
-        "transition-all duration-150"
+          ? "bg-gray-800 ring-2 ring-gray-400 ring-offset-1 ring-offset-white" 
+          : "bg-gray-300 hover:bg-gray-500",
+        isDragging && "opacity-70 scale-125",
+        "transition-all duration-200 ease-out"
       )}
       title={page.title || `Page ${index + 1}`}
-    />
+    >
+      {/* Hover tooltip with page title */}
+      <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+        {page.title || `Page ${index + 1}`}
+      </span>
+    </button>
   );
 };
 
@@ -1111,24 +1228,272 @@ const TextCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
   );
 };
 
-// Module Wrapper Component - more compact
-const ModuleWrapper = ({ item, onRemove, onUpdate, title, icon, children }: any) => (
+// Module Wrapper Component - more compact with customizable color
+const ModuleWrapper = ({ item, onRemove, onUpdate, title, icon, children, color }: any) => (
   <div className="group relative h-full">
-    <div className="rounded-lg border border-gray-300 bg-white/95 shadow-md overflow-hidden h-full flex flex-col">
+    <div className={cn(
+      "rounded-lg border shadow-md overflow-hidden h-full flex flex-col",
+      color || "border-gray-300 bg-white/95"
+    )}>
       <button
         onClick={() => onRemove(item.id)}
         className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
       >
         <X className="h-2.5 w-2.5" />
       </button>
-      <div className="px-2 py-1.5 bg-gray-100/80 border-b border-gray-200 flex items-center gap-1.5">
+      <div className={cn(
+        "px-2 py-1.5 border-b flex items-center gap-1.5",
+        color ? "bg-white/50 border-inherit" : "bg-gray-100/80 border-gray-200"
+      )}>
         <GripVertical className="h-2.5 w-2.5 text-gray-400" />
         {icon}
         <span className="text-xs font-medium text-gray-700">{title}</span>
       </div>
-      <div className="p-2 flex-1 overflow-auto">
+      <div className="p-2 flex-1 overflow-auto bg-white/80">
         {children}
       </div>
     </div>
   </div>
 );
+
+// Weekly Schedule Module Component
+const WeeklyScheduleModule = ({ item, onUpdate }: { item: DiaryPageItem; onUpdate: (id: string, updates: any) => void }) => {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  const [content, setContent] = useState(item.content || '');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleChange = (day: string, value: string) => {
+    const schedule = JSON.parse(content || '{}');
+    schedule[day] = value;
+    const newContent = JSON.stringify(schedule);
+    setContent(newContent);
+    
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onUpdate(item.id, { content: newContent });
+    }, 500);
+  };
+
+  const schedule = (() => {
+    try {
+      return JSON.parse(content || '{}');
+    } catch {
+      return {};
+    }
+  })();
+
+  return (
+    <div className="space-y-1.5">
+      {days.map((day) => (
+        <div key={day} className="flex items-start gap-2">
+          <span className="text-[10px] font-medium text-gray-600 w-7 pt-1">{day}</span>
+          <textarea
+            value={schedule[day] || ''}
+            onChange={(e) => handleChange(day, e.target.value)}
+            placeholder="..."
+            className="flex-1 text-[10px] bg-white/60 border border-gray-200 rounded px-1.5 py-1 min-h-[24px] resize-none focus:outline-none focus:ring-1 focus:ring-green-400"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Deadline Tracker Module Component
+const DeadlineTrackerModule = ({ item, onUpdate }: { item: DiaryPageItem; onUpdate: (id: string, updates: any) => void }) => {
+  const [content, setContent] = useState(item.content || '[]');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const deadlines = (() => {
+    try {
+      return JSON.parse(content || '[]');
+    } catch {
+      return [];
+    }
+  })() as Array<{ text: string; date: string; done: boolean }>;
+
+  const updateDeadlines = (newDeadlines: typeof deadlines) => {
+    const newContent = JSON.stringify(newDeadlines);
+    setContent(newContent);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onUpdate(item.id, { content: newContent });
+    }, 500);
+  };
+
+  const addDeadline = () => {
+    updateDeadlines([...deadlines, { text: '', date: '', done: false }]);
+  };
+
+  const updateDeadline = (index: number, field: string, value: string | boolean) => {
+    const updated = [...deadlines];
+    updated[index] = { ...updated[index], [field]: value };
+    updateDeadlines(updated);
+  };
+
+  const removeDeadline = (index: number) => {
+    updateDeadlines(deadlines.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-1.5">
+      {deadlines.map((deadline, index) => (
+        <div key={index} className="flex items-center gap-1.5 group/deadline">
+          <button
+            onClick={(e) => { e.stopPropagation(); updateDeadline(index, 'done', !deadline.done); }}
+            className={cn(
+              "w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-colors",
+              deadline.done ? "bg-green-500 border-green-500 text-white" : "border-gray-300 hover:border-red-400"
+            )}
+          >
+            {deadline.done && <CheckSquare className="h-2.5 w-2.5" />}
+          </button>
+          <input
+            type="text"
+            value={deadline.text}
+            onChange={(e) => updateDeadline(index, 'text', e.target.value)}
+            placeholder="Task..."
+            className={cn(
+              "flex-1 text-[10px] bg-white/60 border border-gray-200 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-red-400",
+              deadline.done && "line-through text-gray-400"
+            )}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <input
+            type="date"
+            value={deadline.date}
+            onChange={(e) => updateDeadline(index, 'date', e.target.value)}
+            className="text-[9px] bg-white/60 border border-gray-200 rounded px-1 py-0.5 w-20 focus:outline-none focus:ring-1 focus:ring-red-400"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); removeDeadline(index); }}
+            className="opacity-0 group-hover/deadline:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={(e) => { e.stopPropagation(); addDeadline(); }}
+        className="text-[10px] text-red-600 hover:text-red-700 flex items-center gap-1 mt-1"
+      >
+        <span className="text-sm">+</span> Add deadline
+      </button>
+    </div>
+  );
+};
+
+// Checklist Card Component
+const ChecklistCard = ({ item, onRemove, onUpdate, onDuplicate }: any) => {
+  const [content, setContent] = useState(item.content || '');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const parseChecklist = (text: string) => {
+    return text.split('\n').map(line => {
+      const isChecked = line.includes('[x]') || line.includes('[X]');
+      const cleanText = line.replace(/^[-*]\s*\[[xX ]\]\s*/, '').replace(/^[-*]\s*/, '');
+      return { checked: isChecked, text: cleanText };
+    }).filter(item => item.text.trim() !== '');
+  };
+
+  const items = parseChecklist(content);
+
+  const toggleItem = (index: number) => {
+    const newItems = [...items];
+    newItems[index].checked = !newItems[index].checked;
+    const newContent = newItems.map(i => `- [${i.checked ? 'x' : ' '}] ${i.text}`).join('\n');
+    setContent(newContent);
+    onUpdate(item.id, { content: newContent });
+  };
+
+  const updateText = (index: number, text: string) => {
+    const newItems = [...items];
+    newItems[index].text = text;
+    const newContent = newItems.map(i => `- [${i.checked ? 'x' : ' '}] ${i.text}`).join('\n');
+    setContent(newContent);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onUpdate(item.id, { content: newContent });
+    }, 300);
+  };
+
+  const addItem = () => {
+    const newContent = content + '\n- [ ] New task';
+    setContent(newContent);
+    onUpdate(item.id, { content: newContent });
+  };
+
+  const removeItem = (index: number) => {
+    const newItems = items.filter((_, i) => i !== index);
+    const newContent = newItems.map(i => `- [${i.checked ? 'x' : ' '}] ${i.text}`).join('\n');
+    setContent(newContent);
+    onUpdate(item.id, { content: newContent });
+  };
+
+  return (
+    <div className="group relative h-full">
+      <div className="p-2 rounded-lg bg-cyan-50/90 border border-cyan-200 shadow-sm h-full flex flex-col">
+        <button
+          onClick={() => onRemove(item.id)}
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+        >
+          <X className="h-2.5 w-2.5" />
+        </button>
+        {onDuplicate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
+            className="absolute -top-1.5 right-4 w-4 h-4 rounded-full bg-cyan-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs z-10"
+            title="Duplicate"
+          >
+            <Copy className="h-2.5 w-2.5" />
+          </button>
+        )}
+        <div className="flex items-center gap-1.5 mb-2 opacity-70">
+          <ListTodo className="h-3 w-3 text-cyan-700" />
+          <GripVertical className="h-2.5 w-2.5 text-gray-400" />
+        </div>
+        <div className="space-y-1 flex-1 overflow-auto">
+          {items.map((checkItem, index) => (
+            <div key={index} className="flex items-center gap-1.5 group/item">
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleItem(index); }}
+                className={cn(
+                  "w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all",
+                  checkItem.checked 
+                    ? "bg-cyan-500 border-cyan-500 text-white" 
+                    : "border-cyan-300 hover:border-cyan-500 bg-white"
+                )}
+              >
+                {checkItem.checked && <CheckSquare className="h-2.5 w-2.5" />}
+              </button>
+              <input
+                type="text"
+                value={checkItem.text}
+                onChange={(e) => updateText(index, e.target.value)}
+                className={cn(
+                  "flex-1 text-[11px] bg-transparent border-none p-0 focus:outline-none",
+                  checkItem.checked && "line-through text-gray-400"
+                )}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); removeItem(index); }}
+                className="opacity-0 group-hover/item:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); addItem(); }}
+          className="text-[10px] text-cyan-600 hover:text-cyan-700 flex items-center gap-0.5 mt-1"
+        >
+          <span className="text-sm">+</span> Add item
+        </button>
+      </div>
+    </div>
+  );
+};

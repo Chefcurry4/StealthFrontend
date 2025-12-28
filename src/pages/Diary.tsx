@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Book, Plus, Trash2, Download, Copy, Type, Maximize2, Minimize2, Undo2, Redo2 } from "lucide-react";
+import { Book, Plus, Trash2, Download, Copy, Type, Maximize2, Minimize2, Undo2, Redo2, Keyboard, Hand } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -328,7 +328,7 @@ const Diary = () => {
           onSuccess: () => toast.success("Lab added to page!"),
         });
       } else if (activeDataCurrent?.type === 'module') {
-        // Handle text module separately
+        // Handle text and sticky note modules separately
         if (activeDataCurrent.moduleType === 'text') {
           createItem.mutate({
             pageId: currentPage.id,
@@ -341,11 +341,38 @@ const Diary = () => {
           }, {
             onSuccess: () => toast.success("Text added!"),
           });
+        } else if (activeDataCurrent.moduleType === 'sticky_note') {
+          createItem.mutate({
+            pageId: currentPage.id,
+            itemType: 'note' as any,
+            content: '',
+            color: 'yellow',
+            positionX: Math.round(posX),
+            positionY: Math.round(posY),
+            width: 180,
+            height: 120,
+          }, {
+            onSuccess: () => toast.success("Sticky note added!"),
+          });
+        } else if (activeDataCurrent.moduleType === 'checklist') {
+          createItem.mutate({
+            pageId: currentPage.id,
+            itemType: 'checklist' as any,
+            content: '- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3',
+            positionX: Math.round(posX),
+            positionY: Math.round(posY),
+            width: 220,
+            height: 160,
+          }, {
+            onSuccess: () => toast.success("Checklist added!"),
+          });
         } else {
-          // Smaller default sizes for modules - fully visible on screen
+          // Default sizes for different module types - fully visible on screen
           const moduleSize = {
             semester_planner: { width: 380, height: 320 },
             lab_tracker: { width: 280, height: 200 },
+            weekly_schedule: { width: 400, height: 280 },
+            deadline_tracker: { width: 300, height: 220 },
           }[activeDataCurrent.moduleType] || { width: 280, height: 200 };
           
           createItem.mutate({
@@ -712,6 +739,36 @@ const Diary = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Keyboard Shortcuts Help Dialog */}
+      <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
+
+      {/* Floating keyboard help button */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowHelp(true)}
+              className="fixed bottom-4 right-4 z-40 h-9 w-9 rounded-full bg-white/90 shadow-lg border border-gray-200 hover:bg-white"
+            >
+              <Keyboard className="h-4 w-4 text-gray-600" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <span>Keyboard shortcuts (press ?)</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Mobile swipe hint - only shown on touch devices */}
+      <div className="fixed bottom-4 left-4 z-40 md:hidden">
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/90 shadow-md border border-gray-200 text-[10px] text-gray-600">
+          <Hand className="h-3 w-3" />
+          <span>Swipe to turn pages</span>
+        </div>
+      </div>
     </>
   );
 };
