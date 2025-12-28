@@ -1,12 +1,11 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2, Type, BookOpen, Clock, Target, CheckSquare, Square, ListTodo } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, GripVertical, GraduationCap, Beaker, StickyNote, BarChart3, Palette, Copy, Pencil, Maximize2, Minimize2, Type, Clock, Target, CheckSquare, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
