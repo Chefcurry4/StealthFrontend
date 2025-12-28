@@ -13,7 +13,7 @@ import { DiaryNotebook } from "@/components/diary/DiaryNotebook";
 import { DiarySidebar } from "@/components/diary/DiarySidebar";
 import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { SEO } from "@/components/SEO";
-import { Loader } from "@/components/Loader";
+import { DiaryFullSkeleton, DiaryPageSkeleton } from "@/components/skeletons/DiaryPageSkeleton";
 import { toast } from "sonner";
 import { DiaryPageItem } from "@/types/diary";
 import {
@@ -431,12 +431,8 @@ const Diary = () => {
     });
   };
 
-  if (!user) {
-    return <Loader fullScreen />;
-  }
-
-  if (notebooksLoading) {
-    return <Loader fullScreen />;
+  if (!user || notebooksLoading) {
+    return <DiaryFullSkeleton />;
   }
 
   return (
@@ -594,7 +590,7 @@ const Diary = () => {
                     >
                       {isExporting ? (
                         <>
-                          <Loader size="sm" />
+                          <span className="animate-spin h-3.5 w-3.5 mr-1 border-2 border-current border-t-transparent rounded-full inline-block" />
                           <span className="ml-1">Exporting...</span>
                         </>
                       ) : (
@@ -625,9 +621,7 @@ const Diary = () => {
             {/* Notebook Area */}
             <div className="flex-1 overflow-hidden">
               {pagesLoading ? (
-                <div className="h-full flex items-center justify-center">
-                  <Loader />
-                </div>
+                <DiaryPageSkeleton />
               ) : pages && pages.length > 0 ? (
                 <DiaryNotebook
                   pages={pages}

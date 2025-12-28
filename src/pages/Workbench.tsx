@@ -268,16 +268,10 @@ const Workbench = () => {
   const updateConversation = useUpdateConversation();
   const { data: loadedMessages } = useAIMessages(currentConversationId || null);
 
-  // Track if user explicitly started a new chat
-  const [isNewChatMode, setIsNewChatMode] = useState(false);
+  // Track if user explicitly started a new chat - default to true so we always start fresh
+  const [isNewChatMode, setIsNewChatMode] = useState(true);
 
-  // Auto-load the most recent conversation when entering workbench (only if not in new chat mode)
-  useEffect(() => {
-    if (!isNewChatMode && !currentConversationId && recentConversations && recentConversations.length > 0 && messages.length === 0) {
-      // Load the most recent conversation
-      setCurrentConversationId(recentConversations[0].id);
-    }
-  }, [recentConversations, currentConversationId, messages.length, isNewChatMode]);
+  // When opening workbench, always start with a new chat (no auto-load of previous conversations)
 
   // Load messages when switching conversations
   useEffect(() => {
