@@ -81,7 +81,7 @@ const navSections: NavSection[] = [
   { id: "documents", label: "Documents", icon: FileText, group: "workbench" },
   { id: "ai-history", label: "AI Chats", icon: MessageSquare, group: "workbench" },
   { id: "drafts", label: "Email Drafts", icon: Mail, group: "workbench" },
-  { id: "agreements", label: "Agreements", icon: FileCheck, group: "workbench" },
+  { id: "agreements", label: "Learning Agreements", icon: FileCheck, group: "workbench" },
   { id: "activity", label: "Activity", icon: Activity, group: "workbench" },
   // Settings
   { id: "preferences", label: "Preferences", icon: Settings, group: "settings" },
@@ -389,7 +389,17 @@ const Profile = () => {
       case "drafts":
         return <WorkbenchEmailDrafts />;
       case "agreements":
-        return <WorkbenchLearningAgreements />;
+        return (
+          <Card className="bg-background/50 backdrop-blur-sm border-border/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <FileCheck className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Learning Agreements</h3>
+              <p className="text-muted-foreground max-w-md">
+                This feature will be released in the next updates. Stay tuned for the ability to create and manage your learning agreements!
+              </p>
+            </CardContent>
+          </Card>
+        );
       case "activity":
         return <WorkbenchActivity />;
 

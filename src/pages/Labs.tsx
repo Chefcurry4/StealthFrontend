@@ -17,6 +17,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
 import { SEO } from "@/components/SEO";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 
 type SortOption = 'name-asc' | 'name-desc' | 'most-saved';
 type DisplaySize = '5' | '7' | '10';
@@ -26,6 +27,7 @@ const Labs = () => {
   const [researchDomain, setResearchDomain] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
+  const displayPrefs = useDisplayPreferences();
   const { data: labs, isLoading, error, refetch } = useLabs(filters);
   const { data: universities } = useUniversities();
   const { user } = useAuth();
@@ -45,6 +47,14 @@ const Labs = () => {
   };
 
   const getGridCols = () => {
+    if (displayPrefs.display_compact) {
+      switch (displaySize) {
+        case '5': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6';
+        case '7': return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8';
+        case '10': return 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12';
+        default: return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6';
+      }
+    }
     switch (displaySize) {
       case '5': return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
       case '7': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
@@ -54,7 +64,7 @@ const Labs = () => {
   };
 
   const getCardSize = () => {
-    if (displaySize === '10') {
+    if (displayPrefs.display_compact || displaySize === '10') {
       return { imageHeight: 'h-16 sm:h-18 lg:h-20', textSize: 'text-xs', padding: 'p-2' };
     }
     return { imageHeight: 'h-20 sm:h-24 lg:h-28', textSize: 'text-sm sm:text-base lg:text-lg', padding: 'p-3 sm:p-4' };

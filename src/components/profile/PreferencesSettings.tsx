@@ -231,24 +231,6 @@ export const PreferencesSettings = () => {
             />
           </div>
 
-          <Separator style={{ background: 'var(--theme-card-border)' }} />
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FileText className="h-4 w-4 opacity-70" />
-              <div>
-                <Label className="text-base">Agreement Updates</Label>
-                <p className="text-sm opacity-70">
-                  Notifications about learning agreement changes
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={preferences.notification_agreements}
-              onCheckedChange={(checked) => handleToggle("notification_agreements", checked)}
-              disabled={updatePreferences.isPending}
-            />
-          </div>
         </CardContent>
       </Card>
 

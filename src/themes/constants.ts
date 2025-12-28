@@ -11,7 +11,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       textColor: '#5e3a43',
       blendMode: 'multiply',
       ui: {
-        // ↑ more separation on light bg
         cardBackground: 'rgba(255,255,255,0.8)',
         cardBorder: 'rgba(94,58,67,0.3)',
         buttonPrimary: '#5e3a43',
@@ -42,7 +41,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
   [ThemeId.OCEAN]: {
     name: 'Ocean',
     description: 'Vibrant cyans with a distinct sandy texture.',
-    // ↓ less “fizz” on light background
     grain: { intensity: 0.3, size: 1.0, type: 'fractalNoise' },
     colors: ['#4facfe', '#00f2fe', '#a8edea', '#43e97b', '#ffffff'],
     day: {
@@ -80,7 +78,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
   [ThemeId.AURORA]: {
     name: 'Aurora',
     description: 'Magical night sky with soft, misty grain.',
-    // ↓ slightly toned down for day readability
     grain: { intensity: 0.3, size: 1.2, type: 'fractalNoise' },
     colors: ['#764ba2', '#667eea', '#43e97b', '#fa709a', '#2980b9'],
     day: {
@@ -115,83 +112,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
     }
   },
 
-  [ThemeId.CHILLING]: {
-    name: 'Chilling',
-    description: 'Warm evening haze with medium film grain.',
-    // ↓ reduce day “noise”
-    grain: { intensity: 0.35, size: 1.1, type: 'fractalNoise' },
-    colors: ['#ff9a9e', '#fecfef', '#feada6', '#f5efef', '#a18cd1'],
-    day: {
-      background: '#fef7f0',
-      textColor: '#5c4033',
-      blendMode: 'multiply',
-      ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(92,64,51,0.3)',
-        // ↓ improved contrast with white text
-        buttonPrimary: '#7e6da3',
-        buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(161,140,209,0.15)',
-        buttonSecondaryText: '#5c4033',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(92,64,51,0.4)',
-      }
-    },
-    night: {
-      background: '#2d1b2e',
-      textColor: '#ffecd2',
-      blendMode: 'screen',
-      ui: {
-        cardBackground: 'rgba(0,0,0,0.3)',
-        cardBorder: 'rgba(255,236,210,0.2)',
-        buttonPrimary: '#ff9a9e',
-        buttonPrimaryText: '#2d1b2e',
-        buttonSecondary: 'rgba(255,154,158,0.2)',
-        buttonSecondaryText: '#ffecd2',
-        inputBackground: 'rgba(0,0,0,0.4)',
-        inputBorder: 'rgba(255,236,210,0.3)',
-      }
-    }
-  },
-
-  [ThemeId.FOREST]: {
-    name: 'Forest',
-    description: 'Organic greens with earthy, coarse texture.',
-    // ↓ reduce day “fizz” (turbulence can be harsh on light UI)
-    grain: { intensity: 0.35, size: 0.7, type: 'turbulence' },
-    colors: ['#134e5e', '#71b280', '#2d3436', '#55efc4', '#006400'],
-    day: {
-      background: '#ecfdf5',
-      textColor: '#064e3b',
-      blendMode: 'multiply',
-      ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(6,78,59,0.3)',
-        buttonPrimary: '#134e5e',
-        buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(19,78,94,0.15)',
-        buttonSecondaryText: '#064e3b',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(6,78,59,0.4)',
-      }
-    },
-    night: {
-      background: '#0f140f',
-      textColor: '#dce8dc',
-      blendMode: 'overlay',
-      ui: {
-        cardBackground: 'rgba(0,0,0,0.3)',
-        cardBorder: 'rgba(220,232,220,0.2)',
-        buttonPrimary: '#55efc4',
-        buttonPrimaryText: '#0f140f',
-        buttonSecondary: 'rgba(85,239,196,0.2)',
-        buttonSecondaryText: '#dce8dc',
-        inputBackground: 'rgba(0,0,0,0.4)',
-        inputBorder: 'rgba(220,232,220,0.3)',
-      }
-    }
-  },
-
   [ThemeId.NEON]: {
     name: 'Neon',
     description: 'Digital void with sharp, high-frequency static.',
@@ -202,7 +122,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       textColor: '#1a1a2e',
       blendMode: 'multiply',
       ui: {
-        // keep slightly “neon glass”, but give more separation
         cardBackground: 'rgba(255,255,255,0.8)',
         cardBorder: 'rgba(26,26,46,0.28)',
         buttonPrimary: '#9900cc',
@@ -242,7 +161,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       ui: {
         cardBackground: 'rgba(255,255,255,0.8)',
         cardBorder: 'rgba(120,53,15,0.3)',
-        // ↓ improved contrast with white text
         buttonPrimary: '#c85000',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(230,92,0,0.15)',
@@ -264,45 +182,6 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
         buttonSecondaryText: '#f1e6b9',
         inputBackground: 'rgba(0,0,0,0.4)',
         inputBorder: 'rgba(241,230,185,0.3)',
-      }
-    }
-  },
-
-  [ThemeId.FLOW]: {
-    name: 'Flow',
-    description: 'Bright, flowing waters with crystalline grain.',
-    // ↓ reduce day “fizz”
-    grain: { intensity: 0.35, size: 0.85, type: 'fractalNoise' },
-    colors: ['#00bfff', '#1ca9c9', '#48d1cc', '#87ceeb', '#ffffff'],
-    day: {
-      background: '#f0f9ff',
-      textColor: '#0c4a6e',
-      blendMode: 'multiply',
-      ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(12,74,110,0.3)',
-        // ↓ improved contrast with white text
-        buttonPrimary: '#027cbb',
-        buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(2,132,199,0.15)',
-        buttonSecondaryText: '#0c4a6e',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(12,74,110,0.4)',
-      }
-    },
-    night: {
-      background: '#006994',
-      textColor: '#e0f7fa',
-      blendMode: 'hard-light',
-      ui: {
-        cardBackground: 'rgba(0,0,0,0.3)',
-        cardBorder: 'rgba(224,247,250,0.2)',
-        buttonPrimary: '#00bfff',
-        buttonPrimaryText: '#003d5b',
-        buttonSecondary: 'rgba(0,191,255,0.2)',
-        buttonSecondaryText: '#e0f7fa',
-        inputBackground: 'rgba(0,0,0,0.4)',
-        inputBorder: 'rgba(224,247,250,0.3)',
       }
     }
   },
