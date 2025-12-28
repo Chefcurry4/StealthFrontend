@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/collapsible";
 import {
   PanelLeftClose,
+  PanelLeft,
   Plus,
   MessageSquare,
   BookOpen,
@@ -103,48 +104,9 @@ export const WorkbenchSidebar = ({
   const isMobile = useIsMobile();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-open sidebar on hover (PC only, 0.5s delay for calmer transition)
-  const handleMouseEnter = () => {
-    if (isMobile) return;
-    // Cancel any pending close
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    if (!isOpen) {
-      hoverTimeoutRef.current = setTimeout(() => {
-        onOpen?.();
-      }, 500);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    // Auto-close sidebar when mouse leaves (PC only, with delay)
-    if (!isMobile && isOpen) {
-      closeTimeoutRef.current = setTimeout(() => {
-        onClose?.();
-      }, 600);
-    }
-  };
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      if (closeTimeoutRef.current) {
-        clearTimeout(closeTimeoutRef.current);
-      }
-    };
-  }, []);
+  // No auto-close behavior - user must click the close button
 
   const { data: conversations } = useAIConversations();
   const { data: savedCourses } = useSavedCourses();
@@ -191,7 +153,8 @@ export const WorkbenchSidebar = ({
 
   const handleCourseClick = (e: React.MouseEvent, item: any) => {
     e.preventDefault();
-    const course = item["Courses(C)"];
+    e.stopPropagation();
+    const course = item.Courses;
     if (course && onReferenceCourse) {
       onReferenceCourse(course.name_course, course.id_course);
       if (isMobile) onToggle();
@@ -200,7 +163,8 @@ export const WorkbenchSidebar = ({
 
   const handleLabClick = (e: React.MouseEvent, item: any) => {
     e.preventDefault();
-    const lab = item["Labs(L)"];
+    e.stopPropagation();
+    const lab = item.Labs;
     if (lab && onReferenceLab) {
       onReferenceLab(lab.name, lab.slug);
       if (isMobile) onToggle();
@@ -232,7 +196,7 @@ export const WorkbenchSidebar = ({
     
   const filteredCourses = query 
     ? savedCourses?.filter(item => {
-        const course = item["Courses(C)"];
+        const course = item.Courses;
         return (course?.name_course || '').toLowerCase().includes(query) ||
                (course?.code || '').toLowerCase().includes(query);
       })
@@ -240,7 +204,7 @@ export const WorkbenchSidebar = ({
     
   const filteredLabs = query 
     ? savedLabs?.filter(item => {
-        const lab = item["Labs(L)"];
+        const lab = item.Labs;
         return (lab?.name || '').toLowerCase().includes(query) ||
                (lab?.topics || '').toLowerCase().includes(query);
       })
@@ -262,11 +226,15 @@ export const WorkbenchSidebar = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h2 className="font-semibold text-foreground">Workbench</h2>
-        {!isMobile && (
-          <Button variant="ghost" size="icon" onClick={onToggle}>
-            <PanelLeftClose className="h-5 w-5" />
-          </Button>
-        )}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onClose || onToggle}
+          className="gap-1.5 bg-accent/50 hover:bg-accent"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+          <span className="text-xs">Close</span>
+        </Button>
       </div>
 
       {/* New Chat Button */}
@@ -382,7 +350,10 @@ export const WorkbenchSidebar = ({
                           }}
                           title="Double-click to rename"
                         >
-                          {conv.title}
+                          {/* Truncate to ~4 words with ellipsis */}
+                          {conv.title && conv.title.split(' ').length > 4 
+                            ? conv.title.split(' ').slice(0, 4).join(' ') + '...'
+                            : conv.title}
                         </span>
                         <Button
                           variant="ghost"
@@ -443,7 +414,7 @@ export const WorkbenchSidebar = ({
                 </p>
               ) : (
                 filteredCourses?.slice(0, 8).map((item) => {
-                  const course = item["Courses(C)"];
+                  const course = item.Courses;
                   return (
                     <DraggableItem
                       key={item.id}
@@ -514,7 +485,7 @@ export const WorkbenchSidebar = ({
                 </p>
               ) : (
                 filteredLabs?.slice(0, 8).map((item) => {
-                  const lab = item["Labs(L)"];
+                  const lab = item.Labs;
                   return (
                     <DraggableItem
                       key={item.id}
@@ -764,14 +735,31 @@ export const WorkbenchSidebar = ({
     </div>
   );
 
-  // Collapsed sidebar view (PC only) - shows icons and hover to expand
+  // Collapsed sidebar view (PC only) - shows icons and click to expand
   if (!isOpen && !isMobile) {
     return (
       <div 
         className="w-14 border-r border-border/30 bg-background/50 flex flex-col items-center py-4 gap-4"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onOpen}
+          className="hover:bg-accent/50"
+          title="Open Sidebar"
+        >
+          <PanelLeft className="h-5 w-5" />
+        </Button>
+        <div className="w-8 border-t border-border/30" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onNewChat}
+          className="hover:bg-accent/50"
+          title="New Chat"
+        >
+          <Plus className="h-5 w-5" />
+        </Button>
         <Button 
           variant="ghost" 
           size="icon" 
@@ -846,8 +834,6 @@ export const WorkbenchSidebar = ({
   return (
     <div 
       className="w-72 border-r border-border/30 bg-background/50 flex flex-col"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       <SidebarContent />
     </div>

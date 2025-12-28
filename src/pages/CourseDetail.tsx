@@ -1,6 +1,6 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useRef, useEffect, useMemo } from "react";
-import { ChevronRight, BookOpen, Bookmark } from "lucide-react";
+import { ChevronRight, BookOpen, Bookmark, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +21,12 @@ import {
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: course, isLoading, error } = useCourse(id!);
+  
+  // Check if user came from workbench
+  const cameFromWorkbench = location.state?.fromWorkbench === true;
+  const workbenchConversationId = location.state?.conversationId;
   const { user } = useAuth();
   const { data: savedCourses } = useSavedCourses();
   const toggleSave = useToggleSaveCourse();
@@ -165,6 +170,19 @@ const CourseDetail = () => {
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Header Section */}
           <header className="mb-8">
+            {/* Back to Workbench button if came from there */}
+            {cameFromWorkbench && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mb-4 gap-2"
+                onClick={() => navigate('/workbench', { state: { conversationId: workbenchConversationId } })}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to AI Chat
+              </Button>
+            )}
+            
             {/* Breadcrumb */}
             <nav className="flex items-center text-sm text-muted-foreground mb-4">
               <Link to="/courses" className="hover:text-foreground transition-colors">
