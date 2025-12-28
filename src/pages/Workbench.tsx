@@ -964,7 +964,13 @@ const Workbench = () => {
                               className="h-8 w-8 rounded-lg hover:bg-accent/50"
                               title="Save to Email Drafts"
                               onClick={async () => {
-                                const cleanContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                let content = message.content;
+                                let previous: string | undefined;
+                                do {
+                                  previous = content;
+                                  content = content.replace(/<!--[\s\S]*?-->/g, "");
+                                } while (content !== previous);
+                                const cleanContent = content.trim();
                                 await createEmailDraft.mutateAsync({
                                   subject: "AI Generated Email",
                                   body: cleanContent,
