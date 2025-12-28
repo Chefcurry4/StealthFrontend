@@ -5,6 +5,33 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
+// Sanitize URLs used in markdown links to prevent javascript: and similar schemes
+const sanitizeUrl = (rawUrl: string): string => {
+  const url = rawUrl.trim();
+
+  if (!url) {
+    return "#";
+  }
+
+  // Allow relative URLs (no scheme)
+  const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+  if (!hasScheme) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url, window.location.origin);
+    const allowedSchemes = ["http:", "https:", "mailto:", "tel:"];
+    if (allowedSchemes.includes(parsed.protocol)) {
+      return url;
+    }
+  } catch {
+    // Fall through to return safe default
+  }
+
+  return "#";
+};
+
 export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) => {
   const renderMarkdown = (text: string): React.ReactNode[] => {
     const lines = text.split("\n");
@@ -197,7 +224,7 @@ export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) 
         parts.push(
           <a 
             key={key++} 
-            href={linkMatch[2]} 
+            href={sanitizeUrl(linkMatch[2])} 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-primary hover:underline"
