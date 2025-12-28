@@ -60,7 +60,9 @@ import {
   FileJson,
   FileDown,
   Square,
-  Mail
+  Mail,
+  BookOpen,
+  Beaker
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -192,9 +194,12 @@ const Workbench = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
+  const [referencedItems, setReferencedItems] = useState<Array<{ type: 'course' | 'lab'; data: any }>>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const inputAreaRef = useRef<HTMLDivElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Conversation search hook
@@ -293,6 +298,7 @@ const Workbench = () => {
     setIsNewChatMode(true);
     setInput("");
     setAttachments([]);
+    setReferencedItems([]);
   };
 
   const handleSelectConversation = (id: string) => {
@@ -300,6 +306,49 @@ const Workbench = () => {
     setIsNewChatMode(false);
     setInput("");
     setAttachments([]);
+    setReferencedItems([]);
+  };
+
+  // Drag and drop handlers for referenced items
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    try {
+      const jsonData = e.dataTransfer.getData("application/json");
+      if (jsonData) {
+        const { type, data } = JSON.parse(jsonData);
+        if (type === "course" || type === "lab") {
+          // Check if already added
+          const exists = referencedItems.some(
+            item => item.type === type && item.data.id === data.id
+          );
+          if (!exists) {
+            setReferencedItems(prev => [...prev, { type, data }]);
+            toast.success(`${type === "course" ? "Course" : "Lab"} added to context`);
+          } else {
+            toast.info("Already added to context");
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse drop data:", err);
+    }
+  };
+
+  const removeReferencedItem = (index: number) => {
+    setReferencedItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleReferenceCourse = (courseName: string, courseId: string) => {
@@ -505,6 +554,8 @@ const Workbench = () => {
     setMessages(newMessages);
     setInput("");
     setAttachments([]);
+    const currentReferencedItems = [...referencedItems]; // Capture before clearing
+    setReferencedItems([]);
     setIsStreaming(true);
     setIsThinking(true);
     
@@ -531,6 +582,21 @@ const Workbench = () => {
 
       // Build comprehensive user context for AI with FULL details
       const userContext = {
+        // Referenced items from drag-and-drop (prioritized context)
+        referencedItems: currentReferencedItems.map(item => ({
+          type: item.type,
+          ...(item.type === 'course' ? {
+            name: item.data.name,
+            code: item.data.code,
+            ects: item.data.ects,
+            description: item.data.description,
+            professor: item.data.professor
+          } : {
+            name: item.data.name,
+            description: item.data.description,
+            topics: item.data.topics
+          })
+        })),
         savedCourses: savedCourses?.map(c => ({
           name: c.Courses?.name_course,
           code: c.Courses?.code,
@@ -1033,8 +1099,50 @@ const Workbench = () => {
         </div>
       </ScrollArea>
 
-      {/* Input Area - Fixed bottom */}
-      <div className="border-t border-border/50 bg-transparent p-4">
+      {/* Input Area - Fixed bottom with drop zone */}
+      <div 
+        ref={inputAreaRef}
+        className={`border-t border-border/50 bg-transparent p-4 transition-colors ${
+          isDragOver ? 'bg-primary/5 border-primary/50' : ''
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Drop zone indicator */}
+        {isDragOver && (
+          <div className="mb-3 p-3 border-2 border-dashed border-primary/50 rounded-lg bg-primary/5 text-center">
+            <p className="text-sm text-primary">Drop to add as context</p>
+          </div>
+        )}
+
+        {/* Referenced Items (Context Chips) */}
+        {referencedItems.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {referencedItems.map((item, index) => (
+              <div
+                key={`${item.type}-${item.data.id || index}`}
+                className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-1.5 text-sm"
+              >
+                {item.type === 'course' ? (
+                  <BookOpen className="h-3.5 w-3.5 text-primary" />
+                ) : (
+                  <Beaker className="h-3.5 w-3.5 text-primary" />
+                )}
+                <span className="max-w-40 truncate text-foreground font-medium">
+                  {item.data.code || item.data.name}
+                </span>
+                <button
+                  onClick={() => removeReferencedItem(index)}
+                  className="text-primary/70 hover:text-destructive transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Attachments Preview */}
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">

@@ -760,15 +760,6 @@ export const WorkbenchSidebar = ({
         >
           <Plus className="h-5 w-5" />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onNewChat}
-          className="hover:bg-accent/50"
-          title="New Chat"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
         <div className="w-8 border-t border-border/30" />
         <Button 
           variant="ghost" 
