@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
-import { useEmailDrafts } from "@/hooks/useEmailDrafts";
+import { useEmailDrafts, useCreateEmailDraft } from "@/hooks/useEmailDrafts";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { 
@@ -15,6 +15,8 @@ import {
   useAIConversations 
 } from "@/hooks/useAIConversations";
 import { useConversationSearch } from "@/hooks/useConversationSearch";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,7 +24,9 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
@@ -48,7 +52,15 @@ import {
   GraduationCap,
   PanelLeft,
   Database,
-  Search
+  Search,
+  Mic,
+  MicOff,
+  Download,
+  FileText,
+  FileJson,
+  FileDown,
+  Square,
+  Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -68,22 +80,88 @@ interface Message {
   timestamp: Date;
 }
 
-type ModelType = "fast" | "thinking";
+type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar" | "sonar-pro" | "sonar-reasoning";
 
-const models: { id: ModelType; name: string; description: string; icon: React.ReactNode }[] = [
+type ProviderType = "gemini" | "openai" | "perplexity";
+
+interface ModelInfo {
+  id: ModelType;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  provider: ProviderType;
+}
+
+const models: ModelInfo[] = [
+  // Gemini Models
   { 
-    id: "fast", 
-    name: "studentAI Fast", 
-    description: "Quick responses for simple questions",
-    icon: <Zap className="h-4 w-4" />
+    id: "gemini-flash", 
+    name: "Gemini Flash", 
+    description: "Fast, balanced responses (default)",
+    icon: <Zap className="h-4 w-4" />,
+    provider: "gemini"
   },
   { 
-    id: "thinking", 
-    name: "studentAI Pro", 
-    description: "Deep reasoning for complex problems",
-    icon: <Brain className="h-4 w-4" />
+    id: "gemini-pro", 
+    name: "Gemini Pro", 
+    description: "Advanced reasoning for complex questions",
+    icon: <Brain className="h-4 w-4" />,
+    provider: "gemini"
+  },
+  // OpenAI Models
+  { 
+    id: "gpt-5", 
+    name: "GPT-5", 
+    description: "OpenAI's most powerful model",
+    icon: <Sparkles className="h-4 w-4" />,
+    provider: "openai"
+  },
+  { 
+    id: "gpt-5-mini", 
+    name: "GPT-5 Mini", 
+    description: "Fast and cost-effective OpenAI model",
+    icon: <Zap className="h-4 w-4" />,
+    provider: "openai"
+  },
+  // Perplexity Models
+  { 
+    id: "sonar", 
+    name: "Sonar", 
+    description: "Web-grounded search answers",
+    icon: <Search className="h-4 w-4" />,
+    provider: "perplexity"
+  },
+  { 
+    id: "sonar-pro", 
+    name: "Sonar Pro", 
+    description: "Multi-step reasoning with citations",
+    icon: <Brain className="h-4 w-4" />,
+    provider: "perplexity"
+  },
+  { 
+    id: "sonar-reasoning", 
+    name: "Sonar Reasoning", 
+    description: "Deep reasoning with real-time search",
+    icon: <Sparkles className="h-4 w-4" />,
+    provider: "perplexity"
   },
 ];
+
+// Provider logos and labels
+const providerInfo: Record<ProviderType, { name: string; logo: string }> = {
+  gemini: {
+    name: "Google Gemini",
+    logo: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+  },
+  openai: {
+    name: "OpenAI",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg"
+  },
+  perplexity: {
+    name: "Perplexity",
+    logo: "https://pbs.twimg.com/profile_images/1798110641414443008/XP8gyBaY_400x400.jpg"
+  }
+};
 
 // Helper to format tool names for display
 const formatToolName = (toolName: string): string => {
@@ -105,16 +183,18 @@ const Workbench = () => {
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState<ModelType>("fast");
+  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-flash");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Conversation search hook
@@ -177,6 +257,7 @@ const Workbench = () => {
   const { data: savedPrograms } = useSavedPrograms();
   const { data: agreements } = useLearningAgreements();
   const { data: emailDrafts } = useEmailDrafts();
+  const createEmailDraft = useCreateEmailDraft();
   const { data: documents } = useUserDocuments();
   const { data: userProfile } = useUserProfile();
   const { data: recentConversations } = useAIConversations();
@@ -256,12 +337,25 @@ const Workbench = () => {
     }
   };
 
+  // Stop ongoing AI response
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsStreaming(false);
+      setIsThinking(false);
+      setIsSearchingDatabase(false);
+      setActiveSearchTools([]);
+      toast.info("Response stopped");
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isStreaming]);
+  }, [messages, isStreaming, isThinking]);
 
   if (!user) {
     navigate("/auth");
@@ -307,7 +401,9 @@ const Workbench = () => {
 
   const handleCopy = async (content: string, messageId: string) => {
     try {
-      await navigator.clipboard.writeText(content);
+      // Strip HTML comments (metadata like <!--COURSES:[...]-->) before copying
+      const cleanContent = content.replace(/<!--[\s\S]*?-->/g, '').trim();
+      await navigator.clipboard.writeText(cleanContent);
       setCopiedId(messageId);
       setTimeout(() => setCopiedId(null), 2000);
       toast.success("Copied to clipboard");
@@ -378,6 +474,7 @@ const Workbench = () => {
       await streamAIStudyAdvisor({
         messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
         userContext,
+        model: selectedModel,
         onDelta: (delta) => {
           assistantContent += delta;
           setMessages(prev => prev.map(m => 
@@ -415,6 +512,10 @@ const Workbench = () => {
     setInput("");
     setAttachments([]);
     setIsStreaming(true);
+    setIsThinking(true);
+    
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
 
     try {
       // Create conversation on first message if none exists
@@ -434,31 +535,37 @@ const Workbench = () => {
         content: userMessageContent
       });
 
-      // Build comprehensive user context for AI
+      // Build comprehensive user context for AI with FULL details
       const userContext = {
         savedCourses: savedCourses?.map(c => ({
           name: c.Courses?.name_course,
           code: c.Courses?.code,
           ects: c.Courses?.ects,
-          level: c.Courses?.ba_ma
+          level: c.Courses?.ba_ma,
+          description: c.Courses?.description,
+          topics: c.Courses?.topics,
+          professor: c.Courses?.professor_name
         })).filter(c => c.name) || [],
         savedLabs: savedLabs?.map(l => ({
           name: l.Labs?.name,
-          topics: l.Labs?.topics
+          topics: l.Labs?.topics,
+          description: l.Labs?.description,
+          professors: l.Labs?.professors,
+          facultyMatch: l.Labs?.faculty_match,
+          link: l.Labs?.link
         })).filter(l => l.name) || [],
         savedPrograms: savedPrograms?.map(p => ({
           name: p.Programs?.name
         })).filter(p => p.name) || [],
-        learningAgreements: agreements?.map(a => ({
-          title: a.title,
-          status: a.status,
-          type: a.agreement_type
-        })) || [],
         emailDrafts: emailDrafts?.map(d => ({
           subject: d.subject,
-          recipient: d.recipient
+          recipient: d.recipient,
+          body: d.body
         })) || [],
-        documents: documents?.map(d => d.name) || [],
+        documents: documents?.map(d => ({
+          name: d.name,
+          url: d.file_url
+        })) || [],
         recentConversations: recentConversations?.slice(0, 5).map(c => ({
           title: c.title
         })) || [],
@@ -495,7 +602,10 @@ const Workbench = () => {
       await streamAIStudyAdvisor({
         messages: messagesForAI,
         userContext,
+        model: selectedModel,
+        signal: abortControllerRef.current?.signal,
         onDelta: (delta) => {
+          setIsThinking(false);
           assistantContent += delta;
           setMessages(prev => prev.map(m => 
             m.id === assistantMessageId ? { ...m, content: assistantContent } : m
@@ -503,8 +613,10 @@ const Workbench = () => {
         },
         onDone: async () => {
           setIsStreaming(false);
+          setIsThinking(false);
           setIsSearchingDatabase(false);
           setActiveSearchTools([]);
+          abortControllerRef.current = null;
           // Save assistant message to database after streaming is done
           if (conversationId && assistantContent) {
             await saveMessage.mutateAsync({
@@ -514,16 +626,49 @@ const Workbench = () => {
             });
           }
         },
-        onSearchingDatabase: setIsSearchingDatabase,
+        onSearchingDatabase: (searching) => {
+          setIsSearchingDatabase(searching);
+          if (searching) setIsThinking(false);
+        },
         onToolsUsed: setActiveSearchTools
       });
     } catch (err) {
       setIsStreaming(false);
+      setIsThinking(false);
+      abortControllerRef.current = null;
+      if (err instanceof Error && err.name === 'AbortError') {
+        // User stopped the request, don't show error
+        return;
+      }
       toast.error("Failed to get response from hubAI");
     }
   };
 
   const selectedModelData = models.find(m => m.id === selectedModel)!;
+
+  // Voice input hook
+  const { 
+    isListening, 
+    isSupported: voiceSupported, 
+    startListening, 
+    stopListening, 
+    transcript 
+  } = useVoiceInput({
+    onTranscript: (text) => {
+      setInput(prev => prev + (prev ? ' ' : '') + text);
+    }
+  });
+
+  // Handle export
+  const handleExport = (format: 'markdown' | 'text' | 'json') => {
+    if (messages.length === 0) {
+      toast.error("No messages to export");
+      return;
+    }
+    const title = recentConversations?.find(c => c.id === currentConversationId)?.title;
+    exportConversation(messages, format, title || undefined);
+    toast.success(`Conversation exported as ${format.toUpperCase()}`);
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -579,7 +724,7 @@ const Workbench = () => {
           </div>
         </div>
 
-        {/* Model Selector */}
+        {/* Model Selector with Provider Groups */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
@@ -591,8 +736,59 @@ const Workbench = () => {
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            {models.map(model => (
+          <DropdownMenuContent align="end" className="w-72">
+            {/* Google Gemini Models */}
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
+              {providerInfo.gemini.name}
+            </DropdownMenuLabel>
+            {models.filter(m => m.provider === "gemini").map(model => (
+              <DropdownMenuItem
+                key={model.id}
+                onClick={() => setSelectedModel(model.id)}
+                className="flex items-start gap-3 p-3 cursor-pointer"
+              >
+                <div className="mt-0.5 text-primary">{model.icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-xs opacity-70">{model.description}</div>
+                </div>
+                {selectedModel === model.id && (
+                  <Check className="h-4 w-4 text-primary mt-0.5" />
+                )}
+              </DropdownMenuItem>
+            ))}
+            
+            {/* OpenAI Models */}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <img src={providerInfo.openai.logo} alt="OpenAI" className="h-4 w-4" />
+              {providerInfo.openai.name}
+            </DropdownMenuLabel>
+            {models.filter(m => m.provider === "openai").map(model => (
+              <DropdownMenuItem
+                key={model.id}
+                onClick={() => setSelectedModel(model.id)}
+                className="flex items-start gap-3 p-3 cursor-pointer"
+              >
+                <div className="mt-0.5 text-primary">{model.icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-xs opacity-70">{model.description}</div>
+                </div>
+                {selectedModel === model.id && (
+                  <Check className="h-4 w-4 text-primary mt-0.5" />
+                )}
+              </DropdownMenuItem>
+            ))}
+            
+            {/* Perplexity Models */}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
+              {providerInfo.perplexity.name}
+            </DropdownMenuLabel>
+            {models.filter(m => m.provider === "perplexity").map(model => (
               <DropdownMenuItem
                 key={model.id}
                 onClick={() => setSelectedModel(model.id)}
@@ -735,7 +931,7 @@ const Workbench = () => {
                       </div>
 
                       {/* Message Actions */}
-                      {message.role === "assistant" && (
+                      {message.role === "assistant" && message.content && (
                         <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
                             variant="ghost"
@@ -758,6 +954,28 @@ const Workbench = () => {
                           >
                             <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
+                          {/* Save to Email Drafts - show if message looks like an email */}
+                          {(message.content.toLowerCase().includes('subject:') || 
+                            message.content.toLowerCase().includes('dear ') ||
+                            message.content.toLowerCase().includes('email')) && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                              title="Save to Email Drafts"
+                              onClick={async () => {
+                                const cleanContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                await createEmailDraft.mutateAsync({
+                                  subject: "AI Generated Email",
+                                  body: cleanContent,
+                                  recipient: "",
+                                });
+                                toast.success("Email saved to drafts");
+                              }}
+                            >
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
                             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
                           </Button>
@@ -771,6 +989,26 @@ const Workbench = () => {
                 </div>
               ))}
               
+              {/* Thinking Indicator (before any streaming starts) */}
+              {isThinking && !isSearchingDatabase && (
+                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
+                    <Brain className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Thinking...</span>
+                    <div className="flex gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Database Searching Indicator */}
               {isSearchingDatabase && (
                 <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
@@ -838,34 +1076,125 @@ const Workbench = () => {
             <Paperclip className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
           </Button>
 
+          {/* Voice Input Button */}
+          {voiceSupported && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`shrink-0 h-11 w-11 rounded-xl transition-colors ${
+                isListening 
+                  ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' 
+                  : 'bg-transparent hover:bg-accent/30'
+              }`}
+              onClick={isListening ? stopListening : startListening}
+              disabled={isStreaming}
+              title={isListening ? "Stop recording" : "Start voice input"}
+            >
+              {isListening ? (
+                <MicOff className="h-5 w-5 animate-pulse" />
+              ) : (
+                <Mic className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
+              )}
+            </Button>
+          )}
+
+          {/* Export Button */}
+          {messages.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
+                  disabled={isStreaming}
+                  title="Export conversation"
+                >
+                  <Download className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Export as</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExport('markdown')} className="cursor-pointer">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Markdown (.md)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('text')} className="cursor-pointer">
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Plain Text (.txt)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
+                  <FileJson className="h-4 w-4 mr-2" />
+                  JSON (.json)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Text Input */}
           <div className="flex-1 relative">
             <Input
-              placeholder="Message hubAI..."
+              placeholder={isListening ? "Listening..." : "Message hubAI..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               disabled={isStreaming}
-              className="pr-14 py-6 rounded-xl border border-foreground/20 dark:border-border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground"
+              className={`pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground ${
+                isListening ? 'border-destructive/50' : 'border-foreground/20 dark:border-border'
+              }`}
             />
-            <Button
-              size="icon"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
-              onClick={handleSend}
-              disabled={isStreaming || (!input.trim() && attachments.length === 0)}
-            >
-              {isStreaming ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+            {isStreaming ? (
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                onClick={handleStop}
+                title="Stop generating"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                onClick={handleSend}
+                disabled={!input.trim() && attachments.length === 0}
+              >
                 <Send className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
 
-        <p className="text-xs text-center text-foreground/40 dark:text-muted-foreground/70 mt-3">
-          hubAI can make mistakes. Consider checking important information.
-        </p>
+        {/* Voice transcript indicator */}
+        {isListening && transcript && (
+          <div className="mt-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+            <span className="font-medium">Listening:</span> {transcript}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-2 mt-3">
+          <p className="text-xs text-foreground/40 dark:text-muted-foreground/70">
+            hubAI can make mistakes. Consider checking important information.
+          </p>
+          
+          {/* Powered By Section */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
+            <span>Powered by</span>
+            <div className="flex items-center gap-1.5">
+              <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
+              <span className="font-medium">Gemini</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <img src={providerInfo.openai.logo} alt="ChatGPT" className="h-4 w-4" />
+              <span className="font-medium">ChatGPT</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
+              <span className="font-medium">Perplexity</span>
+            </div>
+          </div>
+        </div>
       </div>
       </div>
       

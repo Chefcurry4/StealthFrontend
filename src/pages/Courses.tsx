@@ -164,9 +164,14 @@ const Courses = () => {
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Select onValueChange={(value) => updateFilter("universityId", value)}>
-                <SelectTrigger className="w-[200px]">
+            
+            {/* Filter Row 1: Dropdowns */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+              <Select 
+                value={filters.universityId || "all"} 
+                onValueChange={(value) => updateFilter("universityId", value)}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="University" />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,8 +184,11 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("programId", value)}>
-                <SelectTrigger className="w-[200px]">
+              <Select 
+                value={filters.programId || "all"} 
+                onValueChange={(value) => updateFilter("programId", value)}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Program" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,8 +201,11 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("language", value)}>
-                <SelectTrigger className="w-[180px]">
+              <Select 
+                value={filters.language || "all"} 
+                onValueChange={(value) => updateFilter("language", value)}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Language" />
                 </SelectTrigger>
                 <SelectContent>
@@ -206,80 +217,76 @@ const Courses = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("level", value)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="Ba">Bachelor</SelectItem>
-                  <SelectItem value="Ma">Master</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select onValueChange={(value) => updateFilter("term", value)}>
-                <SelectTrigger className="w-[180px]">
+              <Select 
+                value={filters.term || "all"} 
+                onValueChange={(value) => updateFilter("term", value)}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Term" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Terms</SelectItem>
                   <SelectItem value="Winter">Winter</SelectItem>
                   <SelectItem value="Summer">Summer</SelectItem>
-                  <SelectItem value="Win">Win</SelectItem>
-                  <SelectItem value="Sum">Sum</SelectItem>
                   <SelectItem value="Winter/Summer">Winter/Summer</SelectItem>
-                  <SelectItem value="Summer/Winter">Summer/Winter</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("examType", value)}>
-                <SelectTrigger className="w-[180px]">
+              <Select 
+                value={filters.examType || "all"} 
+                onValueChange={(value) => updateFilter("examType", value)}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Exam Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">All Exam Types</SelectItem>
                   <SelectItem value="Written">Written</SelectItem>
                   <SelectItem value="Oral">Oral</SelectItem>
-                  <SelectItem value="During the semester">During the semester</SelectItem>
+                  <SelectItem value="During the semester">During Semester</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={(value) => updateFilter("mandatoryOptional", value)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="Mandatory">Mandatory</SelectItem>
-                  <SelectItem value="Optional">Optional</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select onValueChange={(value) => updateFilter("whichYear", value)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Years</SelectItem>
-                  <SelectItem value="1">Year 1</SelectItem>
-                  <SelectItem value="2">Year 2</SelectItem>
-                  <SelectItem value="3">Year 3</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* ECTS Slider */}
+              <div className="flex flex-col justify-center">
+                <label className="text-xs font-medium mb-1">
+                  ECTS: {ectsRange[0]} - {ectsRange[1]}
+                </label>
+                <Slider
+                  min={0}
+                  max={30}
+                  step={1}
+                  value={ectsRange}
+                  onValueChange={handleEctsChange}
+                  className="w-full"
+                />
+              </div>
             </div>
 
-            <div className="mt-4 max-w-xs">
-              <label className="text-sm font-medium mb-2 block">
-                ECTS Credits: {ectsRange[0]} - {ectsRange[1]}
-              </label>
-              <Slider
-                min={0}
-                max={30}
-                step={1}
-                value={ectsRange}
-                onValueChange={handleEctsChange}
-                className="w-full"
-              />
+            {/* Filter Row 2: Button Groups */}
+            <div className="flex flex-wrap items-center gap-4 mt-4">
+              {/* Level (Bachelor/Master) */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium opacity-70">Level:</span>
+                <div className="flex gap-1">
+                  <Button
+                    variant={filters.level === "Ba" ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-3 text-xs"
+                    onClick={() => updateFilter("level", filters.level === "Ba" ? "all" : "Ba")}
+                  >
+                    Bachelor
+                  </Button>
+                  <Button
+                    variant={filters.level === "Ma" ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-3 text-xs"
+                    onClick={() => updateFilter("level", filters.level === "Ma" ? "all" : "Ma")}
+                  >
+                    Master
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -349,7 +356,10 @@ const Courses = () => {
                               variant="secondary" 
                               size="sm" 
                               className={`flex-1 theme-btn-secondary ${isSmall ? 'text-[10px] h-6' : 'text-xs sm:text-sm'}`}
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/courses/${course.id_course}`);
+                              }}
                             >
                               View
                             </Button>

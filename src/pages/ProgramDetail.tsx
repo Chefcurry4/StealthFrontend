@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, GraduationCap, Clock, BookOpen, Filter, ChevronRight, Users, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useProgram, useProgramCourses } from "@/hooks/usePrograms";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { TeacherLink } from "@/components/TeacherLink";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 // Map of program slugs that have master structure pages
 const MASTER_STRUCTURE_PROGRAMS: Record<string, string> = {
@@ -25,10 +26,23 @@ const ProgramDetail = () => {
   const navigate = useNavigate();
   const { data: program, isLoading, error } = useProgram(slug!);
   const { data: courses, isLoading: coursesLoading } = useProgramCourses(program?.id || "");
+  const { addItem } = useRecentlyViewed();
 
   const [levelFilter, setLevelFilter] = useState<"all" | "Ba" | "Ma">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "Mandatory" | "Optional">("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Track recently viewed program
+  useEffect(() => {
+    if (program) {
+      addItem({
+        id: program.id,
+        type: 'program',
+        name: program.name,
+        href: `/programs/${program.slug}`,
+      });
+    }
+  }, [program, addItem]);
 
   // Fetch course details with bridge table info
   const { data: coursesWithInfo } = useQuery({

@@ -38,17 +38,21 @@ export const useAIStudyAdvisor = () => {
 export const streamAIStudyAdvisor = async ({
   messages,
   userContext,
+  model = "gemini-flash",
   onDelta,
   onDone,
   onSearchingDatabase,
   onToolsUsed,
+  signal,
 }: {
   messages: { role: string; content: string }[];
   userContext?: any;
+  model?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onSearchingDatabase?: (searching: boolean) => void;
   onToolsUsed?: (tools: string[]) => void;
+  signal?: AbortSignal;
 }) => {
   const CHAT_URL = `https://zbgcvuocupxfugtfjids.supabase.co/functions/v1/ai-study-advisor`;
 
@@ -58,7 +62,8 @@ export const streamAIStudyAdvisor = async ({
       "Content-Type": "application/json",
       Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiZ2N2dW9jdXB4ZnVndGZqaWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzE2NjgsImV4cCI6MjA3OTQwNzY2OH0.FbAlFRNtIKBapKuqp-f3CeHo3bbp_a2VThgHHqp1rwc`,
     },
-    body: JSON.stringify({ messages, userContext, stream: true }),
+    body: JSON.stringify({ messages, userContext, stream: true, model }),
+    signal,
   });
 
   if (!resp.ok) {
@@ -76,68 +81,76 @@ export const streamAIStudyAdvisor = async ({
   let textBuffer = "";
   let streamDone = false;
 
-  while (!streamDone) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    textBuffer += decoder.decode(value, { stream: true });
-
-    // Process line-by-line as data arrives
-    let newlineIndex: number;
-    while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-      let line = textBuffer.slice(0, newlineIndex);
-      textBuffer = textBuffer.slice(newlineIndex + 1);
-
-      if (line.endsWith("\r")) line = line.slice(0, -1);
-      if (line.startsWith(":") || line.trim() === "") continue;
-      if (!line.startsWith("data: ")) continue;
-
-      const jsonStr = line.slice(6).trim();
-      if (jsonStr === "[DONE]") {
-        streamDone = true;
+  try {
+    while (!streamDone) {
+      // Check if aborted
+      if (signal?.aborted) {
+        reader.cancel();
         break;
       }
+      
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
 
-      try {
-        const parsed = JSON.parse(jsonStr);
-        
-        // Check for tools_used event (sent before streaming content)
-        if (parsed.tools_used) {
-          onToolsUsed?.(parsed.tools_used);
-          continue;
+      // Process line-by-line as data arrives
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") {
+          streamDone = true;
+          break;
         }
-        
-        const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-        if (content) {
-          // First content received means search is done, now streaming
-          onSearchingDatabase?.(false);
-          onDelta(content);
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          
+          // Check for tools_used event (sent before streaming content)
+          if (parsed.tools_used) {
+            onToolsUsed?.(parsed.tools_used);
+            continue;
+          }
+          
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            // First content received means search is done, now streaming
+            onSearchingDatabase?.(false);
+            onDelta(content);
+          }
+        } catch {
+          // Incomplete JSON split across chunks: put it back and wait for more data
+          textBuffer = line + "\n" + textBuffer;
+          break;
         }
-      } catch {
-        // Incomplete JSON split across chunks: put it back and wait for more data
-        textBuffer = line + "\n" + textBuffer;
-        break;
       }
     }
-  }
 
-  // Final flush
-  if (textBuffer.trim()) {
-    for (let raw of textBuffer.split("\n")) {
-      if (!raw) continue;
-      if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-      if (raw.startsWith(":") || raw.trim() === "") continue;
-      if (!raw.startsWith("data: ")) continue;
-      const jsonStr = raw.slice(6).trim();
-      if (jsonStr === "[DONE]") continue;
-      try {
-        const parsed = JSON.parse(jsonStr);
-        const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-        if (content) onDelta(content);
-      } catch { /* ignore partial leftovers */ }
+    // Final flush
+    if (textBuffer.trim() && !signal?.aborted) {
+      for (let raw of textBuffer.split("\n")) {
+        if (!raw) continue;
+        if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+        if (raw.startsWith(":") || raw.trim() === "") continue;
+        if (!raw.startsWith("data: ")) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) onDelta(content);
+        } catch { /* ignore partial leftovers */ }
+      }
     }
+  } finally {
+    onDone();
   }
-
-  onDone();
 };
 
 export const useAIEmailDraft = () => {

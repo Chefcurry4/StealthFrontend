@@ -42,10 +42,10 @@ export const CourseCardImage = ({
         }}
       />
       
-      {/* Rating badge - top right */}
+      {/* Rating badge - top right with yellow star */}
       {averageRating !== undefined && reviewCount > 0 && (
-        <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-0.5">
-          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+        <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-0.5 transition-all duration-200 hover:scale-105">
+          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 transition-all duration-200" />
           <span className="text-xs font-semibold text-foreground">{averageRating.toFixed(1)}</span>
         </div>
       )}

@@ -180,3 +180,33 @@ export const useToggleReviewUpvote = () => {
     },
   });
 };
+
+// Review replies hooks - placeholder until table is created
+export const useReviewReplies = (reviewId: string) => {
+  return useQuery({
+    queryKey: ["reviewReplies", reviewId],
+    queryFn: async () => {
+      // Return empty array until the table is created
+      return [];
+    },
+    enabled: !!reviewId,
+  });
+};
+
+export const useCreateReviewReply = () => {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ reviewId, content, courseId }: { reviewId: string; content: string; courseId: string }) => {
+      // Placeholder - will work once table is created
+      toast({
+        title: "Coming soon",
+        description: "Reply feature is being set up",
+      });
+      throw new Error("Feature coming soon");
+    },
+    onError: () => {
+      // Silent error
+    },
+  });
+};
