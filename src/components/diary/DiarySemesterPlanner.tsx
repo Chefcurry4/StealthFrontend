@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 
 interface DiarySemesterPlannerProps {
   pageId: string;
+  moduleId?: string; // Unique ID for this semester planner module
   items: DiaryPageItem[];
   courses: any[];
   onRemoveItem: (id: string) => void;
@@ -19,29 +20,48 @@ const SEMESTERS = [
   { id: 'summer', label: 'Summer Semester', icon: Sun, color: 'bg-amber-50 border-amber-200' },
 ];
 
-// Helper function to count exam types - "During the semester" counts as both written AND project
+// Helper function to count exam types - handles multiple exam types per course
 const countExamTypes = (courses: any[]) => {
   let written = 0;
   let oral = 0;
-  let project = 0;
+  let projectMidterm = 0;
 
   courses.forEach((course) => {
     const examType = course.type_exam?.toLowerCase() || "";
     
-    // "During the semester" means both written exam AND project/midterm
-    if (examType.includes("semester") || examType.includes("during") || examType.includes("continuous")) {
-      written++;
-      project++;
-    } else if (examType.includes("written") || examType.includes("écrit") || examType.includes("write")) {
-      written++;
-    } else if (examType.includes("oral")) {
-      oral++;
-    } else if (examType.includes("project") || examType.includes("midterm")) {
-      project++;
+    // Check for written exam keywords
+    const isWritten = examType.includes("written") || 
+                      examType.includes("écrit") || 
+                      examType.includes("write") ||
+                      examType.includes("exam") && !examType.includes("oral");
+    
+    // Check for oral exam keywords
+    const isOral = examType.includes("oral") || 
+                   examType.includes("presentation") ||
+                   examType.includes("defense");
+    
+    // Check for project/midterm keywords
+    const isProjectMidterm = examType.includes("project") || 
+                              examType.includes("midterm") ||
+                              examType.includes("semester") ||
+                              examType.includes("during") ||
+                              examType.includes("continuous") ||
+                              examType.includes("assignment") ||
+                              examType.includes("report") ||
+                              examType.includes("practical");
+    
+    // Count each type independently (a course can have multiple exam types)
+    if (isWritten) written++;
+    if (isOral) oral++;
+    if (isProjectMidterm) projectMidterm++;
+    
+    // If no specific type detected but there's an exam type string, count as project/midterm
+    if (!isWritten && !isOral && !isProjectMidterm && examType.trim()) {
+      projectMidterm++;
     }
   });
 
-  return { written, oral, project };
+  return { written, oral, projectMidterm };
 };
 
 // Helper function to count levels
@@ -61,14 +81,18 @@ const countLevels = (courses: any[]) => {
   return { bachelor, master };
 };
 
-export const DiarySemesterPlanner = ({ pageId, items, courses, onRemoveItem, onCourseClick }: DiarySemesterPlannerProps) => {
+export const DiarySemesterPlanner = ({ pageId, moduleId, items, courses, onRemoveItem, onCourseClick }: DiarySemesterPlannerProps) => {
   const [selectedSemester, setSelectedSemester] = useState<'winter' | 'summer'>('winter');
   const analytics = useDiaryAnalytics(courses);
   const examCounts = countExamTypes(courses);
   const levelCounts = countLevels(courses);
 
+  // Zone prefix for this specific semester planner module
+  const zonePrefix = moduleId ? `semester-${moduleId}` : '';
+
   const getItemsForZone = (zone: string) => {
-    return items.filter(item => item.zone === zone);
+    const fullZone = moduleId ? `${zonePrefix}-${zone}` : zone;
+    return items.filter(item => item.zone === fullZone);
   };
 
   const currentSemester = SEMESTERS.find(s => s.id === selectedSemester)!;
@@ -137,8 +161,8 @@ export const DiarySemesterPlanner = ({ pageId, items, courses, onRemoveItem, onC
             </div>
             <div className="flex items-center gap-1 text-[10px]">
               <CalendarClock className="h-3 w-3 text-orange-500" />
-              <span className="font-medium">{examCounts.project}</span>
-              <span className="text-gray-500">Project</span>
+              <span className="font-medium">{examCounts.projectMidterm}</span>
+              <span className="text-gray-500">Project/Midterm</span>
             </div>
           </div>
         </div>
@@ -171,6 +195,7 @@ export const DiarySemesterPlanner = ({ pageId, items, courses, onRemoveItem, onC
         courses={courses}
         onRemoveItem={onRemoveItem}
         onCourseClick={onCourseClick}
+        zonePrefix={zonePrefix}
       />
 
       {items.length === 0 && (
@@ -189,11 +214,17 @@ interface SemesterDropZoneProps {
   courses: any[];
   onRemoveItem: (id: string) => void;
   onCourseClick?: (course: any) => void;
+  zonePrefix?: string;
 }
 
-const SemesterDropZone = ({ semester, items, courses, onRemoveItem, onCourseClick }: SemesterDropZoneProps) => {
+const SemesterDropZone = ({ semester, items, courses, onRemoveItem, onCourseClick, zonePrefix }: SemesterDropZoneProps) => {
+  // Create unique droppable ID that includes the module prefix
+  const droppableId = zonePrefix 
+    ? `${zonePrefix}-${semester.id}` 
+    : `semester-zone-${semester.id}`;
+    
   const { isOver, setNodeRef } = useDroppable({
-    id: `semester-zone-${semester.id}`,
+    id: droppableId,
   });
 
   const Icon = semester.icon;
