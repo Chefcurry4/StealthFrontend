@@ -29,7 +29,9 @@ const shortcuts: Shortcut[] = [
   // Workbench shortcuts
   { keys: ["Ctrl", "N"], description: "New conversation", category: "Workbench" },
   { keys: ["Ctrl", "Enter"], description: "Send message", category: "Workbench" },
-  { keys: ["Escape"], description: "Close sidebar", category: "Workbench" },
+  { keys: ["@"], description: "Mention saved courses/labs", category: "Workbench" },
+  { keys: ["Ctrl", "F"], description: "Search in conversation", category: "Workbench" },
+  { keys: ["Escape"], description: "Close sidebar/popup", category: "Workbench" },
   
   // General shortcuts
   { keys: ["?"], description: "Show keyboard shortcuts", category: "General" },

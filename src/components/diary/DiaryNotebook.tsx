@@ -275,6 +275,12 @@ export const DiaryNotebook = ({
     }
 
     if (item.item_type === 'semester_planner' as any) {
+      // Each semester planner module tracks items in its own zone (using item.id as zone prefix)
+      const moduleZonePrefix = `semester-${item.id}`;
+      const moduleItems = pageItems.filter(i => i.zone && i.zone.startsWith(moduleZonePrefix));
+      const moduleCourseIds = moduleItems.map(i => i.reference_id).filter(Boolean);
+      const moduleCourses = courses.filter(c => moduleCourseIds.includes(c.id_course));
+      
       return (
         <DraggableItem key={item.id} {...commonProps}>
           <ModuleWrapper 
@@ -286,8 +292,9 @@ export const DiaryNotebook = ({
           >
             <DiarySemesterPlanner
               pageId={currentPage?.id || ''}
-              items={pageItems.filter(i => i.zone)}
-              courses={courses}
+              moduleId={item.id}
+              items={moduleItems}
+              courses={moduleCourses}
               onRemoveItem={onRemoveItem}
               onCourseClick={handleCourseClick}
             />
@@ -536,19 +543,110 @@ export const DiaryNotebook = ({
             <ChevronRight className="h-4 w-4 text-gray-600" />
           </Button>
 
-          {/* Draggable Page dots */}
+          {/* Draggable Page dots / Pagination */}
           <DndContext sensors={pageSensors} collisionDetection={closestCenter} onDragEnd={handlePageReorder}>
             <SortableContext items={pages.map(p => p.id)} strategy={horizontalListSortingStrategy}>
-              <div className="absolute -bottom-4 sm:bottom-1 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-20 bg-white/80 px-2 py-1 rounded-full shadow-sm">
-                {pages.map((page, index) => (
-                  <SortablePageDot
-                    key={page.id}
-                    page={page}
-                    index={index}
-                    isActive={index === currentPageIndex}
-                    onClick={() => onPageChange(index)}
-                  />
-                ))}
+              {/* Enhanced pagination for larger screens */}
+              <div className="absolute -bottom-4 sm:bottom-1 left-1/2 -translate-x-1/2 z-20 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200/50">
+                <div className="flex items-center gap-1 px-2 py-1.5 sm:px-4 sm:py-2">
+                  {/* Previous button - visible on larger screens */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hidden md:flex h-6 w-6 lg:h-7 lg:w-7 rounded-full hover:bg-gray-100"
+                    onClick={() => onPageChange(Math.max(0, currentPageIndex - 1))}
+                    disabled={currentPageIndex === 0}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                  </Button>
+                  
+                  {/* Page dots with smart display for many pages */}
+                  <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+                    {pages.length <= 7 ? (
+                      // Show all dots if 7 or fewer pages
+                      pages.map((page, index) => (
+                        <SortablePageDot
+                          key={page.id}
+                          page={page}
+                          index={index}
+                          isActive={index === currentPageIndex}
+                          onClick={() => onPageChange(index)}
+                        />
+                      ))
+                    ) : (
+                      // Smart pagination for many pages
+                      <>
+                        {/* First page */}
+                        <SortablePageDot
+                          key={pages[0].id}
+                          page={pages[0]}
+                          index={0}
+                          isActive={0 === currentPageIndex}
+                          onClick={() => onPageChange(0)}
+                        />
+                        
+                        {/* Ellipsis or pages near start */}
+                        {currentPageIndex > 2 && (
+                          <span className="text-gray-400 text-xs px-1">...</span>
+                        )}
+                        
+                        {/* Pages around current */}
+                        {pages.slice(
+                          Math.max(1, currentPageIndex - 1),
+                          Math.min(pages.length - 1, currentPageIndex + 2)
+                        ).map((page, idx) => {
+                          const actualIndex = Math.max(1, currentPageIndex - 1) + idx;
+                          if (actualIndex === 0 || actualIndex === pages.length - 1) return null;
+                          return (
+                            <SortablePageDot
+                              key={page.id}
+                              page={page}
+                              index={actualIndex}
+                              isActive={actualIndex === currentPageIndex}
+                              onClick={() => onPageChange(actualIndex)}
+                            />
+                          );
+                        })}
+                        
+                        {/* Ellipsis or pages near end */}
+                        {currentPageIndex < pages.length - 3 && (
+                          <span className="text-gray-400 text-xs px-1">...</span>
+                        )}
+                        
+                        {/* Last page */}
+                        <SortablePageDot
+                          key={pages[pages.length - 1].id}
+                          page={pages[pages.length - 1]}
+                          index={pages.length - 1}
+                          isActive={pages.length - 1 === currentPageIndex}
+                          onClick={() => onPageChange(pages.length - 1)}
+                        />
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Next button - visible on larger screens */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hidden md:flex h-6 w-6 lg:h-7 lg:w-7 rounded-full hover:bg-gray-100"
+                    onClick={() => onPageChange(Math.min(pages.length - 1, currentPageIndex + 1))}
+                    disabled={currentPageIndex === pages.length - 1}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                  </Button>
+                  
+                  {/* Page counter - visible on larger screens */}
+                  <div className="hidden lg:flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
+                    <span className="text-xs text-gray-600 font-medium">
+                      {currentPageIndex + 1}
+                    </span>
+                    <span className="text-xs text-gray-400">/</span>
+                    <span className="text-xs text-gray-500">
+                      {pages.length}
+                    </span>
+                  </div>
+                </div>
               </div>
             </SortableContext>
           </DndContext>

@@ -362,16 +362,23 @@ const Diary = () => {
       }
     }
 
-    // Handle dropping on semester zones
-    if (overId.startsWith('semester-zone-')) {
-      const zone = overId.replace('semester-zone-', '');
+    // Handle dropping on semester zones (both old format and new module-specific format)
+    // New format: semester-{moduleId}-{winter|summer}
+    // Old format: semester-zone-{winter|summer}
+    if (overId.startsWith('semester-')) {
+      let zone = overId;
+      
+      // Handle old format for backward compatibility
+      if (overId.startsWith('semester-zone-')) {
+        zone = overId.replace('semester-zone-', '');
+      }
       
       if (activeDataCurrent?.type === 'course') {
         createItem.mutate({
           pageId: currentPage.id,
           itemType: 'course',
           referenceId: activeDataCurrent.course.id_course,
-          zone,
+          zone, // Full zone including module prefix
           positionX: 0,
           positionY: 0,
         }, {

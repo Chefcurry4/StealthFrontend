@@ -34,6 +34,7 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { AIResultCards } from "@/components/AIResultCard";
 import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { ConversationSearchBar } from "@/components/ConversationSearchBar";
+import { MentionPopup } from "@/components/MentionPopup";
 import { 
   Send, 
   Loader2, 
@@ -196,10 +197,14 @@ const Workbench = () => {
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const [referencedItems, setReferencedItems] = useState<Array<{ type: 'course' | 'lab'; data: any }>>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showMentionPopup, setShowMentionPopup] = useState(false);
+  const [mentionSearchQuery, setMentionSearchQuery] = useState("");
+  const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Conversation search hook
@@ -350,6 +355,74 @@ const Workbench = () => {
   const removeReferencedItem = (index: number) => {
     setReferencedItems(prev => prev.filter((_, i) => i !== index));
   };
+
+  // Handle @ mentions in input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+    setInput(value);
+    
+    // Check if user typed @ and extract search query after @
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
+      // Only show popup if @ is at word boundary (start or after space)
+      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] : ' ';
+      
+      if ((charBeforeAt === ' ' || lastAtIndex === 0) && !textAfterAt.includes(' ')) {
+        setShowMentionPopup(true);
+        setMentionSearchQuery(textAfterAt);
+        setMentionCursorPosition(lastAtIndex);
+        return;
+      }
+    }
+    
+    setShowMentionPopup(false);
+  };
+
+  // Handle mention selection
+  const handleMentionSelect = (item: { id: string; type: 'course' | 'lab'; name: string; code?: string }) => {
+    // Remove the @ and search query from input
+    const beforeAt = input.slice(0, mentionCursorPosition);
+    const afterCursor = input.slice(mentionCursorPosition + 1 + mentionSearchQuery.length);
+    setInput(beforeAt + afterCursor);
+    
+    // Add item to referenced items
+    const exists = referencedItems.some(
+      r => r.type === item.type && r.data.id === item.id
+    );
+    
+    if (!exists) {
+      setReferencedItems(prev => [...prev, { 
+        type: item.type, 
+        data: { 
+          id: item.id, 
+          name: item.name, 
+          code: item.code 
+        } 
+      }]);
+      toast.success(`${item.type === 'course' ? 'Course' : 'Lab'} added to context`);
+    }
+    
+    setShowMentionPopup(false);
+    inputRef.current?.focus();
+  };
+
+  // Build mention items from saved data
+  const mentionCourses = savedCourses?.map(c => ({
+    id: c.Courses?.id_course || '',
+    type: 'course' as const,
+    name: c.Courses?.name_course || '',
+    code: c.Courses?.code || undefined,
+  })).filter(c => c.name) || [];
+
+  const mentionLabs = savedLabs?.map(l => ({
+    id: l.Labs?.id_lab || '',
+    type: 'lab' as const,
+    name: l.Labs?.name || '',
+  })).filter(l => l.name) || [];
 
   const handleReferenceCourse = (courseName: string, courseId: string) => {
     setInput(prev => prev + (prev ? " " : "") + `Tell me about the course "${courseName}"`);
@@ -1244,11 +1317,30 @@ const Workbench = () => {
 
           {/* Text Input */}
           <div className="flex-1 relative">
+            {/* Mention Popup */}
+            <MentionPopup
+              isOpen={showMentionPopup}
+              onClose={() => setShowMentionPopup(false)}
+              onSelect={handleMentionSelect}
+              courses={mentionCourses}
+              labs={mentionLabs}
+              searchQuery={mentionSearchQuery}
+            />
+            
             <Input
-              placeholder={isListening ? "Listening..." : "Message hubAI..."}
+              ref={inputRef}
+              placeholder={isListening ? "Listening..." : "Message hubAI... (type @ to mention courses/labs)"}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !showMentionPopup) {
+                  e.preventDefault();
+                  handleSend();
+                }
+                if (e.key === "Escape" && showMentionPopup) {
+                  setShowMentionPopup(false);
+                }
+              }}
               disabled={isStreaming}
               className={`pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground ${
                 isListening ? 'border-destructive/50' : 'border-foreground/20 dark:border-border'
