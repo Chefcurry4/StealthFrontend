@@ -553,14 +553,8 @@ const Workbench = () => {
           name: l.Labs?.name,
           topics: l.Labs?.topics
         })).filter(l => l.name) || [],
-        savedPrograms: savedPrograms?.map(p => ({
-          name: p.Programs?.name
-        })).filter(p => p.name) || [],
-        learningAgreements: agreements?.map(a => ({
-          title: a.title,
-          status: a.status,
-          type: a.agreement_type
-        })) || [],
+        savedPrograms: [],
+        learningAgreements: [],
         emailDrafts: emailDrafts?.map(d => ({
           subject: d.subject,
           recipient: d.recipient
@@ -687,9 +681,7 @@ const Workbench = () => {
           facultyMatch: l.Labs?.faculty_match,
           link: l.Labs?.link
         })).filter(l => l.name) || [],
-        savedPrograms: savedPrograms?.map(p => ({
-          name: p.Programs?.name
-        })).filter(p => p.name) || [],
+        savedPrograms: [],
         emailDrafts: emailDrafts?.map(d => ({
           subject: d.subject,
           recipient: d.recipient,

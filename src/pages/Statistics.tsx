@@ -25,12 +25,11 @@ const Statistics = () => {
   const { data: userStats } = useQuery({
     queryKey: ["user-stats-enhanced"],
     queryFn: async () => {
-      const [usersRes, reviewsRes, savedCoursesRes, savedLabsRes, savedProgramsRes, usersTimelineRes] = await Promise.all([
+      const [usersRes, reviewsRes, savedCoursesRes, savedLabsRes, usersTimelineRes] = await Promise.all([
         supabase.from("Users(US)").select("id", { count: "exact", head: true }),
         supabase.from("course_reviews").select("id, rating", { count: "exact" }),
         supabase.from("user_saved_courses(US-C)").select("id", { count: "exact", head: true }),
         supabase.from("user_saved_labs(US-L)").select("id", { count: "exact", head: true }),
-        supabase.from("user_saved_programs(US-P)").select("id", { count: "exact", head: true }),
         supabase.from("Users(US)").select("created_at"),
       ]);
       
@@ -69,7 +68,7 @@ const Statistics = () => {
         totalReviews: reviewsRes.count || 0,
         totalSavedCourses: savedCoursesRes.count || 0,
         totalSavedLabs: savedLabsRes.count || 0,
-        totalSavedPrograms: savedProgramsRes.count || 0,
+        totalSavedPrograms: 0, // Table doesn't exist yet
         avgRating,
         timelineData,
       };

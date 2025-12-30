@@ -165,24 +165,12 @@ const Profile = () => {
       
       await supabase.from("user_saved_courses(US-C)").delete().eq("user_id", userId);
       await supabase.from("user_saved_labs(US-L)").delete().eq("user_id", userId);
-      await supabase.from("user_saved_programs(US-P)").delete().eq("user_id", userId);
       await supabase.from("course_reviews").delete().eq("user_id", userId);
       await supabase.from("course_review_upvotes").delete().eq("user_id", userId);
       await supabase.from("email_drafts").delete().eq("user_id", userId);
       await supabase.from("ai_conversations").delete().eq("user_id", userId);
       await supabase.from("user_documents").delete().eq("user_id", userId);
-      
-      const { data: agreements } = await supabase
-        .from("Learning_agreements(LA)")
-        .select("id")
-        .eq("user_id", userId);
-      
-      if (agreements && agreements.length > 0) {
-        const agreementIds = agreements.map(a => a.id);
-        await supabase.from("learning_agreement_courses").delete().in("agreement_id", agreementIds);
-      }
-      
-      await supabase.from("Learning_agreements(LA)").delete().eq("user_id", userId);
+      await supabase.from("diary_notebooks").delete().eq("user_id", userId);
       await supabase.from("Users(US)").delete().eq("id", userId);
       
       await signOut();
