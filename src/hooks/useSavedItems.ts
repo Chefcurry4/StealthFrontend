@@ -194,90 +194,30 @@ export const useToggleSaveLab = () => {
   });
 };
 
-// Saved Programs
+// Saved Programs - Placeholder (table doesn't exist yet)
 export const useSavedPrograms = () => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ["savedPrograms", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from("user_saved_programs(US-P)")
-        .select(`
-          id,
-          id_program,
-          note,
-          created_at,
-          Programs:id_program (
-            id,
-            name,
-            slug,
-            description
-          )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
+      // Table doesn't exist yet - return empty array
+      return [] as Array<{ id: string; Programs?: { name: string } }>;
     },
     enabled: !!user,
   });
 };
 
 export const useToggleSaveProgram = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (programId: string) => {
-      if (!user) throw new Error("Must be logged in");
-
-      const { data: existing } = await supabase
-        .from("user_saved_programs(US-P)")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("id_program", programId)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from("user_saved_programs(US-P)")
-          .delete()
-          .eq("id", existing.id);
-
-        if (error) throw error;
-        return { action: "removed" };
-      } else {
-        const { error } = await supabase
-          .from("user_saved_programs(US-P)")
-          .insert({
-            user_id: user.id,
-            id_program: programId,
-          });
-
-        if (error) throw error;
-        return { action: "added" };
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["savedPrograms"] });
       toast({
-        title: data.action === "added" ? "Program saved!" : "Program removed",
-        description: data.action === "added" 
-          ? "You can view your saved programs in your profile" 
-          : "Program removed from your saved list",
+        title: "Coming Soon",
+        description: "Save programs feature will be available in a future update.",
       });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save program",
-        variant: "destructive",
-      });
+      throw new Error("Feature not yet implemented");
     },
   });
 };

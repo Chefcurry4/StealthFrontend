@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ActivityItem {
   id: string;
-  type: "saved_course" | "saved_lab" | "saved_program" | "agreement" | "review" | "email_draft";
+  type: "saved_course" | "saved_lab" | "review" | "email_draft";
   title: string;
   description?: string;
   created_at: string;
@@ -71,49 +71,6 @@ export const useActivityTimeline = () => {
             created_at: item.created_at,
           });
         }
-      });
-
-      // Fetch saved programs
-      const { data: savedPrograms } = await supabase
-        .from("user_saved_programs(US-P)")
-        .select(`
-          id,
-          created_at,
-          program:id_program (
-            name
-          )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      savedPrograms?.forEach((item: any) => {
-        if (item.program) {
-          activities.push({
-            id: item.id,
-            type: "saved_program",
-            title: item.program.name || "Unknown Program",
-            created_at: item.created_at,
-          });
-        }
-      });
-
-      // Fetch learning agreements
-      const { data: agreements } = await supabase
-        .from("Learning_agreements(LA)")
-        .select("id, title, agreement_type, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      agreements?.forEach((item) => {
-        activities.push({
-          id: item.id,
-          type: "agreement",
-          title: item.title || "Untitled Agreement",
-          description: item.agreement_type,
-          created_at: item.created_at,
-        });
       });
 
       // Fetch course reviews

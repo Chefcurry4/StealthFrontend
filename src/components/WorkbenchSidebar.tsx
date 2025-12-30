@@ -624,13 +624,13 @@ export const WorkbenchSidebar = ({
                 </div>
               ) : (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+                  className="w-full justify-start gap-2 text-xs bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20"
                   onClick={() => setShowDraftForm(true)}
                 >
                   <Plus className="h-3 w-3" />
-                  New Email Draft
+                  Compose Email
                 </Button>
               )}
               
