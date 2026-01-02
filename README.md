@@ -9,7 +9,7 @@ An international study planning platform that helps students discover universiti
 ## Code line count 🧮 
 
 <!-- LOC_START -->
-**Stealth Total Lines of Code:** 42262
+**Stealth Total Lines of Code:** 42675
 <!-- LOC_END -->
 
 ## 📁 Project Structure
