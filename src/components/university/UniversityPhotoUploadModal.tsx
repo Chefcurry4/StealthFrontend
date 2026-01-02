@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,6 +34,7 @@ export const UniversityPhotoUploadModal = ({
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [moderating, setModerating] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -59,7 +60,7 @@ export const UniversityPhotoUploadModal = ({
 
     setUploading(true);
     try {
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage first
       const fileExt = file.name.split(".").pop();
       const fileName = `${universityId}/${user.id}-${Date.now()}.${fileExt}`;
       
@@ -74,24 +75,58 @@ export const UniversityPhotoUploadModal = ({
         .from("profile-pictures")
         .getPublicUrl(fileName);
 
+      const imageUrl = urlData.publicUrl;
+
+      // Run content moderation
+      setModerating(true);
+      try {
+        const { data: moderationResult, error: moderationError } = await supabase.functions
+          .invoke("moderate-image", {
+            body: { imageUrl },
+          });
+
+        if (moderationError) {
+          console.error("Moderation error:", moderationError);
+          // Continue anyway if moderation fails
+        } else if (moderationResult && !moderationResult.safe) {
+          // Delete the uploaded image
+          await supabase.storage.from("profile-pictures").remove([fileName]);
+          
+          toast({
+            title: "Image rejected",
+            description: moderationResult.reason || "This image doesn't meet our community guidelines",
+            variant: "destructive",
+          });
+          setUploading(false);
+          setModerating(false);
+          return;
+        }
+      } catch (modError) {
+        console.error("Moderation check failed:", modError);
+        // Continue anyway if moderation fails
+      }
+      setModerating(false);
+
       // Save to university_media table
       await uploadMutation.mutateAsync({
         university_id: universityId,
-        image_url: urlData.publicUrl,
+        image_url: imageUrl,
         type: "campus",
       });
 
       setFile(null);
       setPreview(null);
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Could not upload your photo";
       toast({
         title: "Upload failed",
-        description: error.message || "Could not upload your photo",
+        description: message,
         variant: "destructive",
       });
     } finally {
       setUploading(false);
+      setModerating(false);
     }
   };
 
@@ -149,6 +184,12 @@ export const UniversityPhotoUploadModal = ({
             </div>
           )}
 
+          {/* Security notice */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span>Images are reviewed for appropriate content before publishing</span>
+          </div>
+
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
@@ -157,7 +198,7 @@ export const UniversityPhotoUploadModal = ({
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
+                  {moderating ? "Checking..." : "Uploading..."}
                 </>
               ) : (
                 "Upload Photo"

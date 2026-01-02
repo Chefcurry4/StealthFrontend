@@ -3,3 +3,4 @@ export { UniversityContentTabs } from "./UniversityContentTabs";
 export { UniversityListCard } from "./UniversityListCard";
 export { UniversityStatsSection } from "./UniversityStatsSection";
 export { UniversityPhotoUploadModal } from "./UniversityPhotoUploadModal";
+export { ImageLightbox } from "./ImageLightbox";
