@@ -10,8 +10,8 @@ import { CourseCardSkeleton } from "@/components/skeletons/CourseCardSkeleton";
 import { Slider } from "@/components/ui/slider";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useCourses, CourseFilters } from "@/hooks/useCourses";
-import { useUniversities } from "@/hooks/useUniversities";
 import { usePrograms } from "@/hooks/usePrograms";
+import { useTopics } from "@/hooks/useTopics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -27,6 +27,7 @@ const Courses = () => {
   const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const [currentPage, setCurrentPage] = useState(1);
   const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
+  const [selectedTopic, setSelectedTopic] = useState<string>("all");
   const displayPrefs = useDisplayPreferences();
   const itemsPerPage = displayPrefs.display_items_per_page;
   const queryClient = useQueryClient();
@@ -52,7 +53,7 @@ const Courses = () => {
   const courseIds = useMemo(() => courses.map(c => c.id_course), [courses]);
   const { data: ratingsMap } = useCourseRatings(courseIds);
   
-  const { data: universities } = useUniversities();
+  const { data: topics } = useTopics();
   const { data: programs } = usePrograms();
   const { user } = useAuth();
   const { data: savedCourses } = useSavedCourses();
@@ -79,10 +80,11 @@ const Courses = () => {
   const resetFilters = () => {
     setFilters({});
     setEctsRange([0, 30]);
+    setSelectedTopic("all");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '') || ectsRange[0] !== 0 || ectsRange[1] !== 30;
+  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '') || ectsRange[0] !== 0 || ectsRange[1] !== 30 || selectedTopic !== "all";
 
   const getGridCols = () => {
     // If compact mode is enabled, show more items per row
@@ -179,17 +181,20 @@ const Courses = () => {
             {/* Filter Row 1: Dropdowns */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
               <Select 
-                value={filters.universityId || "all"} 
-                onValueChange={(value) => updateFilter("universityId", value)}
+                value={selectedTopic} 
+                onValueChange={(value) => {
+                  setSelectedTopic(value);
+                  setCurrentPage(1);
+                }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="University" />
+                  <SelectValue placeholder="Topic" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Universities</SelectItem>
-                  {universities?.map((uni) => (
-                    <SelectItem key={uni.uuid} value={uni.uuid}>
-                      {uni.name}
+                  <SelectItem value="all">All Topics</SelectItem>
+                  {topics?.map((topic) => (
+                    <SelectItem key={topic.id_topic} value={topic.topic_name}>
+                      {topic.topic_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
