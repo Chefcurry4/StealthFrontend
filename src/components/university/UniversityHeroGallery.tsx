@@ -95,9 +95,9 @@ export const UniversityHeroGallery = ({
   };
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Campus Gallery
         </h2>
         <Button
@@ -117,32 +117,32 @@ export const UniversityHeroGallery = ({
         <Button
           variant="outline"
           size="icon"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/90 backdrop-blur-sm hidden sm:flex"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/90 backdrop-blur-sm hidden sm:flex h-8 w-8"
           onClick={scrollPrev}
           disabled={!canScrollPrev && images.length <= 3}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
 
         <Button
           variant="outline"
           size="icon"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/90 backdrop-blur-sm hidden sm:flex"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/90 backdrop-blur-sm hidden sm:flex h-8 w-8"
           onClick={scrollNext}
           disabled={!canScrollNext && images.length <= 3}
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
 
-        {/* Carousel */}
+        {/* Carousel - Larger images */}
         <div className="overflow-hidden rounded-xl" ref={emblaRef}>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {images.map((image, index) => (
               <div
                 key={index}
-                className="flex-[0_0_100%] sm:flex-[0_0_calc(33.333%-11px)] min-w-0"
+                className="flex-[0_0_100%] min-w-0"
               >
-                <div className="aspect-[16/9] relative rounded-lg overflow-hidden bg-muted">
+                <div className="aspect-[16/10] relative rounded-lg overflow-hidden bg-muted">
                   <img
                     src={image}
                     alt={`${universityName} campus ${index + 1}`}
@@ -155,8 +155,8 @@ export const UniversityHeroGallery = ({
           </div>
         </div>
 
-        {/* Mobile Swipe Indicator */}
-        <div className="flex justify-center gap-2 mt-3 sm:hidden">
+        {/* Dots Indicator */}
+        <div className="flex justify-center gap-2 mt-3">
           {images.slice(0, Math.min(5, images.length)).map((_, index) => (
             <div
               key={index}
