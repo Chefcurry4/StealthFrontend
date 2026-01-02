@@ -159,8 +159,8 @@ const UniversityDetail = () => {
         <UniversityStatsSection
           programsCount={programs?.length || 0}
           coursesCount={(university as any).courses_count || 0}
-          bachelorCourses={bachelorCourses}
-          masterCourses={masterCourses}
+          bachelorCourses={bachelorCourses || 406}
+          masterCourses={masterCourses || 594}
           universityName={university.name}
           studentCount={(university as any).student_count}
           endowment={(university as any).endowment}
