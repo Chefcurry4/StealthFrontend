@@ -62,7 +62,6 @@ type SectionId =
   | "agreements" 
   | "activity" 
   | "preferences" 
-  | "appearance" 
   | "account";
 
 interface NavSection {
@@ -85,7 +84,6 @@ const navSections: NavSection[] = [
   { id: "activity", label: "Activity", icon: Activity, group: "workbench" },
   // Settings
   { id: "preferences", label: "Preferences", icon: Settings, group: "settings" },
-  { id: "appearance", label: "Appearance", icon: Palette, group: "settings" },
   { id: "account", label: "Account", icon: Trash2, group: "settings" },
 ];
 
@@ -404,46 +402,6 @@ const Profile = () => {
       case "preferences":
         return <PreferencesSettings />;
 
-      case "appearance":
-        return (
-          <Card className="bg-background/50 backdrop-blur-sm border-border/50">
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>Customize how your profile looks</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Palette className="h-4 w-4" />
-                  Flashcard Color Style
-                </Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { id: 'gradient', label: 'Default', colors: 'from-violet-500 via-purple-500 to-fuchsia-500' },
-                    { id: 'ocean', label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400' },
-                    { id: 'sunset', label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500' },
-                    { id: 'forest', label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500' },
-                  ].map((style) => (
-                    <button
-                      key={style.id}
-                      type="button"
-                      onClick={() => updateProfile.mutate({ flashcard_color_style: style.id as FlashcardColorStyle })}
-                      className={cn(
-                        "relative p-3 rounded-xl border-2 transition-all",
-                        profile?.flashcard_color_style === style.id || (!profile?.flashcard_color_style && style.id === 'gradient')
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-border hover:border-primary/50'
-                      )}
-                    >
-                      <div className={`h-12 w-full rounded-lg bg-gradient-to-br ${style.colors}`} />
-                      <p className="text-xs text-center mt-2 font-medium">{style.label}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
 
       case "account":
         return (
