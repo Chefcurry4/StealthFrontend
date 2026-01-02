@@ -9,6 +9,7 @@ import { useLab, useUniversitiesByLab, useLabs } from "@/hooks/useLabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { TeacherLink } from "@/components/TeacherLink";
+import { TopicDescriptionPopup } from "@/components/TopicDescriptionPopup";
 import { SEO, generateLabSchema, generateBreadcrumbSchema } from "@/components/SEO";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
@@ -186,18 +187,16 @@ const LabDetail = () => {
                     <div>
                       <h3 className="font-semibold mb-3 flex items-center gap-2">
                         Research Areas
-                        <span className="text-xs opacity-70">(click to explore similar labs)</span>
+                        <span className="text-xs opacity-70">(click for description)</span>
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {topics.map((topic, idx) => (
-                          <Badge 
-                            key={idx} 
-                            variant="secondary"
-                            className="cursor-pointer bg-white/20 hover:bg-white/40 transition-colors"
-                            onClick={() => setActiveFilter({type: 'topic', value: topic})}
-                          >
-                            {topic}
-                          </Badge>
+                          <TopicDescriptionPopup
+                            key={idx}
+                            topicName={topic}
+                            variant="badge"
+                            className="bg-white/20 hover:bg-white/40"
+                          />
                         ))}
                       </div>
                     </div>
