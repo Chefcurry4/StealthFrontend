@@ -166,8 +166,8 @@ const Statistics = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{universities?.length || 0}</div>
-              <p className="text-xs opacity-70 mt-1">Partner institutions</p>
+              <div className="text-3xl font-bold">{1}</div>
+              <p className="text-xs opacity-70 mt-1">Tracked institutions</p>
             </CardContent>
           </Card>
 
