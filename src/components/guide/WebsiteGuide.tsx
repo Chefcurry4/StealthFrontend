@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, 
-  Microscope, Bot, BookMarked, Search, User, Sparkles,
-  Home, MessageCircle
+  Microscope, Bot, BookMarked, User, Sparkles,
+  MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,8 +17,8 @@ interface GuideStep {
   emoji: string;
   features: string[];
   color: string;
-  route?: string; // Optional route to navigate to
-  avatarMessage: string; // What the avatar says
+  route: string;
+  avatarMessage: string;
 }
 
 const guideSteps: GuideStep[] = [
@@ -37,22 +37,6 @@ const guideSteps: GuideStep[] = [
     color: "from-primary/20 to-primary/5",
     route: "/",
     avatarMessage: "Hi there! I'm so excited to show you around. Let's explore together!"
-  },
-  {
-    id: "search",
-    title: "Global Search",
-    description: "Find anything instantly! Use Ctrl+K (or Cmd+K) to open the search from anywhere.",
-    icon: Search,
-    emoji: "🔍",
-    features: [
-      "Search universities, courses, labs",
-      "Smart autocomplete suggestions",
-      "Filter by category type",
-      "Recent searches saved"
-    ],
-    color: "from-blue-500/20 to-blue-500/5",
-    route: "/",
-    avatarMessage: "Pro tip: Press Ctrl+K anytime to search. It's super fast!"
   },
   {
     id: "universities",
@@ -160,6 +144,7 @@ interface WebsiteGuideProps {
 
 export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -168,75 +153,88 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
   const step = guideSteps[currentStep];
   const Icon = step.icon;
 
-  const handleNext = () => {
+  const navigateToStep = useCallback((stepIndex: number) => {
+    const targetStep = guideSteps[stepIndex];
+    if (targetStep.route !== location.pathname) {
+      setIsNavigating(true);
+      navigate(targetStep.route);
+      // Wait for navigation to complete
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 300);
+    }
+  }, [location.pathname, navigate]);
+
+  const handleNext = useCallback(() => {
     if (currentStep < totalSteps - 1) {
-      const nextStep = guideSteps[currentStep + 1];
-      setCurrentStep(currentStep + 1);
-      // Navigate to the next step's route if different
-      if (nextStep.route && nextStep.route !== location.pathname) {
-        navigate(nextStep.route);
-      }
+      const nextIndex = currentStep + 1;
+      setCurrentStep(nextIndex);
+      navigateToStep(nextIndex);
     } else {
       onComplete();
-      navigate("/"); // Return to home on completion
+      navigate("/");
     }
-  };
+  }, [currentStep, totalSteps, navigateToStep, onComplete, navigate]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentStep > 0) {
-      const prevStep = guideSteps[currentStep - 1];
-      setCurrentStep(currentStep - 1);
-      if (prevStep.route && prevStep.route !== location.pathname) {
-        navigate(prevStep.route);
-      }
+      const prevIndex = currentStep - 1;
+      setCurrentStep(prevIndex);
+      navigateToStep(prevIndex);
     }
-  };
+  }, [currentStep, navigateToStep]);
 
-  const handleSkip = () => {
+  const handleSkip = useCallback(() => {
     onComplete();
     navigate("/");
-  };
+  }, [onComplete, navigate]);
 
-  const goToStep = (index: number) => {
+  const goToStep = useCallback((index: number) => {
     setCurrentStep(index);
-    const targetStep = guideSteps[index];
-    if (targetStep.route && targetStep.route !== location.pathname) {
-      navigate(targetStep.route);
-    }
-  };
+    navigateToStep(index);
+  }, [navigateToStep]);
 
   // Navigate to initial route when guide opens
   useEffect(() => {
-    if (isOpen && guideSteps[0].route && location.pathname !== guideSteps[0].route) {
-      navigate(guideSteps[0].route);
+    if (isOpen && currentStep === 0) {
+      navigateToStep(0);
+    }
+  }, [isOpen, currentStep, navigateToStep]);
+
+  // Reset step when guide closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep(0);
     }
   }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
+      if (!isOpen || isNavigating) return;
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, currentStep]);
+  }, [isOpen, isNavigating, handleNext, handlePrev, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
+    <>
       {/* Overlay that darkens the background but still shows it */}
       <motion.div
+        key="guide-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm pointer-events-none"
       />
       
       {/* Floating avatar guide in bottom left */}
       <motion.div
+        key="guide-avatar"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -263,27 +261,31 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
           </motion.div>
           
           {/* Speech bubble */}
-          <motion.div
-            key={step.id}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="relative bg-card rounded-2xl shadow-xl border p-4 max-w-sm"
-          >
-            {/* Triangle pointer */}
-            <div className="absolute -left-2 bottom-4 w-4 h-4 bg-card border-l border-b rotate-45" />
-            
-            <div className="flex items-center gap-2 mb-2">
-              <MessageCircle className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">Guide</span>
-            </div>
-            <p className="text-sm leading-relaxed">{step.avatarMessage}</p>
-          </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`bubble-${step.id}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative bg-card rounded-2xl shadow-xl border p-4 max-w-sm"
+            >
+              {/* Triangle pointer */}
+              <div className="absolute -left-2 bottom-4 w-4 h-4 bg-card border-l border-b rotate-45" />
+              
+              <div className="flex items-center gap-2 mb-2">
+                <MessageCircle className="h-4 w-4 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">Guide</span>
+              </div>
+              <p className="text-sm leading-relaxed">{step.avatarMessage}</p>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
 
       {/* Main guide card - positioned at top right */}
       <motion.div
+        key="guide-card"
         initial={{ x: 50, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 50, opacity: 0 }}
@@ -307,9 +309,9 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
           <div className="p-5">
             {/* Step indicator dots */}
             <div className="flex items-center justify-center gap-1.5 mb-4">
-              {guideSteps.map((_, index) => (
+              {guideSteps.map((s, index) => (
                 <button
-                  key={index}
+                  key={`dot-${s.id}`}
                   onClick={() => goToStep(index)}
                   className={`h-2 rounded-full transition-all ${
                     index === currentStep
@@ -324,7 +326,7 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={step.id}
+                key={`content-${step.id}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -348,7 +350,7 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {step.features.map((feature, index) => (
                     <motion.div
-                      key={feature}
+                      key={`${step.id}-feature-${index}`}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05 }}
@@ -378,13 +380,18 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
               <Button
                 variant="outline"
                 onClick={handlePrev}
-                disabled={currentStep === 0}
+                disabled={currentStep === 0 || isNavigating}
                 size="icon"
                 className="h-8 w-8"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button onClick={handleNext} size="sm" className="min-w-[80px]">
+              <Button 
+                onClick={handleNext} 
+                size="sm" 
+                className="min-w-[80px]"
+                disabled={isNavigating}
+              >
                 {currentStep === totalSteps - 1 ? (
                   "Finish!"
                 ) : (
@@ -397,6 +404,6 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </>
   );
 };
