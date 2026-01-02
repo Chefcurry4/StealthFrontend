@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import useEmblaCarousel from "embla-carousel-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { ImageLightbox } from "./ImageLightbox";
 
 // Import EPFL-specific images
 import epflCampus1 from "@/assets/universities/epfl-campus-1.jpg";
@@ -58,6 +59,8 @@ export const UniversityHeroGallery = ({
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const images = getUniversityImages(universityName, universityId, media);
 
@@ -92,6 +95,11 @@ export const UniversityHeroGallery = ({
       return;
     }
     onUploadClick?.();
+  };
+
+  const handleImageClick = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
   };
 
   return (
@@ -140,15 +148,21 @@ export const UniversityHeroGallery = ({
             {images.map((image, index) => (
               <div
                 key={index}
-                className="flex-[0_0_100%] min-w-0"
+                className="flex-[0_0_100%] min-w-0 cursor-pointer"
+                onClick={() => handleImageClick(index)}
               >
-                <div className="aspect-[16/10] relative rounded-lg overflow-hidden bg-muted">
+                <div className="aspect-[16/10] relative rounded-lg overflow-hidden bg-muted group">
                   <img
                     src={image}
                     alt={`${universityName} campus ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
                   />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">
+                      Click to enlarge
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -165,6 +179,15 @@ export const UniversityHeroGallery = ({
           ))}
         </div>
       </div>
+
+      {/* Lightbox */}
+      <ImageLightbox
+        images={images}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        universityName={universityName}
+      />
     </div>
   );
 };

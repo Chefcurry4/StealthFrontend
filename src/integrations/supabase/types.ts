@@ -832,35 +832,47 @@ export type Database = {
       }
       "Universities(U)": {
         Row: {
+          campus_area: string | null
           coordinates: unknown
           country: string | null
           country_code: string | null
+          courses_count: number | null
           created_at: string | null
+          endowment: string | null
           logo_url: string | null
           name: string
           slug: string
+          student_count: number | null
           uuid: string
           website: string | null
         }
         Insert: {
+          campus_area?: string | null
           coordinates?: unknown
           country?: string | null
           country_code?: string | null
+          courses_count?: number | null
           created_at?: string | null
+          endowment?: string | null
           logo_url?: string | null
           name: string
           slug: string
+          student_count?: number | null
           uuid?: string
           website?: string | null
         }
         Update: {
+          campus_area?: string | null
           coordinates?: unknown
           country?: string | null
           country_code?: string | null
+          courses_count?: number | null
           created_at?: string | null
+          endowment?: string | null
           logo_url?: string | null
           name?: string
           slug?: string
+          student_count?: number | null
           uuid?: string
           website?: string | null
         }

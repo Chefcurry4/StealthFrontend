@@ -158,10 +158,13 @@ const UniversityDetail = () => {
         {/* Statistics Section at Bottom */}
         <UniversityStatsSection
           programsCount={programs?.length || 0}
-          coursesCount={courses?.length || 0}
+          coursesCount={(university as any).courses_count || 0}
           bachelorCourses={bachelorCourses}
           masterCourses={masterCourses}
           universityName={university.name}
+          studentCount={(university as any).student_count}
+          endowment={(university as any).endowment}
+          campusArea={(university as any).campus_area}
         />
       </div>
 

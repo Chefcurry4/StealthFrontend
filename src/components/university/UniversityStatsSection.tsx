@@ -7,10 +7,10 @@ interface UniversityStatsSectionProps {
   bachelorCourses?: number;
   masterCourses?: number;
   universityName?: string;
-  // Extended stats for rich display
-  studentCount?: number;
-  endowment?: string;
-  campusArea?: string;
+  // Extended stats from database
+  studentCount?: number | null;
+  endowment?: string | null;
+  campusArea?: string | null;
 }
 
 export const UniversityStatsSection = ({
@@ -37,17 +37,17 @@ export const UniversityStatsSection = ({
     },
     {
       label: "Students",
-      value: studentCount ? studentCount.toLocaleString() : "~12,000",
+      value: studentCount ? studentCount.toLocaleString() : "N/A",
       icon: Users,
     },
     {
       label: "Endowment",
-      value: endowment || "~$1.2B",
+      value: endowment || "N/A",
       icon: DollarSign,
     },
     {
       label: "Campus Area",
-      value: campusArea || "136 acres",
+      value: campusArea || "N/A",
       icon: MapPin,
     },
   ];
