@@ -2,13 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAIConversations, useDeleteConversation, useUpdateConversation } from "@/hooks/useAIConversations";
 import { useSavedCourses, useSavedLabs } from "@/hooks/useSavedItems";
-import { useEmailDrafts, useCreateEmailDraft, useDeleteEmailDraft } from "@/hooks/useEmailDrafts";
+import { useEmailDrafts, useDeleteEmailDraft } from "@/hooks/useEmailDrafts";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Collapsible,
@@ -93,10 +92,6 @@ export const WorkbenchSidebar = ({
   onReferenceEmailDraft,
 }: WorkbenchSidebarProps) => {
   const [openSections, setOpenSections] = useState<string[]>(["chats"]);
-  const [showDraftForm, setShowDraftForm] = useState(false);
-  const [draftSubject, setDraftSubject] = useState("");
-  const [draftRecipient, setDraftRecipient] = useState("");
-  const [draftBody, setDraftBody] = useState("");
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,7 +110,6 @@ export const WorkbenchSidebar = ({
   const { data: userDocuments } = useUserDocuments();
   const deleteConversation = useDeleteConversation();
   const updateConversation = useUpdateConversation();
-  const createEmailDraft = useCreateEmailDraft();
   const deleteEmailDraft = useDeleteEmailDraft();
 
   // Focus input when editing starts
@@ -565,78 +559,9 @@ export const WorkbenchSidebar = ({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {/* New Draft Button / Form */}
-              {showDraftForm ? (
-                <div className="p-2 space-y-2 bg-accent/30 rounded-lg">
-                  <Input
-                    placeholder="Recipient email"
-                    value={draftRecipient}
-                    onChange={(e) => setDraftRecipient(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  <Input
-                    placeholder="Subject"
-                    value={draftSubject}
-                    onChange={(e) => setDraftSubject(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  <Textarea
-                    placeholder="Email body..."
-                    value={draftBody}
-                    onChange={(e) => setDraftBody(e.target.value)}
-                    className="text-xs min-h-[60px] resize-none"
-                  />
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      className="flex-1 h-7 text-xs"
-                      onClick={async () => {
-                        if (draftSubject.trim() || draftBody.trim()) {
-                          await createEmailDraft.mutateAsync({
-                            subject: draftSubject,
-                            body: draftBody,
-                            recipient: draftRecipient,
-                          });
-                          setDraftSubject("");
-                          setDraftBody("");
-                          setDraftRecipient("");
-                          setShowDraftForm(false);
-                        }
-                      }}
-                      disabled={createEmailDraft.isPending}
-                    >
-                      {createEmailDraft.isPending ? "Saving..." : "Save"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs"
-                      onClick={() => {
-                        setShowDraftForm(false);
-                        setDraftSubject("");
-                        setDraftBody("");
-                        setDraftRecipient("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-xs bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20"
-                  onClick={() => setShowDraftForm(true)}
-                >
-                  <Plus className="h-3 w-3" />
-                  Compose Email
-                </Button>
-              )}
-              
-              {filteredDrafts?.length === 0 && !showDraftForm ? (
+              {filteredDrafts?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
-                  {searchQuery ? "No matching drafts" : "No email drafts"}
+                  {searchQuery ? "No matching drafts" : "No email drafts yet"}
                 </p>
               ) : (
                 filteredDrafts?.slice(0, 5).map((draft) => (

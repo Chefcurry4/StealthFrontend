@@ -130,6 +130,30 @@ export type Database = {
         }
         Relationships: []
       }
+      "bridge_lp(L-P)": {
+        Row: {
+          id_bridge_lp: string
+          lab_id: string
+          lab_slug: string
+          program_id: string
+          program_slug: string
+        }
+        Insert: {
+          id_bridge_lp: string
+          lab_id: string
+          lab_slug: string
+          program_id: string
+          program_slug: string
+        }
+        Update: {
+          id_bridge_lp?: string
+          lab_id?: string
+          lab_slug?: string
+          program_id?: string
+          program_slug?: string
+        }
+        Relationships: []
+      }
       "bridge_tc(T-C)": {
         Row: {
           course_code: string
@@ -151,6 +175,57 @@ export type Database = {
           id_course?: string
           id_teacher?: string | null
           professor_name?: string
+        }
+        Relationships: []
+      }
+      "bridge_topc(TOP-C)": {
+        Row: {
+          bridge_id: string
+          course_code: string | null
+          course_id: string | null
+          course_name: string | null
+          topic_id: string | null
+          topic_name: string | null
+        }
+        Insert: {
+          bridge_id?: string
+          course_code?: string | null
+          course_id?: string | null
+          course_name?: string | null
+          topic_id?: string | null
+          topic_name?: string | null
+        }
+        Update: {
+          bridge_id?: string
+          course_code?: string | null
+          course_id?: string | null
+          course_name?: string | null
+          topic_id?: string | null
+          topic_name?: string | null
+        }
+        Relationships: []
+      }
+      "bridge_topl(TOP-L)": {
+        Row: {
+          lab_slug: string | null
+          topic_name: string | null
+          uuid_bridge: string
+          uuid_lab: string | null
+          uuid_topic: string | null
+        }
+        Insert: {
+          lab_slug?: string | null
+          topic_name?: string | null
+          uuid_bridge?: string
+          uuid_lab?: string | null
+          uuid_topic?: string | null
+        }
+        Update: {
+          lab_slug?: string | null
+          topic_name?: string | null
+          uuid_bridge?: string
+          uuid_lab?: string | null
+          uuid_topic?: string | null
         }
         Relationships: []
       }
@@ -734,6 +809,24 @@ export type Database = {
           name?: string | null
           topics?: string[] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      "Topics(TOP)": {
+        Row: {
+          descriptions: string | null
+          id_topic: string
+          topic_name: string
+        }
+        Insert: {
+          descriptions?: string | null
+          id_topic: string
+          topic_name: string
+        }
+        Update: {
+          descriptions?: string | null
+          id_topic?: string
+          topic_name?: string
         }
         Relationships: []
       }

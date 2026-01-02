@@ -135,7 +135,7 @@ export const Header = () => {
                   <User className="h-4 w-4 mr-2" />
                   My Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/profile?tab=workbench")}>
+                <DropdownMenuItem onClick={() => navigate("/profile?section=saved")}>
                   <Bookmark className="h-4 w-4 mr-2" />
                   Saved Items
                 </DropdownMenuItem>
