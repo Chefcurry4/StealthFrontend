@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProfile";
 import { useUpdatePreferences } from "@/hooks/useUserPreferences";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Globe, LayoutGrid, Mail, Star, FileText, Palette, Sun, Moon, Lock } from "lucide-react";
+import { Bell, Globe, LayoutGrid, Mail, Star, Palette, Sun, Moon, Lock, User } from "lucide-react";
 import { Loader } from "@/components/Loader";
 import { ThemePreviewCard } from "./ThemePreviewCard";
 import { ThemeId, ThemeMode } from "@/themes/types";
 import { THEMES } from "@/themes/constants";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { FlashcardColorStyle } from "@/components/UserFlashcard";
+import { cn } from "@/lib/utils";
 
 export const PreferencesSettings = () => {
   const { data: profile, isLoading } = useUserProfile();
   const updatePreferences = useUpdatePreferences();
+  const updateProfile = useUpdateProfile();
   const { themeId: currentThemeId, mode: currentMode, setBackgroundTheme, toggleMode } = useBackgroundTheme();
 
   const [preferences, setPreferences] = useState({
@@ -319,6 +322,48 @@ export const PreferencesSettings = () => {
                 <SelectItem value="50">50</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Appearance - Flashcard Style */}
+      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            <CardTitle>Profile Appearance</CardTitle>
+          </div>
+          <CardDescription>Customize how your profile card looks</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              Flashcard Color Style
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { id: 'gradient', label: 'Default', colors: 'from-violet-500 via-purple-500 to-fuchsia-500' },
+                { id: 'ocean', label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400' },
+                { id: 'sunset', label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500' },
+                { id: 'forest', label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500' },
+              ].map((style) => (
+                <button
+                  key={style.id}
+                  type="button"
+                  onClick={() => updateProfile.mutate({ flashcard_color_style: style.id as FlashcardColorStyle })}
+                  className={cn(
+                    "relative p-3 rounded-xl border-2 transition-all",
+                    profile?.flashcard_color_style === style.id || (!profile?.flashcard_color_style && style.id === 'gradient')
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <div className={`h-12 w-full rounded-lg bg-gradient-to-br ${style.colors}`} />
+                  <p className="text-xs text-center mt-2 font-medium">{style.label}</p>
+                </button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

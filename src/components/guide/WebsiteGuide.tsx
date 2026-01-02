@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, 
   Microscope, Bot, BookMarked, User, Sparkles,
-  MessageCircle
+  MessageCircle, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Link } from "react-router-dom";
 
 interface GuideStep {
   id: string;
@@ -19,6 +19,7 @@ interface GuideStep {
   color: string;
   route: string;
   avatarMessage: string;
+  screenshot?: string;
 }
 
 const guideSteps: GuideStep[] = [
@@ -144,62 +145,33 @@ interface WebsiteGuideProps {
 
 export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
   
   const totalSteps = guideSteps.length;
   const progress = ((currentStep + 1) / totalSteps) * 100;
   const step = guideSteps[currentStep];
   const Icon = step.icon;
 
-  const navigateToStep = useCallback((stepIndex: number) => {
-    const targetStep = guideSteps[stepIndex];
-    if (targetStep.route !== location.pathname) {
-      setIsNavigating(true);
-      navigate(targetStep.route);
-      // Wait for navigation to complete
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 300);
-    }
-  }, [location.pathname, navigate]);
-
   const handleNext = useCallback(() => {
     if (currentStep < totalSteps - 1) {
-      const nextIndex = currentStep + 1;
-      setCurrentStep(nextIndex);
-      navigateToStep(nextIndex);
+      setCurrentStep(currentStep + 1);
     } else {
       onComplete();
-      navigate("/");
     }
-  }, [currentStep, totalSteps, navigateToStep, onComplete, navigate]);
+  }, [currentStep, totalSteps, onComplete]);
 
   const handlePrev = useCallback(() => {
     if (currentStep > 0) {
-      const prevIndex = currentStep - 1;
-      setCurrentStep(prevIndex);
-      navigateToStep(prevIndex);
+      setCurrentStep(currentStep - 1);
     }
-  }, [currentStep, navigateToStep]);
+  }, [currentStep]);
 
   const handleSkip = useCallback(() => {
     onComplete();
-    navigate("/");
-  }, [onComplete, navigate]);
+  }, [onComplete]);
 
   const goToStep = useCallback((index: number) => {
     setCurrentStep(index);
-    navigateToStep(index);
-  }, [navigateToStep]);
-
-  // Navigate to initial route when guide opens
-  useEffect(() => {
-    if (isOpen && currentStep === 0) {
-      navigateToStep(0);
-    }
-  }, [isOpen, currentStep, navigateToStep]);
+  }, []);
 
   // Reset step when guide closes
   useEffect(() => {
@@ -210,88 +182,38 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen || isNavigating) return;
+      if (!isOpen) return;
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isNavigating, handleNext, handlePrev, onClose]);
+  }, [isOpen, handleNext, handlePrev, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Overlay that darkens the background but still shows it */}
+    <AnimatePresence>
+      {/* Full screen overlay */}
       <motion.div
         key="guide-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm pointer-events-none"
-      />
-      
-      {/* Floating avatar guide in bottom left */}
-      <motion.div
-        key="guide-avatar"
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        transition={{ type: "spring", damping: 20 }}
-        className="fixed bottom-6 left-6 z-[101] max-w-md"
+        className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        {/* Avatar with speech bubble */}
-        <div className="flex items-end gap-3">
-          {/* Avatar */}
-          <motion.div
-            animate={{ 
-              y: [0, -5, 0],
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="shrink-0"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg border-2 border-background">
-              <span className="text-3xl">📚</span>
-            </div>
-          </motion.div>
-          
-          {/* Speech bubble */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`bubble-${step.id}`}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative bg-card rounded-2xl shadow-xl border p-4 max-w-sm"
-            >
-              {/* Triangle pointer */}
-              <div className="absolute -left-2 bottom-4 w-4 h-4 bg-card border-l border-b rotate-45" />
-              
-              <div className="flex items-center gap-2 mb-2">
-                <MessageCircle className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">Guide</span>
-              </div>
-              <p className="text-sm leading-relaxed">{step.avatarMessage}</p>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </motion.div>
-
-      {/* Main guide card - positioned at top right */}
-      <motion.div
-        key="guide-card"
-        initial={{ x: 50, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: 50, opacity: 0 }}
-        className="fixed top-20 right-6 z-[101] w-full max-w-sm"
-      >
-        <div className="bg-card rounded-2xl shadow-2xl border overflow-hidden">
+        {/* Main guide modal */}
+        <motion.div
+          key="guide-modal"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="relative w-full max-w-2xl bg-card rounded-2xl shadow-2xl border overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Progress bar */}
           <div className="h-1">
             <Progress value={progress} className="h-1 rounded-none" />
@@ -300,25 +222,24 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-muted transition-colors"
+            className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-muted transition-colors"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
 
-          {/* Content */}
-          <div className="p-5">
+          <div className="p-6 sm:p-8">
             {/* Step indicator dots */}
-            <div className="flex items-center justify-center gap-1.5 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-6">
               {guideSteps.map((s, index) => (
                 <button
                   key={`dot-${s.id}`}
                   onClick={() => goToStep(index)}
-                  className={`h-2 rounded-full transition-all ${
+                  className={`h-2.5 rounded-full transition-all ${
                     index === currentStep
-                      ? "w-6 bg-primary"
+                      ? "w-8 bg-primary"
                       : index < currentStep
-                      ? "w-2 bg-primary/50"
-                      : "w-2 bg-muted"
+                      ? "w-2.5 bg-primary/50"
+                      : "w-2.5 bg-muted"
                   }`}
                 />
               ))}
@@ -327,73 +248,118 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
             <AnimatePresence mode="wait">
               <motion.div
                 key={`content-${step.id}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col sm:flex-row gap-6"
               >
-                {/* Icon and title */}
-                <div className={`mx-auto w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4`}>
-                  <span className="text-2xl">{step.emoji}</span>
+                {/* Left side - Avatar and message */}
+                <div className="flex-shrink-0 flex flex-col items-center sm:items-start">
+                  {/* Avatar */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -5, 0],
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg border-2 border-background`}>
+                      <span className="text-4xl">{step.emoji}</span>
+                    </div>
+                  </motion.div>
+                  
+                  {/* Speech bubble */}
+                  <div className="mt-4 relative bg-muted/50 rounded-xl p-4 max-w-[240px]">
+                    <div className="absolute -top-2 left-8 w-4 h-4 bg-muted/50 rotate-45" />
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageCircle className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-medium text-muted-foreground">Guide</span>
+                    </div>
+                    <p className="text-sm leading-relaxed">{step.avatarMessage}</p>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Icon className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-bold">{step.title}</h2>
-                </div>
+                {/* Right side - Content */}
+                <div className="flex-1">
+                  {/* Icon and title */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center`}>
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold">{step.title}</h2>
+                  </div>
 
-                <p className="text-sm text-muted-foreground text-center mb-4">
-                  {step.description}
-                </p>
+                  <p className="text-muted-foreground mb-4">
+                    {step.description}
+                  </p>
 
-                {/* Features */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {step.features.map((feature, index) => (
-                    <motion.div
-                      key={`${step.id}-feature-${index}`}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50 text-xs"
+                  {/* Features */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                    {step.features.map((feature, index) => (
+                      <motion.div
+                        key={`${step.id}-feature-${index}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 text-sm"
+                      >
+                        <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                        <span>{feature}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Visit page link */}
+                  {step.route !== "/" && (
+                    <Link
+                      to={step.route}
+                      onClick={onClose}
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                     >
-                      <Sparkles className="h-3 w-3 text-primary shrink-0" />
-                      <span className="line-clamp-1">{feature}</span>
-                    </motion.div>
-                  ))}
+                      <ExternalLink className="h-4 w-4" />
+                      Visit this page
+                    </Link>
+                  )}
                 </div>
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between px-5 pb-5">
+          <div className="flex items-center justify-between px-6 sm:px-8 pb-6 sm:pb-8 pt-2 border-t bg-muted/20">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSkip}
-              className="text-xs text-muted-foreground"
+              className="text-muted-foreground"
             >
               Skip Tour
             </Button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 onClick={handlePrev}
-                disabled={currentStep === 0 || isNavigating}
+                disabled={currentStep === 0}
                 size="icon"
-                className="h-8 w-8"
+                className="h-9 w-9"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
+              <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                {currentStep + 1} / {totalSteps}
+              </span>
               <Button 
                 onClick={handleNext} 
                 size="sm" 
-                className="min-w-[80px]"
-                disabled={isNavigating}
+                className="min-w-[100px]"
               >
                 {currentStep === totalSteps - 1 ? (
-                  "Finish!"
+                  "Get Started!"
                 ) : (
                   <>
                     Next <ChevronRight className="h-4 w-4 ml-1" />
@@ -402,8 +368,8 @@ export const WebsiteGuide = ({ isOpen, onClose, onComplete }: WebsiteGuideProps)
               </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
-    </>
+    </AnimatePresence>
   );
 };
