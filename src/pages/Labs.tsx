@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { LabCardImage } from "@/components/LabCardImage";
 import { useLabs, LabFilters } from "@/hooks/useLabs";
-import { useTopics } from "@/hooks/useTopics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { useLabSaveCounts } from "@/hooks/useLabSaveCounts";
@@ -18,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
 import { SEO } from "@/components/SEO";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { TopicFilterMultiSelect } from "@/components/TopicFilterMultiSelect";
 
 type SortOption = 'name-asc' | 'name-desc' | 'most-saved';
 type DisplaySize = '5' | '7' | '10';
@@ -25,12 +25,11 @@ type DisplaySize = '5' | '7' | '10';
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
   const [researchDomain, setResearchDomain] = useState<string>('');
-  const [selectedTopic, setSelectedTopic] = useState<string>('all');
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
   const displayPrefs = useDisplayPreferences();
   const { data: labs, isLoading, error, refetch } = useLabs(filters);
-  const { data: topics } = useTopics();
   const { user } = useAuth();
   const { data: savedLabs } = useSavedLabs();
   const { data: labSaveCounts } = useLabSaveCounts();
@@ -38,12 +37,12 @@ const Labs = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const hasActiveFilters = filters.search || filters.facultyArea || researchDomain || selectedTopic !== 'all';
+  const hasActiveFilters = filters.search || filters.facultyArea || researchDomain || selectedTopics.length > 0;
 
   const resetFilters = () => {
     setFilters({});
     setResearchDomain('');
-    setSelectedTopic('all');
+    setSelectedTopics([]);
     setSortBy('name-asc');
     setDisplaySize('5');
   };
@@ -100,10 +99,13 @@ const Labs = () => {
 
   // Filter labs by topic and research domain
   const filteredLabs = labs?.filter(lab => {
-    // Topic filter
-    if (selectedTopic !== 'all') {
+    // Topic filter - support multiple topics
+    if (selectedTopics.length > 0) {
       const labTopics = lab.topics?.toLowerCase() || '';
-      if (!labTopics.includes(selectedTopic.toLowerCase())) return false;
+      const hasMatchingTopic = selectedTopics.some(topic => 
+        labTopics.includes(topic.toLowerCase())
+      );
+      if (!hasMatchingTopic) return false;
     }
     
     // Research domain filter
@@ -206,22 +208,10 @@ const Labs = () => {
               )}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Select 
-                value={selectedTopic} 
-                onValueChange={setSelectedTopic}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Topics</SelectItem>
-                  {topics?.map((topic) => (
-                    <SelectItem key={topic.id_topic} value={topic.topic_name}>
-                      {topic.topic_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TopicFilterMultiSelect
+                selectedTopics={selectedTopics}
+                onTopicsChange={setSelectedTopics}
+              />
 
               <Select 
                 value={filters.facultyArea || "all"} 

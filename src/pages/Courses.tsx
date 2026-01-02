@@ -11,7 +11,6 @@ import { Slider } from "@/components/ui/slider";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useCourses, CourseFilters } from "@/hooks/useCourses";
 import { usePrograms } from "@/hooks/usePrograms";
-import { useTopics } from "@/hooks/useTopics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -19,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
 import { useCourseRatings } from "@/hooks/useCourseRatings";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { TopicFilterMultiSelect } from "@/components/TopicFilterMultiSelect";
 
 type DisplaySize = '5' | '7' | '10';
 
@@ -27,7 +27,7 @@ const Courses = () => {
   const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const [currentPage, setCurrentPage] = useState(1);
   const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
-  const [selectedTopic, setSelectedTopic] = useState<string>("all");
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const displayPrefs = useDisplayPreferences();
   const itemsPerPage = displayPrefs.display_items_per_page;
   const queryClient = useQueryClient();
@@ -39,21 +39,33 @@ const Courses = () => {
     await refetch();
   }, [queryClient, refetch]);
 
+  // Filter courses by selected topics
+  const filteredCourses = useMemo(() => {
+    if (!allCourses) return [];
+    if (selectedTopics.length === 0) return allCourses;
+    
+    return allCourses.filter(course => {
+      const courseTopics = course.topics?.toLowerCase() || '';
+      return selectedTopics.some(topic => 
+        courseTopics.includes(topic.toLowerCase())
+      );
+    });
+  }, [allCourses, selectedTopics]);
+
   const { courses, totalPages } = useMemo(() => {
-    if (!allCourses) return { courses: [], totalPages: 0 };
+    if (!filteredCourses.length) return { courses: [], totalPages: 0 };
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return {
-      courses: allCourses.slice(startIndex, endIndex),
-      totalPages: Math.ceil(allCourses.length / itemsPerPage)
+      courses: filteredCourses.slice(startIndex, endIndex),
+      totalPages: Math.ceil(filteredCourses.length / itemsPerPage)
     };
-  }, [allCourses, currentPage]);
+  }, [filteredCourses, currentPage, itemsPerPage]);
   
   // Fetch ratings for current page courses
   const courseIds = useMemo(() => courses.map(c => c.id_course), [courses]);
   const { data: ratingsMap } = useCourseRatings(courseIds);
   
-  const { data: topics } = useTopics();
   const { data: programs } = usePrograms();
   const { user } = useAuth();
   const { data: savedCourses } = useSavedCourses();
@@ -80,11 +92,11 @@ const Courses = () => {
   const resetFilters = () => {
     setFilters({});
     setEctsRange([0, 30]);
-    setSelectedTopic("all");
+    setSelectedTopics([]);
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '') || ectsRange[0] !== 0 || ectsRange[1] !== 30 || selectedTopic !== "all";
+  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '') || ectsRange[0] !== 0 || ectsRange[1] !== 30 || selectedTopics.length > 0;
 
   const getGridCols = () => {
     // If compact mode is enabled, show more items per row
@@ -180,25 +192,13 @@ const Courses = () => {
             
             {/* Filter Row 1: Dropdowns */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-              <Select 
-                value={selectedTopic} 
-                onValueChange={(value) => {
-                  setSelectedTopic(value);
+              <TopicFilterMultiSelect
+                selectedTopics={selectedTopics}
+                onTopicsChange={(topics) => {
+                  setSelectedTopics(topics);
                   setCurrentPage(1);
                 }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Topics</SelectItem>
-                  {topics?.map((topic) => (
-                    <SelectItem key={topic.id_topic} value={topic.topic_name}>
-                      {topic.topic_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
 
               <Select 
                 value={filters.programId || "all"} 

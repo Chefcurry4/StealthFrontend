@@ -1,8 +1,8 @@
-import { Link } from "react-router-dom";
 import { User, Wrench, Info, BookOpen, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeacherLink } from "@/components/TeacherLink";
+import { TopicDescriptionPopup } from "@/components/TopicDescriptionPopup";
 import {
   Tooltip,
   TooltipContent,
@@ -145,18 +145,12 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
           {topics.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {topics.map((topic, idx) => (
-                <Link 
+                <TopicDescriptionPopup 
                   key={idx}
-                  to={`/courses?search=${encodeURIComponent(topic)}`}
-                  className="inline-block"
-                >
-                  <Badge 
-                    variant="secondary" 
-                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs px-2.5 py-1"
-                  >
-                    {topic}
-                  </Badge>
-                </Link>
+                  topicName={topic}
+                  variant="badge"
+                  className="text-xs px-2.5 py-1"
+                />
               ))}
             </div>
           ) : (
