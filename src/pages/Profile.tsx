@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProfile";
 import { useProfilePictureUpload } from "@/hooks/useProfilePicture";
 import { useUniversities } from "@/hooks/useUniversities";
@@ -92,13 +92,16 @@ const navSections: NavSection[] = [
 const Profile = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: universities } = useUniversities();
   const updateProfile = useUpdateProfile();
   const uploadPicture = useProfilePictureUpload();
 
-  const [activeSection, setActiveSection] = useState<SectionId>("profile");
+  // Read section from URL params
+  const sectionFromUrl = searchParams.get("section") as SectionId | null;
+  const [activeSection, setActiveSection] = useState<SectionId>(sectionFromUrl || "profile");
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
@@ -109,6 +112,13 @@ const Profile = () => {
   });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update activeSection when URL params change
+  useEffect(() => {
+    if (sectionFromUrl && navSections.some(s => s.id === sectionFromUrl)) {
+      setActiveSection(sectionFromUrl);
+    }
+  }, [sectionFromUrl]);
 
   if (authLoading || profileLoading) {
     return <Loader fullScreen />;

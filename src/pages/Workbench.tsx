@@ -35,6 +35,7 @@ import { AIResultCards } from "@/components/AIResultCard";
 import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
+import { EmailComposeModal } from "@/components/EmailComposeModal";
 import { 
   Send, 
   Loader2, 
@@ -200,6 +201,7 @@ const Workbench = () => {
   const [showMentionPopup, setShowMentionPopup] = useState(false);
   const [mentionSearchQuery, setMentionSearchQuery] = useState("");
   const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -922,6 +924,17 @@ const Workbench = () => {
           </Button>
         )}
         
+        {/* Compose Email Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20"
+          onClick={() => setShowEmailModal(true)}
+        >
+          <Mail className="h-4 w-4" />
+          <span className="hidden sm:inline">Compose Email</span>
+        </Button>
+        
         {/* Document Context Indicator */}
         {attachments.length > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
@@ -1395,6 +1408,12 @@ const Workbench = () => {
       
       {/* Keyboard shortcuts help */}
       <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
+      
+      {/* Email Compose Modal */}
+      <EmailComposeModal 
+        open={showEmailModal} 
+        onOpenChange={setShowEmailModal}
+      />
     </div>
   );
 };

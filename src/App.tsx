@@ -8,6 +8,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackgroundThemeProvider, useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { NavigationTrackerProvider } from "@/contexts/NavigationTrackerContext";
 import { GrainyBackground } from "@/components/GrainyBackground";
 import { PageTransition } from "@/components/PageTransition";
 import { Suspense } from "react";
@@ -100,10 +101,12 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <ScrollToTop />
-                <ErrorBoundary>
-                  <AppContent />
-                </ErrorBoundary>
+                <NavigationTrackerProvider>
+                  <ScrollToTop />
+                  <ErrorBoundary>
+                    <AppContent />
+                  </ErrorBoundary>
+                </NavigationTrackerProvider>
               </BrowserRouter>
             </TooltipProvider>
           </BackgroundThemeProvider>
