@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { LabCardImage } from "@/components/LabCardImage";
 import { useLabs, LabFilters } from "@/hooks/useLabs";
-import { useUniversities } from "@/hooks/useUniversities";
+import { useTopics } from "@/hooks/useTopics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { useLabSaveCounts } from "@/hooks/useLabSaveCounts";
@@ -25,11 +25,12 @@ type DisplaySize = '5' | '7' | '10';
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
   const [researchDomain, setResearchDomain] = useState<string>('');
+  const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
   const displayPrefs = useDisplayPreferences();
   const { data: labs, isLoading, error, refetch } = useLabs(filters);
-  const { data: universities } = useUniversities();
+  const { data: topics } = useTopics();
   const { user } = useAuth();
   const { data: savedLabs } = useSavedLabs();
   const { data: labSaveCounts } = useLabSaveCounts();
@@ -37,11 +38,12 @@ const Labs = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const hasActiveFilters = filters.search || filters.universityId || filters.facultyArea || researchDomain;
+  const hasActiveFilters = filters.search || filters.facultyArea || researchDomain || selectedTopic !== 'all';
 
   const resetFilters = () => {
     setFilters({});
     setResearchDomain('');
+    setSelectedTopic('all');
     setSortBy('name-asc');
     setDisplaySize('5');
   };
@@ -96,8 +98,15 @@ const Labs = () => {
     return Array.from(allFaculties).sort();
   }, [labs]);
 
-  // Filter labs by research domain (client-side filtering based on category detection)
+  // Filter labs by topic and research domain
   const filteredLabs = labs?.filter(lab => {
+    // Topic filter
+    if (selectedTopic !== 'all') {
+      const labTopics = lab.topics?.toLowerCase() || '';
+      if (!labTopics.includes(selectedTopic.toLowerCase())) return false;
+    }
+    
+    // Research domain filter
     if (!researchDomain) return true;
     
     const combined = `${lab.topics || ''} ${lab.faculty_match || ''}`.toLowerCase();
@@ -198,17 +207,17 @@ const Labs = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               <Select 
-                value={filters.universityId || "all"} 
-                onValueChange={(value) => updateFilter("universityId", value)}
+                value={selectedTopic} 
+                onValueChange={setSelectedTopic}
               >
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="University" />
+                  <SelectValue placeholder="Topic" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Universities</SelectItem>
-                  {universities?.map((uni) => (
-                    <SelectItem key={uni.uuid} value={uni.uuid}>
-                      {uni.name}
+                  <SelectItem value="all">All Topics</SelectItem>
+                  {topics?.map((topic) => (
+                    <SelectItem key={topic.id_topic} value={topic.topic_name}>
+                      {topic.topic_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
