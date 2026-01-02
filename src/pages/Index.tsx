@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useCourses } from "@/hooks/useCourses";
@@ -11,6 +11,9 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { SEO } from "@/components/SEO";
 import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
+import { useGuide } from "@/hooks/useGuide";
+import { WebsiteGuide } from "@/components/guide/WebsiteGuide";
+import { GuidePromptDialog } from "@/components/guide/GuidePromptDialog";
 
 const Index = () => {
   const { user } = useAuth();
@@ -20,6 +23,16 @@ const Index = () => {
   const { data: universities } = useUniversities();
   const { data: courses } = useCourses({});
   const { data: labs } = useLabs();
+  
+  const {
+    showPrompt,
+    showGuide,
+    startGuide,
+    closePrompt,
+    closeGuide,
+    completeGuide,
+    openGuide,
+  } = useGuide();
 
   const hubs = [
     {
@@ -58,6 +71,37 @@ const Index = () => {
       href: "/diary",
       color: "text-rose-500",
       authRequired: true,
+    },
+  ];
+
+  const journeySteps = [
+    {
+      icon: Search,
+      title: "Explore",
+      description: "Browse universities, courses, and labs",
+      details: "Use our powerful search to find exactly what you need across 12+ universities and 1400+ courses.",
+      color: "bg-blue-500/10 text-blue-500",
+    },
+    {
+      icon: BookOpen,
+      title: "Discover",
+      description: "Find courses that match your interests",
+      details: "Filter by topic, read student reviews, and compare options to build your perfect course list.",
+      color: "bg-green-500/10 text-green-500",
+    },
+    {
+      icon: Sparkles,
+      title: "Get AI Help",
+      description: "Personalized recommendations",
+      details: "Our AI advisor understands your goals and suggests the best courses, labs, and opportunities.",
+      color: "bg-orange-500/10 text-orange-500",
+    },
+    {
+      icon: FileText,
+      title: "Plan",
+      description: "Organize your semester",
+      details: "Use the diary to visually plan your courses, track lab communications, and stay organized.",
+      color: "bg-rose-500/10 text-rose-500",
     },
   ];
 
@@ -143,30 +187,80 @@ const Index = () => {
       {/* Recently Viewed Section */}
       <RecentlyViewed />
 
-      {/* How It Works Section */}
+      {/* How It Works Section - Enhanced */}
       <section className="py-16 backdrop-blur-sm theme-section">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
               How It Works
             </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+              Your journey to the perfect exchange semester in four simple steps
+            </p>
+            <Button 
+              onClick={openGuide}
+              variant="outline"
+              className="group"
+            >
+              <Compass className="h-4 w-4 mr-2 group-hover:rotate-45 transition-transform" />
+              Take the Interactive Tour
+              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          {/* Journey Steps */}
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {journeySteps.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <div 
+                    key={step.title}
+                    className="group relative"
+                  >
+                    {/* Connector line */}
+                    {index < journeySteps.length - 1 && (
+                      <div className="hidden lg:block absolute top-8 left-[60%] w-[80%] h-[2px] bg-gradient-to-r from-border to-transparent" />
+                    )}
+                    
+                    <Card className="h-full transition-all hover:shadow-lg hover:scale-[1.02] backdrop-blur-md">
+                      <CardContent className="p-6">
+                        {/* Step number */}
+                        <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg">
+                          {index + 1}
+                        </div>
+
+                        <div className={`w-14 h-14 rounded-xl ${step.color} flex items-center justify-center mb-4`}>
+                          <Icon className="h-7 w-7" />
+                        </div>
+
+                        <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+                        <p className="text-sm font-medium text-foreground mb-2">{step.description}</p>
+                        <p className="text-xs text-muted-foreground">{step.details}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Feature highlights */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {[
-              { step: "1", title: "Browse", description: "Explore universities & programs" },
-              { step: "2", title: "Discover", description: "Find courses & labs" },
-              { step: "3", title: "Build", description: "Create learning agreements" },
-              { step: "4", title: "Get Guidance", description: "AI-powered recommendations" },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-12 h-12 backdrop-blur rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3 theme-badge">
-                  {item.step}
+              { icon: GraduationCap, label: "12+ Universities", color: "text-blue-500" },
+              { icon: BookOpen, label: "1400+ Courses", color: "text-green-500" },
+              { icon: Microscope, label: "400+ Labs", color: "text-purple-500" },
+              { icon: Mail, label: "AI Email Composer", color: "text-orange-500" },
+            ].map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div key={feature.label} className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 backdrop-blur">
+                  <Icon className={`h-5 w-5 ${feature.color}`} />
+                  <span className="text-sm font-medium">{feature.label}</span>
                 </div>
-                <h3 className="font-semibold mb-1">{item.title}</h3>
-                <p className="text-xs opacity-80">{item.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -176,6 +270,18 @@ const Index = () => {
       open={authDialogOpen} 
       onOpenChange={setAuthDialogOpen}
       feature={authDialogFeature}
+    />
+
+    {/* Guide Components */}
+    <GuidePromptDialog
+      isOpen={showPrompt}
+      onClose={closePrompt}
+      onStartGuide={startGuide}
+    />
+    <WebsiteGuide
+      isOpen={showGuide}
+      onClose={closeGuide}
+      onComplete={completeGuide}
     />
     </>
   );
