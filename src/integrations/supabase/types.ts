@@ -1053,8 +1053,10 @@ export type Database = {
           email: string
           email_public: boolean | null
           flashcard_color_style: string | null
+          guide_completed: boolean | null
           id: string
           language_preference: string | null
+          login_count: number | null
           notification_agreements: boolean | null
           notification_email: boolean | null
           notification_reviews: boolean | null
@@ -1075,8 +1077,10 @@ export type Database = {
           email: string
           email_public?: boolean | null
           flashcard_color_style?: string | null
+          guide_completed?: boolean | null
           id?: string
           language_preference?: string | null
+          login_count?: number | null
           notification_agreements?: boolean | null
           notification_email?: boolean | null
           notification_reviews?: boolean | null
@@ -1097,8 +1101,10 @@ export type Database = {
           email?: string
           email_public?: boolean | null
           flashcard_color_style?: string | null
+          guide_completed?: boolean | null
           id?: string
           language_preference?: string | null
+          login_count?: number | null
           notification_agreements?: boolean | null
           notification_email?: boolean | null
           notification_reviews?: boolean | null

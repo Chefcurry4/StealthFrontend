@@ -50,6 +50,8 @@ export const useUpdateProfile = () => {
       university_id?: string | null;
       student_level?: 'Bachelor' | 'Master' | null;
       flashcard_color_style?: 'gradient' | 'ocean' | 'sunset' | 'forest';
+      login_count?: number;
+      guide_completed?: boolean;
     }) => {
       if (!user) throw new Error("Must be logged in");
 
