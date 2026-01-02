@@ -1,9 +1,14 @@
 import { useState, useCallback, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Plus, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useEmblaCarousel from "embla-carousel-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+
+// Import EPFL-specific images
+import epflCampus1 from "@/assets/universities/epfl-campus-1.jpg";
+import epflCampus2 from "@/assets/universities/epfl-campus-2.jpg";
+import epflCampus3 from "@/assets/universities/epfl-campus-3.jpg";
 
 interface UniversityHeroGalleryProps {
   universityName: string;
@@ -12,14 +17,29 @@ interface UniversityHeroGalleryProps {
   onUploadClick?: () => void;
 }
 
-// Generate fallback campus images if no media available
-const getFallbackImages = (universityName: string, universityId: string): string[] => {
+// Get images for university - use EPFL assets if available, otherwise fallback
+const getUniversityImages = (
+  universityName: string,
+  universityId: string,
+  media?: { id: string; image_url: string; likes_count: number }[]
+): string[] => {
+  // If user-uploaded media exists, use those
+  if (media && media.length > 0) {
+    return media.map((m) => m.image_url);
+  }
+
+  // For EPFL specifically, use our downloaded images
+  if (universityName.toLowerCase().includes("epfl")) {
+    return [epflCampus1, epflCampus2, epflCampus3];
+  }
+
+  // Fallback to Unsplash for other universities
   const searchTerms = [
     `${universityName} campus building architecture`,
     `${universityName} university library`,
     `${universityName} campus courtyard`,
   ];
-  
+
   return searchTerms.map((term, index) => {
     const searchQuery = encodeURIComponent(term);
     const seed = universityId.substring(0, 8) + index;
@@ -27,11 +47,11 @@ const getFallbackImages = (universityName: string, universityId: string): string
   });
 };
 
-export const UniversityHeroGallery = ({ 
-  universityName, 
-  universityId, 
+export const UniversityHeroGallery = ({
+  universityName,
+  universityId,
   media = [],
-  onUploadClick 
+  onUploadClick,
 }: UniversityHeroGalleryProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -39,10 +59,7 @@ export const UniversityHeroGallery = ({
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
-  // Use media images or fallback to generated ones
-  const images = media.length > 0 
-    ? media.map(m => m.image_url) 
-    : getFallbackImages(universityName, universityId);
+  const images = getUniversityImages(universityName, universityId, media);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -83,9 +100,9 @@ export const UniversityHeroGallery = ({
         <h2 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
           Campus Gallery
         </h2>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={handleUploadClick}
           className="gap-2"
         >
@@ -106,7 +123,7 @@ export const UniversityHeroGallery = ({
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        
+
         <Button
           variant="outline"
           size="icon"
@@ -121,8 +138,8 @@ export const UniversityHeroGallery = ({
         <div className="overflow-hidden rounded-xl" ref={emblaRef}>
           <div className="flex gap-4">
             {images.map((image, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="flex-[0_0_100%] sm:flex-[0_0_calc(33.333%-11px)] min-w-0"
               >
                 <div className="aspect-[16/9] relative rounded-lg overflow-hidden bg-muted">
@@ -141,7 +158,7 @@ export const UniversityHeroGallery = ({
         {/* Mobile Swipe Indicator */}
         <div className="flex justify-center gap-2 mt-3 sm:hidden">
           {images.slice(0, Math.min(5, images.length)).map((_, index) => (
-            <div 
+            <div
               key={index}
               className="w-2 h-2 rounded-full bg-muted-foreground/30"
             />
