@@ -72,8 +72,8 @@ const UniversityDetail = () => {
     logo: university.logo_url || undefined,
   });
 
-  const bachelorCourses = courses?.filter((c) => c.ba_ma === "Ba").length || 0;
-  const masterCourses = courses?.filter((c) => c.ba_ma === "Ma").length || 0;
+  const bachelorCourses = courses?.filter((c) => c.ba_ma === "Bachelor's").length || 0;
+  const masterCourses = courses?.filter((c) => c.ba_ma === "Master's").length || 0;
 
   // Get university description
   const description = universityDescriptions[slug?.toLowerCase() || ""] ||

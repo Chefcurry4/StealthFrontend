@@ -76,8 +76,8 @@ const Statistics = () => {
   });
 
   // Course stats
-  const baCourses = courses?.filter(c => c.ba_ma === 'Ba').length || 0;
-  const maCourses = courses?.filter(c => c.ba_ma === 'Ma').length || 0;
+  const baCourses = courses?.filter(c => c.ba_ma === "Bachelor's").length || 0;
+  const maCourses = courses?.filter(c => c.ba_ma === "Master's").length || 0;
   const totalCourses = courses?.length || 1;
   
   // Language distribution for pie chart
