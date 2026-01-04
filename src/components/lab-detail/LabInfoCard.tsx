@@ -45,7 +45,11 @@ export const LabInfoCard = ({ lab }: LabInfoCardProps) => {
               <Tag className="h-4 w-4" />
               Faculty Area
             </h3>
-            <Badge variant="secondary">{lab.faculty_match}</Badge>
+            <div className="flex flex-wrap gap-2">
+              {lab.faculty_match.split(',').map((faculty, idx) => (
+                <Badge key={idx} variant="secondary">{faculty.trim()}</Badge>
+              ))}
+            </div>
           </div>
         )}
 

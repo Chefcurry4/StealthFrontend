@@ -207,17 +207,18 @@ const Labs = () => {
                 </Button>
               )}
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
               <TopicFilterMultiSelect
                 selectedTopics={selectedTopics}
                 onTopicsChange={setSelectedTopics}
+                className="w-full"
               />
 
               <Select 
                 value={filters.facultyArea || "all"} 
                 onValueChange={(value) => updateFilter("facultyArea", value)}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Faculty Area" />
                 </SelectTrigger>
                 <SelectContent>
@@ -231,7 +232,7 @@ const Labs = () => {
               </Select>
 
               <Select value={researchDomain} onValueChange={setResearchDomain}>
-                <SelectTrigger className="w-[220px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Research Domain" />
                 </SelectTrigger>
                 <SelectContent>
@@ -244,7 +245,7 @@ const Labs = () => {
               </Select>
 
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full">
                   <ArrowUpDown className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
@@ -256,7 +257,7 @@ const Labs = () => {
               </Select>
 
               <Select value={displaySize} onValueChange={(value) => setDisplaySize(value as DisplaySize)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full">
                   <LayoutGrid className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Display" />
                 </SelectTrigger>

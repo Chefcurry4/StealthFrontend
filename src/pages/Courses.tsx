@@ -191,13 +191,14 @@ const Courses = () => {
             </div>
             
             {/* Filter Row 1: Dropdowns */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
               <TopicFilterMultiSelect
                 selectedTopics={selectedTopics}
                 onTopicsChange={(topics) => {
                   setSelectedTopics(topics);
                   setCurrentPage(1);
                 }}
+                className="w-full"
               />
 
               <Select 
