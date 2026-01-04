@@ -845,6 +845,194 @@ export type Database = {
         }
         Relationships: []
       }
+      program_courses: {
+        Row: {
+          category: string
+          course_id: string | null
+          credits: number
+          id: string
+          name: string
+          program_id: string
+          sort_order: number | null
+          specialization_codes: string[] | null
+        }
+        Insert: {
+          category: string
+          course_id?: string | null
+          credits: number
+          id?: string
+          name: string
+          program_id: string
+          sort_order?: number | null
+          specialization_codes?: string[] | null
+        }
+        Update: {
+          category?: string
+          course_id?: string | null
+          credits?: number
+          id?: string
+          name?: string
+          program_id?: string
+          sort_order?: number | null
+          specialization_codes?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "Courses(C)"
+            referencedColumns: ["id_course"]
+          },
+          {
+            foreignKeyName: "program_courses_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "Programs(P)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_credit_components: {
+        Row: {
+          color: string | null
+          credits: number
+          id: string
+          name: string
+          program_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          color?: string | null
+          credits: number
+          id?: string
+          name: string
+          program_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          color?: string | null
+          credits?: number
+          id?: string
+          name?: string
+          program_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_credit_components_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "Programs(P)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_minors: {
+        Row: {
+          id: string
+          name: string
+          program_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          program_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_minors_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "Programs(P)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_specializations: {
+        Row: {
+          code: string
+          color: string | null
+          id: string
+          name: string
+          program_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          code: string
+          color?: string | null
+          id?: string
+          name: string
+          program_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          code?: string
+          color?: string | null
+          id?: string
+          name?: string
+          program_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_specializations_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "Programs(P)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_structures: {
+        Row: {
+          contact_email: string | null
+          created_at: string | null
+          duration: string | null
+          id: string
+          internship_note: string | null
+          program_id: string
+          total_credits: number | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string | null
+          duration?: string | null
+          id?: string
+          internship_note?: string | null
+          program_id: string
+          total_credits?: number | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string | null
+          duration?: string | null
+          id?: string
+          internship_note?: string | null
+          program_id?: string
+          total_credits?: number | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_structures_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: true
+            referencedRelation: "Programs(P)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "Programs(P)": {
         Row: {
           description: string | null

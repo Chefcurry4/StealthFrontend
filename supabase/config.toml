@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.moderate-image]
 verify_jwt = false
+
+[functions.seed-program-structures]
+verify_jwt = false
