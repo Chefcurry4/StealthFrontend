@@ -104,7 +104,7 @@ export type Database = {
           "Mandatory/Optional": string
           name_course: string
           program_name: string
-          Year: number | null
+          Year: string | null
         }
         Insert: {
           "Ba/Ma": string
@@ -115,7 +115,7 @@ export type Database = {
           "Mandatory/Optional": string
           name_course: string
           program_name: string
-          Year?: number | null
+          Year?: string | null
         }
         Update: {
           "Ba/Ma"?: string
@@ -126,7 +126,7 @@ export type Database = {
           "Mandatory/Optional"?: string
           name_course?: string
           program_name?: string
-          Year?: number | null
+          Year?: string | null
         }
         Relationships: []
       }
@@ -323,14 +323,17 @@ export type Database = {
         Row: {
           id_teacher: string
           id_uni: string
+          name_teacher: string | null
         }
         Insert: {
           id_teacher: string
           id_uni: string
+          name_teacher?: string | null
         }
         Update: {
           id_teacher?: string
           id_uni?: string
+          name_teacher?: string | null
         }
         Relationships: []
       }
@@ -443,7 +446,6 @@ export type Database = {
           professor_name: string | null
           programs: string | null
           software_equipment: string | null
-          stats: string | null
           term: string | null
           topics: string | null
           type_exam: string | null
@@ -466,7 +468,6 @@ export type Database = {
           professor_name?: string | null
           programs?: string | null
           software_equipment?: string | null
-          stats?: string | null
           term?: string | null
           topics?: string | null
           type_exam?: string | null
@@ -489,7 +490,6 @@ export type Database = {
           professor_name?: string | null
           programs?: string | null
           software_equipment?: string | null
-          stats?: string | null
           term?: string | null
           topics?: string | null
           type_exam?: string | null
@@ -780,6 +780,39 @@ export type Database = {
         Relationships: []
       }
       "Teachers(T)": {
+        Row: {
+          citations: string | null
+          email: string | null
+          full_name: string | null
+          "h-index": string | null
+          id_teacher: string
+          name: string | null
+          topics: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          citations?: string | null
+          email?: string | null
+          full_name?: string | null
+          "h-index"?: string | null
+          id_teacher?: string
+          name?: string | null
+          topics?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          citations?: string | null
+          email?: string | null
+          full_name?: string | null
+          "h-index"?: string | null
+          id_teacher?: string
+          name?: string | null
+          topics?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      "Teachers(T)_duplicate": {
         Row: {
           citations: string | null
           email: string | null
