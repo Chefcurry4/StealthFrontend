@@ -1,50 +1,21 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, BookOpen, GraduationCap, Lightbulb, FlaskConical, Info, ExternalLink, Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Course type with optional DB link
-interface Course {
-  name: string;
-  credits: number;
-  specializations?: string[];
-  code?: string;
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-interface ProgramStructure {
-  title: string;
-  totalCredits: number;
-  duration: string;
-  contact: string;
-  website: string;
-  components: { name: string; credits: number; color: string }[];
-  specializations: { code: string; name: string; color: string }[];
-  coreCourses: Course[];
-  optionCourses: Course[];
-  innovationCourses?: Course[];
-  transversalCourses?: Course[];
-  minors?: string[];
-  internshipNote?: string;
-}
-
-// Master structure data for all programs
-const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
-  "Life-Sc": {
-    title: "Master of Science in Life Sciences Engineering",
-    totalCredits: 120,
-    duration: "2 years",
-    contact: "master.lse@epfl.ch",
-    website: "go.epfl.ch/master-life-sciences-engineering",
+// Master structure data for all programs (migrated from MasterStructure.tsx)
+const MASTER_STRUCTURES: Record<string, any> = {
+  "8fdc4640-719b-43a4-a398-cdaacc9cb6e0": {
+    // Life-Sc
+    structure: {
+      total_credits: 120,
+      duration: "2 years",
+      contact_email: "master.lse@epfl.ch",
+      website: "go.epfl.ch/master-life-sciences-engineering",
+      internship_note: null,
+    },
     components: [
       { name: "Master's Thesis", credits: 30, color: "hsl(var(--chart-1))" },
       { name: "Core Courses", credits: 24, color: "hsl(var(--chart-2))" },
@@ -96,13 +67,17 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
       { name: "Entrepreneurship in life sciences", credits: 4 },
       { name: "Strategic management of innovation", credits: 4 },
     ],
+    minors: [],
   },
-  "AR": {
-    title: "Master of Science in Architecture",
-    totalCredits: 120,
-    duration: "2 years",
-    contact: "master.architecture@epfl.ch",
-    website: "go.epfl.ch/master-architecture",
+  "f48170bd-53f9-4774-81e7-7759355a3f0a": {
+    // AR (Architecture)
+    structure: {
+      total_credits: 120,
+      duration: "2 years",
+      contact_email: "master.architecture@epfl.ch",
+      website: "go.epfl.ch/master-architecture",
+      internship_note: null,
+    },
     components: [
       { name: "Master's Thesis", credits: 30, color: "hsl(var(--chart-1))" },
       { name: "Core Courses", credits: 24, color: "hsl(var(--chart-2))" },
@@ -156,13 +131,17 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
       { name: "Habitat et développement urbain", credits: 3, specializations: ["B", "C"] },
       { name: "Habitat et typologie", credits: 3, specializations: ["B", "E"] },
     ],
+    minors: [],
   },
-  "CIV": {
-    title: "Master of Science in Civil Engineering",
-    totalCredits: 120,
-    duration: "2 years",
-    contact: "master.civil@epfl.ch",
-    website: "go.epfl.ch/master-civil-engineering",
+  "4e746be0-7627-48f0-b1dd-7758040860a5": {
+    // CIV (Civil Engineering)
+    structure: {
+      total_credits: 120,
+      duration: "2 years",
+      contact_email: "master.civil@epfl.ch",
+      website: "go.epfl.ch/master-civil-engineering",
+      internship_note: null,
+    },
     components: [
       { name: "Master's Thesis", credits: 30, color: "hsl(var(--chart-1))" },
       { name: "Options", credits: 60, color: "hsl(var(--chart-2))" },
@@ -219,13 +198,15 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
     ],
     minors: ["Computational science and engineering", "Data science", "Territorial engineering"],
   },
-  "URB-SYS": {
-    title: "Master of Science in Urban Systems",
-    totalCredits: 120,
-    duration: "2 years",
-    contact: "urbansystems.info@epfl.ch",
-    website: "go.epfl.ch/master-urban-systems",
-    internshipNote: "The program includes a compulsory 8-week internship which can be extended to 6 months.",
+  "5fb9a7dd-f940-4494-b347-9e50a4cef25a": {
+    // URB-SYS (Urban Systems)
+    structure: {
+      total_credits: 120,
+      duration: "2 years",
+      contact_email: "urbansystems.info@epfl.ch",
+      website: "go.epfl.ch/master-urban-systems",
+      internship_note: "The program includes a compulsory 8-week internship which can be extended to 6 months.",
+    },
     components: [
       { name: "Master's Thesis", credits: 30, color: "hsl(var(--chart-1))" },
       { name: "Core Foundations", credits: 19, color: "hsl(var(--chart-2))" },
@@ -269,14 +250,17 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
       { name: "Image processing for earth observation", credits: 4, specializations: ["A", "C"] },
       { name: "Indoor air quality and ventilation", credits: 4, specializations: ["C"] },
     ],
+    minors: [],
   },
-  "ENV-Sc": {
-    title: "Master of Science in Environmental Sciences and Engineering",
-    totalCredits: 120,
-    duration: "2 years",
-    contact: "master.sie@epfl.ch",
-    website: "go.epfl.ch/master-environmental-engineering",
-    internshipNote: "The program includes a compulsory 8-week internship which can be extended to 6 months.",
+  "bc20c2b2-632e-47a7-8c0b-693ca5655254": {
+    // ENV-Sc (Environmental Sciences)
+    structure: {
+      total_credits: 120,
+      duration: "2 years",
+      contact_email: "master.sie@epfl.ch",
+      website: "go.epfl.ch/master-environmental-engineering",
+      internship_note: "The program includes a compulsory 8-week internship which can be extended to 6 months.",
+    },
     components: [
       { name: "Master's Thesis", credits: 30, color: "hsl(var(--chart-1))" },
       { name: "Core Courses", credits: 25, color: "hsl(var(--chart-2))" },
@@ -336,360 +320,111 @@ const MASTER_STRUCTURES: Record<string, ProgramStructure> = {
   },
 };
 
-// Program slug mapping for the URL
-const PROGRAM_SLUG_MAP: Record<string, string> = {
-  "Life-Sc": "Life-Sc",
-  "Archi": "Archi",
-  "CE": "CE",
-  "US": "US",
-  "SIE": "SIE",
-};
-
-const MasterStructure = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
-
-  // Fetch courses from DB to enable linking
-  const { data: dbCourses } = useQuery({
-    queryKey: ["allCoursesForStructure"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("Courses(C)")
-        .select("id_course, name_course, code");
-      return data || [];
-    },
-  });
-
-  // Find matching course in DB by name (fuzzy match)
-  const findCourseLink = (courseName: string): string | null => {
-    if (!dbCourses) return null;
-    
-    const normalized = courseName.toLowerCase().trim();
-    
-    // Try exact match first
-    const exactMatch = dbCourses.find(c => 
-      c.name_course?.toLowerCase().trim() === normalized
-    );
-    if (exactMatch) return `/courses/${exactMatch.id_course}`;
-    
-    // Try partial match (course name contains or is contained)
-    const partialMatch = dbCourses.find(c => {
-      const dbName = c.name_course?.toLowerCase().trim() || "";
-      return dbName.includes(normalized) || normalized.includes(dbName);
-    });
-    if (partialMatch) return `/courses/${partialMatch.id_course}`;
-    
-    // Try word-based matching (at least 3 significant words match)
-    const courseWords = normalized.split(/\s+/).filter(w => w.length > 3);
-    const wordMatch = dbCourses.find(c => {
-      const dbWords = (c.name_course?.toLowerCase() || "").split(/\s+/).filter(w => w.length > 3);
-      const matchCount = courseWords.filter(w => dbWords.some(dw => dw.includes(w) || w.includes(dw))).length;
-      return matchCount >= Math.min(3, courseWords.length);
-    });
-    if (wordMatch) return `/courses/${wordMatch.id_course}`;
-    
-    return null;
-  };
-
-  const structure = slug ? MASTER_STRUCTURES[slug] : null;
-
-  if (!structure) {
-    return (
-      <div className="min-h-screen py-8">
-        <div className="container mx-auto px-4">
-          <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back
-          </Button>
-          <p className="text-muted-foreground">Master structure not available for this program yet.</p>
-        </div>
-      </div>
-    );
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
-  
-  // Prepare pie chart data
-  const pieData = structure.components.map(c => ({
-    name: c.name,
-    value: c.credits,
-    color: c.color,
-  }));
 
-  const getSpecializationBadge = (code: string) => {
-    const spec = structure.specializations.find(s => s.code === code);
-    if (!spec) return null;
-    return (
-      <Tooltip key={code}>
-        <TooltipTrigger>
-          <Badge variant="outline" className={`${spec.color} text-white text-xs px-1.5 py-0`}>
-            {code}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>{spec.name}</TooltipContent>
-      </Tooltip>
-    );
-  };
-
-  const CourseRow = ({ course, index }: { course: Course; index: number }) => {
-    const courseLink = findCourseLink(course.name);
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    const content = (
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className={`font-medium ${courseLink ? 'group-hover:text-primary transition-colors' : ''}`}>
-          {course.name}
-        </span>
-        {courseLink && (
-          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        )}
-        {course.specializations && course.specializations.length > 0 && (
-          <div className="flex gap-1">
-            {course.specializations.map(s => getSpecializationBadge(s))}
-          </div>
-        )}
-      </div>
-    );
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (courseLink) {
-      return (
-        <Link
-          to={courseLink}
-          key={index}
-          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group cursor-pointer"
-        >
-          {content}
-          <Badge variant="secondary" className="shrink-0">{course.credits} ECTS</Badge>
-        </Link>
-      );
+    const results: string[] = [];
+
+    for (const [programId, data] of Object.entries(MASTER_STRUCTURES)) {
+      // Insert structure
+      const { error: structureError } = await supabase
+        .from("program_structures")
+        .upsert({
+          program_id: programId,
+          total_credits: data.structure.total_credits,
+          duration: data.structure.duration,
+          contact_email: data.structure.contact_email,
+          website: data.structure.website,
+          internship_note: data.structure.internship_note,
+        }, { onConflict: "program_id" });
+
+      if (structureError) {
+        results.push(`Structure error for ${programId}: ${structureError.message}`);
+        continue;
+      }
+
+      // Delete existing related data
+      await supabase.from("program_specializations").delete().eq("program_id", programId);
+      await supabase.from("program_credit_components").delete().eq("program_id", programId);
+      await supabase.from("program_courses").delete().eq("program_id", programId);
+      await supabase.from("program_minors").delete().eq("program_id", programId);
+
+      // Insert specializations
+      if (data.specializations?.length > 0) {
+        const specs = data.specializations.map((s: any, i: number) => ({
+          program_id: programId,
+          code: s.code,
+          name: s.name,
+          color: s.color,
+          sort_order: i,
+        }));
+        const { error } = await supabase.from("program_specializations").insert(specs);
+        if (error) results.push(`Specializations error: ${error.message}`);
+      }
+
+      // Insert components
+      if (data.components?.length > 0) {
+        const comps = data.components.map((c: any, i: number) => ({
+          program_id: programId,
+          name: c.name,
+          credits: c.credits,
+          color: c.color,
+          sort_order: i,
+        }));
+        const { error } = await supabase.from("program_credit_components").insert(comps);
+        if (error) results.push(`Components error: ${error.message}`);
+      }
+
+      // Insert courses
+      const allCourses = [
+        ...(data.coreCourses || []).map((c: any, i: number) => ({ ...c, category: "core", sort_order: i })),
+        ...(data.transversalCourses || []).map((c: any, i: number) => ({ ...c, category: "transversal", sort_order: 100 + i })),
+        ...(data.optionCourses || []).map((c: any, i: number) => ({ ...c, category: "optional", sort_order: 200 + i })),
+        ...(data.innovationCourses || []).map((c: any, i: number) => ({ ...c, category: "innovation", sort_order: 300 + i })),
+      ];
+
+      if (allCourses.length > 0) {
+        const courses = allCourses.map((c: any) => ({
+          program_id: programId,
+          name: c.name,
+          credits: c.credits,
+          category: c.category,
+          specialization_codes: c.specializations || [],
+          sort_order: c.sort_order,
+        }));
+        const { error } = await supabase.from("program_courses").insert(courses);
+        if (error) results.push(`Courses error: ${error.message}`);
+      }
+
+      // Insert minors
+      if (data.minors?.length > 0) {
+        const minors = data.minors.map((m: string) => ({
+          program_id: programId,
+          name: m,
+        }));
+        const { error } = await supabase.from("program_minors").insert(minors);
+        if (error) results.push(`Minors error: ${error.message}`);
+      }
+
+      results.push(`✓ Seeded ${programId}`);
     }
 
-    return (
-      <div 
-        key={index}
-        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-      >
-        {content}
-        <Badge variant="secondary" className="shrink-0">{course.credits} ECTS</Badge>
-      </div>
-    );
-  };
-
-  const hasTransversal = structure.transversalCourses && structure.transversalCourses.length > 0;
-  const hasInnovation = structure.innovationCourses && structure.innovationCourses.length > 0;
-  const hasCore = structure.coreCourses && structure.coreCourses.length > 0;
-
-  return (
-    <div className="min-h-screen py-6 md:py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => navigate(-1)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Program
-        </Button>
-
-        {/* Title Section */}
-        <div className="mb-8">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="p-3 bg-primary/10 rounded-xl shrink-0">
-              <GraduationCap className="h-8 w-8 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">{structure.title}</h1>
-              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                <span>{structure.duration}</span>
-                <span>•</span>
-                <span>{structure.totalCredits} ECTS</span>
-                <span>•</span>
-                <a href={`mailto:${structure.contact}`} className="text-primary hover:underline">
-                  {structure.contact}
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Specializations Legend */}
-        {structure.specializations.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Info className="h-5 w-5" />
-                Specializations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                {structure.specializations.map((spec) => (
-                  <div key={spec.code} className="flex items-center gap-2">
-                    <Badge className={`${spec.color} text-white`}>{spec.code}</Badge>
-                    <span className="text-sm">{spec.name}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Credits Distribution Chart */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Credits Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip 
-                    formatter={(value: number) => [`${value} ECTS`, 'Credits']}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '10px'
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Course Sections */}
-        <Tabs defaultValue={hasCore ? "core" : (hasTransversal ? "transversal" : "options")} className="space-y-4">
-          <TabsList className={`grid w-full ${hasInnovation ? 'grid-cols-3' : (hasTransversal ? 'grid-cols-3' : 'grid-cols-2')}`}>
-            {hasCore && (
-              <TabsTrigger value="core" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Core ({structure.coreCourses.length})
-              </TabsTrigger>
-            )}
-            {hasTransversal && (
-              <TabsTrigger value="transversal" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Transversal ({structure.transversalCourses!.length})
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="options" className="flex items-center gap-2">
-              <FlaskConical className="h-4 w-4" />
-              Options ({structure.optionCourses.length})
-            </TabsTrigger>
-            {hasInnovation && (
-              <TabsTrigger value="innovation" className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" />
-                Innovation ({structure.innovationCourses!.length})
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          {hasCore && (
-            <TabsContent value="core">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Core Courses</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {structure.coreCourses.map((course, index) => (
-                      <CourseRow key={index} course={course} index={index} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-
-          {hasTransversal && (
-            <TabsContent value="transversal">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Compulsory Transversal Courses</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {structure.transversalCourses!.map((course, index) => (
-                      <CourseRow key={index} course={course} index={index} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-
-          <TabsContent value="options">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Option Courses</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                  {structure.optionCourses.map((course, index) => (
-                    <CourseRow key={index} course={course} index={index} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {hasInnovation && (
-            <TabsContent value="innovation">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Innovation & Entrepreneurship</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {structure.innovationCourses!.map((course, index) => (
-                      <CourseRow key={index} course={course} index={index} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-        </Tabs>
-
-        {/* Additional Info */}
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold mb-2">Master's Thesis</h3>
-                <p className="text-sm text-muted-foreground">30 ECTS - Complete an original research project in your chosen specialization</p>
-              </div>
-              {structure.internshipNote && (
-                <div>
-                  <h3 className="font-semibold mb-2">Internship</h3>
-                  <p className="text-sm text-muted-foreground">{structure.internshipNote}</p>
-                </div>
-              )}
-              {structure.minors && structure.minors.length > 0 && (
-                <div className="md:col-span-2">
-                  <h3 className="font-semibold mb-2">Recommended Minors</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {structure.minors.map((minor, idx) => (
-                      <Badge key={idx} variant="outline">{minor}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-};
-
-export default MasterStructure;
+    return new Response(JSON.stringify({ success: true, results }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
