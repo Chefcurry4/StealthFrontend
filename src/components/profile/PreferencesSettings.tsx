@@ -259,15 +259,17 @@ export const PreferencesSettings = () => {
               onValueChange={(value) => handleSelect("language_preference", value)}
               disabled={updatePreferences.isPending}
             >
-              <SelectTrigger className="w-[180px]" style={{ background: 'var(--theme-input-bg)', borderColor: 'var(--theme-input-border)' }}>
+              <SelectTrigger className="w-[220px]" style={{ background: 'var(--theme-input-bg)', borderColor: 'var(--theme-input-border)' }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="de">Deutsch</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
-                <SelectItem value="it">Italiano</SelectItem>
+                <SelectItem value="fr" disabled>
+                  <span className="flex items-center gap-2">
+                    Français
+                    <span className="text-xs text-muted-foreground">(coming soon)</span>
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

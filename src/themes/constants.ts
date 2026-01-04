@@ -149,40 +149,4 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
     }
   },
 
-  [ThemeId.GOLD]: {
-    name: 'Gold',
-    description: 'Luxurious shimmer with subtle texture.',
-    grain: { intensity: 0.3, size: 1.4, type: 'fractalNoise' },
-    colors: ['#eecda3', '#ef629f', '#e65c00', '#f9d423', '#ffffff'],
-    day: {
-      background: '#fffbeb',
-      textColor: '#78350f',
-      blendMode: 'multiply',
-      ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(120,53,15,0.3)',
-        buttonPrimary: '#c85000',
-        buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(230,92,0,0.15)',
-        buttonSecondaryText: '#78350f',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(120,53,15,0.4)',
-      }
-    },
-    night: {
-      background: '#1e1b15',
-      textColor: '#f1e6b9',
-      blendMode: 'soft-light',
-      ui: {
-        cardBackground: 'rgba(0,0,0,0.3)',
-        cardBorder: 'rgba(241,230,185,0.2)',
-        buttonPrimary: '#f9d423',
-        buttonPrimaryText: '#1e1b15',
-        buttonSecondary: 'rgba(249,212,35,0.2)',
-        buttonSecondaryText: '#f1e6b9',
-        inputBackground: 'rgba(0,0,0,0.4)',
-        inputBorder: 'rgba(241,230,185,0.3)',
-      }
-    }
-  },
 };

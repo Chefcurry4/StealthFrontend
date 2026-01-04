@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTopics, Topic } from "@/hooks/useTopics";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TopicFilterMultiSelectProps {
   selectedTopics: string[];
@@ -25,6 +26,7 @@ export const TopicFilterMultiSelect = ({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { data: topics, isLoading } = useTopics();
+  const isMobile = useIsMobile();
 
   const filteredTopics = useMemo(() => {
     if (!topics) return [];
@@ -71,7 +73,11 @@ export const TopicFilterMultiSelect = ({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0" align="start">
+      <PopoverContent 
+        className="w-[min(320px,calc(100vw-2rem))] p-0" 
+        align="start"
+        sideOffset={4}
+      >
         <div className="p-3 border-b">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -99,16 +105,16 @@ export const TopicFilterMultiSelect = ({
                 Clear all
               </Button>
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
               {selectedTopics.map((topic) => (
                 <Badge
                   key={topic}
                   variant="secondary"
-                  className="gap-1 pr-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  className="gap-1 pr-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors text-xs"
                   onClick={() => toggleTopic(topic)}
                 >
-                  {topic}
-                  <X className="h-3 w-3" />
+                  <span className="truncate max-w-[120px]">{topic}</span>
+                  <X className="h-3 w-3 shrink-0" />
                 </Badge>
               ))}
             </div>
@@ -145,12 +151,12 @@ export const TopicFilterMultiSelect = ({
                     >
                       {isSelected && <Check className="h-3 w-3" />}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 overflow-hidden">
                       <p className="text-sm font-medium truncate">
                         {topic.topic_name}
                       </p>
-                      {topic.descriptions && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                      {!isMobile && topic.descriptions && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 break-words">
                           {topic.descriptions}
                         </p>
                       )}

@@ -568,9 +568,21 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
 
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <StarRating rating={review.rating} size="sm" />
-                        {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
-                        {review.workload && <Badge variant="outline">{review.workload}</Badge>}
-                        {review.organization && <Badge variant="outline">{review.organization}</Badge>}
+                        {review.difficulty && (
+                          <Badge variant="outline">
+                            <span className="font-bold mr-1">Difficulty:</span>{review.difficulty}
+                          </Badge>
+                        )}
+                        {review.workload && (
+                          <Badge variant="outline">
+                            <span className="font-bold mr-1">Workload:</span>{review.workload}
+                          </Badge>
+                        )}
+                        {review.organization && (
+                          <Badge variant="outline">
+                            <span className="font-bold mr-1">Organization:</span>{review.organization}
+                          </Badge>
+                        )}
                       </div>
                       {review.comment && <p className="text-sm mb-3">{review.comment}</p>}
                       

@@ -36,6 +36,5 @@ export enum ThemeId {
   QUARTZ = 'QUARTZ',
   OCEAN = 'OCEAN',
   AURORA = 'AURORA',
-  NEON = 'NEON',
-  GOLD = 'GOLD'
+  NEON = 'NEON'
 }
