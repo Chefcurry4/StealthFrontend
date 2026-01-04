@@ -74,7 +74,7 @@ export const TopicFilterMultiSelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[min(320px,calc(100vw-2rem))] p-0" 
+        className="w-[280px] sm:w-[320px] p-0 z-50" 
         align="start"
         sideOffset={4}
       >
@@ -151,12 +151,12 @@ export const TopicFilterMultiSelect = ({
                     >
                       {isSelected && <Check className="h-3 w-3" />}
                     </div>
-                    <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
                         {topic.topic_name}
                       </p>
                       {!isMobile && topic.descriptions && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 break-words">
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 truncate">
                           {topic.descriptions}
                         </p>
                       )}

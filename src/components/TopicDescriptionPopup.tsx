@@ -132,7 +132,7 @@ export const TopicDescriptionPopup = ({
     );
   }
 
-  // For desktop: use hover card
+  // For desktop: use hover card that follows mouse position
   return (
     <HoverCard openDelay={200} closeDelay={100} onOpenChange={setIsOpen}>
       <HoverCardTrigger asChild>
@@ -151,7 +151,12 @@ export const TopicDescriptionPopup = ({
           </span>
         )}
       </HoverCardTrigger>
-      <HoverCardContent className="w-80" align="start">
+      <HoverCardContent 
+        className="w-72 z-50" 
+        align="start"
+        side="right"
+        sideOffset={8}
+      >
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-primary" />

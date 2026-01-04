@@ -190,19 +190,24 @@ export const LabUserActionsCard = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Save & Review */}
-        <div className="flex gap-2">
-          <Button
-            variant={isSaved ? "secondary" : "outline"}
+        <div className="space-y-2">
+          <Button 
+            className="w-full justify-start gap-2.5 h-11 text-sm" 
+            variant={isSaved ? "secondary" : "default"}
             onClick={handleToggleSave}
             disabled={toggleSave.isPending}
-            className="flex-1"
           >
-            <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
-            {isSaved ? 'Saved' : 'Save'}
+            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+            {isSaved ? 'Saved to Collection' : 'Save to Collection'}
           </Button>
-          <Button onClick={onOpenReview} className="flex-1">
-            <Star className="h-4 w-4 mr-2" />
-            Review
+          
+          <Button 
+            variant="outline" 
+            className="w-full justify-start gap-2.5 h-11 text-sm"
+            onClick={onOpenReview}
+          >
+            <Star className="h-4 w-4 text-yellow-500" />
+            Write a Review
           </Button>
         </div>
 
@@ -283,8 +288,12 @@ export const LabUserActionsCard = ({
         {/* Report a Mistake */}
         <Dialog open={reportOpen} onOpenChange={setReportOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
-              <AlertTriangle className="h-4 w-4 mr-2" />
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
               Report a Mistake
             </Button>
           </DialogTrigger>
