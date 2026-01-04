@@ -710,6 +710,99 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_review_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_review_upvotes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "lab_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_review_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "Users(US)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lab_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          lab_id: string
+          mentorship: string | null
+          rating: number
+          research_quality: string | null
+          updated_at: string
+          upvote_count: number | null
+          user_id: string
+          work_environment: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lab_id: string
+          mentorship?: string | null
+          rating: number
+          research_quality?: string | null
+          updated_at?: string
+          upvote_count?: number | null
+          user_id: string
+          work_environment?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lab_id?: string
+          mentorship?: string | null
+          rating?: number
+          research_quality?: string | null
+          updated_at?: string
+          upvote_count?: number | null
+          user_id?: string
+          work_environment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_reviews_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "Labs(L)"
+            referencedColumns: ["id_lab"]
+          },
+          {
+            foreignKeyName: "lab_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "Users(US)"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "Labs(L)": {
         Row: {
           created_at: string
