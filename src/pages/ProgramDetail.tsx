@@ -8,6 +8,7 @@ import { useProgramStructure } from "@/hooks/useProgramStructure";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ProgramHeader,
   ProgramDescription,
@@ -41,30 +42,49 @@ const ProgramDetail = () => {
     }
   }, [program, addItem]);
 
-  // Fetch course details with bridge table info
-  const { data: coursesWithInfo } = useQuery({
+  // Fetch course details with bridge table info - directly from bridge + courses
+  const { data: coursesWithInfo, isLoading: coursesWithInfoLoading } = useQuery({
     queryKey: ["programCoursesDetail", program?.id],
     queryFn: async () => {
       if (!program?.id) return [];
 
+      // Join bridge table with courses table directly
       const { data: bridgeData } = await supabase
         .from("bridge_cp(C-P)")
         .select("*")
         .eq("id_program", program.id);
 
-      if (!bridgeData) return courses || [];
+      if (!bridgeData || bridgeData.length === 0) return [];
 
-      return courses?.map((course) => {
-        const bridgeInfo = bridgeData.find((b) => b.id_course === course.id_course);
+      // Get all course IDs
+      const courseIds = bridgeData.map(b => b.id_course);
+      
+      // Fetch course details
+      const { data: courseDetails } = await supabase
+        .from("Courses(C)")
+        .select("*")
+        .in("id_course", courseIds);
+
+      if (!courseDetails) return [];
+
+      // Merge bridge info with course details
+      return bridgeData.map((bridge) => {
+        const course = courseDetails.find((c) => c.id_course === bridge.id_course);
         return {
-          ...course,
-          year: bridgeInfo?.Year,
-          mandatoryOptional: bridgeInfo?.["Mandatory/Optional"],
-          level: bridgeInfo?.["Ba/Ma"],
+          id_course: bridge.id_course,
+          name_course: course?.name_course || bridge.name_course,
+          code: course?.code || bridge.code_course,
+          ects: course?.ects,
+          term: course?.term,
+          language: course?.language,
+          professor_name: course?.professor_name,
+          year: bridge.Year,
+          mandatoryOptional: bridge["Mandatory/Optional"],
+          level: bridge["Ba/Ma"], // This is "Bachelor" or "Master"
         };
       });
     },
-    enabled: !!program?.id && !!courses,
+    enabled: !!program?.id,
   });
 
   // Fetch program info from bridge table
@@ -118,7 +138,8 @@ const ProgramDetail = () => {
       return { duration: '', courseCount: 0, ects: 0, courses: [] };
     }
 
-    const levelFilter = selectedLevel === 'bachelor' ? 'Ba' : 'Ma';
+    // The database uses "Bachelor" and "Master" as values
+    const levelFilter = selectedLevel === 'bachelor' ? 'Bachelor' : 'Master';
     const filteredCourses = coursesWithInfo.filter((c: any) => c.level === levelFilter);
 
     return {
@@ -129,7 +150,7 @@ const ProgramDetail = () => {
     };
   }, [selectedLevel, coursesWithInfo]);
 
-  if (isLoading || structureLoading) {
+  if (isLoading || structureLoading || coursesWithInfoLoading) {
     return (
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
@@ -178,39 +199,64 @@ const ProgramDetail = () => {
         {/* Description - Always shown */}
         <ProgramDescription description={program.description} />
 
-        {/* Bachelor view - Simple course list */}
-        {selectedLevel === 'bachelor' && (
-          <ProgramCoursesFilter
-            courses={levelStats.courses}
-            isLoading={coursesLoading}
-            showLevelFilter={false}
-          />
-        )}
+        {/* Animated content based on level selection */}
+        <AnimatePresence mode="wait">
+          {/* Bachelor view - Simple course list */}
+          {selectedLevel === 'bachelor' && (
+            <motion.div
+              key="bachelor"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ProgramCoursesFilter
+                courses={levelStats.courses}
+                isLoading={coursesWithInfoLoading}
+                showLevelFilter={false}
+              />
+            </motion.div>
+          )}
 
-        {/* Master view with structure data */}
-        {selectedLevel === 'master' && hasMasterStructure && (
-          <>
-            <ProgramSpecializations specializations={structure.specializations} />
-            <ProgramCreditsChart components={structure.components} />
-            <ProgramCoursesTabs
-              courses={structure.courses}
-              specializations={structure.specializations}
-            />
-            <ProgramAdditionalInfo
-              internshipNote={structure.structure.internship_note}
-              minors={structure.minors}
-            />
-          </>
-        )}
+          {/* Master view with structure data */}
+          {selectedLevel === 'master' && hasMasterStructure && (
+            <motion.div
+              key="master-structure"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ProgramSpecializations specializations={structure.specializations} />
+              <ProgramCreditsChart components={structure.components} />
+              <ProgramCoursesTabs
+                courses={structure.courses}
+                specializations={structure.specializations}
+              />
+              <ProgramAdditionalInfo
+                internshipNote={structure.structure.internship_note}
+                minors={structure.minors}
+              />
+            </motion.div>
+          )}
 
-        {/* Master view without structure data - fallback to simple course list */}
-        {selectedLevel === 'master' && !hasMasterStructure && (
-          <ProgramCoursesFilter
-            courses={levelStats.courses}
-            isLoading={coursesLoading}
-            showLevelFilter={false}
-          />
-        )}
+          {/* Master view without structure data - fallback to simple course list */}
+          {selectedLevel === 'master' && !hasMasterStructure && (
+            <motion.div
+              key="master-fallback"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ProgramCoursesFilter
+                courses={levelStats.courses}
+                isLoading={coursesWithInfoLoading}
+                showLevelFilter={false}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

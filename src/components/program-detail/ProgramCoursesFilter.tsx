@@ -32,7 +32,7 @@ export const ProgramCoursesFilter = ({
   isLoading,
   showLevelFilter = true,
 }: ProgramCoursesFilterProps) => {
-  const [levelFilter, setLevelFilter] = useState<"all" | "Ba" | "Ma">("all");
+  const [levelFilter, setLevelFilter] = useState<"all" | "Bachelor" | "Master">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "Mandatory" | "Optional">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -42,8 +42,8 @@ export const ProgramCoursesFilter = ({
 
     return {
       total: courses.length,
-      bachelor: courses.filter((c) => c.level === "Ba").length,
-      master: courses.filter((c) => c.level === "Ma").length,
+      bachelor: courses.filter((c) => c.level === "Bachelor").length,
+      master: courses.filter((c) => c.level === "Master").length,
       mandatory: courses.filter((c) => c.mandatoryOptional === "Mandatory").length,
       optional: courses.filter((c) => c.mandatoryOptional === "Optional").length,
       totalEcts: courses.reduce((sum, c) => sum + (c.ects || 0), 0),
@@ -87,17 +87,17 @@ export const ProgramCoursesFilter = ({
               </label>
               <Tabs
                 value={levelFilter}
-                onValueChange={(v) => setLevelFilter(v as "all" | "Ba" | "Ma")}
+                onValueChange={(v) => setLevelFilter(v as "all" | "Bachelor" | "Master")}
                 className="w-full"
               >
                 <TabsList className="w-full grid grid-cols-3">
                   <TabsTrigger value="all" className="text-xs">
                     All ({stats.total})
                   </TabsTrigger>
-                  <TabsTrigger value="Ba" className="text-xs">
+                  <TabsTrigger value="Bachelor" className="text-xs">
                     Bachelor ({stats.bachelor})
                   </TabsTrigger>
-                  <TabsTrigger value="Ma" className="text-xs">
+                  <TabsTrigger value="Master" className="text-xs">
                     Master ({stats.master})
                   </TabsTrigger>
                 </TabsList>
@@ -185,10 +185,10 @@ export const ProgramCoursesFilter = ({
                     )}
                     {course.level && (
                       <Badge
-                        variant={course.level === "Ba" ? "default" : "outline"}
+                        variant={course.level === "Bachelor" ? "default" : "outline"}
                         className="text-xs"
                       >
-                        {course.level === "Ba" ? "Bachelor" : "Master"}
+                        {course.level}
                       </Badge>
                     )}
                     {course.mandatoryOptional && (

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, GraduationCap, Clock, BookOpen, ExternalLink, Mail, Share2 } from "lucide-react";
+import { ArrowLeft, GraduationCap, Clock, BookOpen, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Program } from "@/hooks/usePrograms";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { getProgramLogo } from "@/lib/programLogos";
 
 interface ProgramHeaderProps {
   program: Program;
@@ -45,6 +47,7 @@ export const ProgramHeader = ({
   stats,
 }: ProgramHeaderProps) => {
   const navigate = useNavigate();
+  const programLogo = getProgramLogo(program.slug);
 
   const handleShare = async () => {
     try {
@@ -57,9 +60,6 @@ export const ProgramHeader = ({
       toast.success("Link copied to clipboard");
     }
   };
-
-  const displayWebsite = structure?.structure?.website || programInfo?.website;
-  const contactEmail = structure?.structure?.contact_email;
 
   return (
     <div className="mb-6">
@@ -85,35 +85,14 @@ export const ProgramHeader = ({
           </Breadcrumb>
         </div>
 
-        {/* Action Icons */}
-        <div className="flex items-center gap-2">
-          {displayWebsite && (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <a
-                href={displayWebsite.startsWith("http") ? displayWebsite : `https://${displayWebsite}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Official Page
-              </a>
-            </Button>
-          )}
-          {contactEmail && (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <a href={`mailto:${contactEmail}`}>
-                <Mail className="h-4 w-4 mr-2" />
-                Contact
-              </a>
-            </Button>
+        {/* Action Icons + Program Logo */}
+        <div className="flex items-center gap-4">
+          {programLogo && (
+            <img 
+              src={programLogo} 
+              alt={`${program.name} logo`}
+              className="h-12 w-12 object-contain opacity-80"
+            />
           )}
           <Button variant="outline" size="sm" onClick={handleShare}>
             <Share2 className="h-4 w-4 mr-2" />
@@ -130,38 +109,62 @@ export const ProgramHeader = ({
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">{program.name}</h1>
 
-          {/* Bachelor/Master Clickable Tabs */}
+          {/* Bachelor/Master Clickable Tabs with Animation */}
           <div className="flex gap-3 mb-4">
             {hasBachelor && (
-              <button
+              <motion.button
                 onClick={() => onLevelChange('bachelor')}
                 className={cn(
-                  "px-6 py-3 rounded-lg font-semibold text-lg transition-all border-2",
+                  "px-6 py-3 rounded-lg font-semibold text-lg transition-colors border-2 relative overflow-hidden",
                   selectedLevel === 'bachelor'
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                    ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted hover:bg-muted/80 border-transparent text-muted-foreground hover:text-foreground"
                 )}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
+                {selectedLevel === 'bachelor' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-primary rounded-lg -z-10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
                 Bachelor
-              </button>
+              </motion.button>
             )}
             {hasMaster && (
-              <button
+              <motion.button
                 onClick={() => onLevelChange('master')}
                 className={cn(
-                  "px-6 py-3 rounded-lg font-semibold text-lg transition-all border-2",
+                  "px-6 py-3 rounded-lg font-semibold text-lg transition-colors border-2 relative overflow-hidden",
                   selectedLevel === 'master'
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                    ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted hover:bg-muted/80 border-transparent text-muted-foreground hover:text-foreground"
                 )}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
+                {selectedLevel === 'master' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-primary rounded-lg -z-10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
                 Master
-              </button>
+              </motion.button>
             )}
           </div>
 
-          {/* Dynamic Stats Strip */}
-          <div className="flex flex-wrap items-center gap-4 text-sm">
+          {/* Dynamic Stats Strip with Animation */}
+          <motion.div 
+            className="flex flex-wrap items-center gap-4 text-sm"
+            key={selectedLevel}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {stats.duration && (
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="h-4 w-4" />
@@ -175,7 +178,7 @@ export const ProgramHeader = ({
             <span className="font-bold text-foreground">
               {stats.ects} ECTS
             </span>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
