@@ -3,6 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { X, GraduationCap, Snowflake, Sun, FileText, Mic, CalendarClock } from "lucide-react";
 import { DiaryPageItem } from "@/types/diary";
 import { useDiaryAnalytics } from "@/hooks/useDiaryAnalytics";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface DiarySemesterPlannerProps {
@@ -104,7 +105,10 @@ export const DiarySemesterPlanner = ({ pageId, moduleId, items, courses, onRemov
           variant={selectedSemester === 'winter' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSelectedSemester('winter')}
-          className="gap-1 h-6 text-[10px] px-2"
+          className={cn(
+            "gap-1 h-6 text-[10px] px-2",
+            selectedSemester === 'winter' && "bg-sky-600 hover:bg-sky-700"
+          )}
         >
           <Snowflake className="h-3 w-3" />
           Winter
@@ -113,7 +117,10 @@ export const DiarySemesterPlanner = ({ pageId, moduleId, items, courses, onRemov
           variant={selectedSemester === 'summer' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSelectedSemester('summer')}
-          className="gap-1 h-6 text-[10px] px-2"
+          className={cn(
+            "gap-1 h-6 text-[10px] px-2",
+            selectedSemester === 'summer' && "bg-amber-600 hover:bg-amber-700"
+          )}
         >
           <Sun className="h-3 w-3" />
           Summer
