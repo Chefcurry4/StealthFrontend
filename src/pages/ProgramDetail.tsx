@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,9 @@ const ProgramDetail = () => {
   const { data: courses, isLoading: coursesLoading } = useProgramCourses(program?.id || "");
   const { data: structure, isLoading: structureLoading } = useProgramStructure(program?.id);
   const { addItem } = useRecentlyViewed();
+  
+  // State for Bachelor/Master tab selection
+  const [selectedLevel, setSelectedLevel] = useState<'bachelor' | 'master' | null>(null);
 
   // Track recently viewed program
   useEffect(() => {
@@ -96,24 +99,35 @@ const ProgramDetail = () => {
     enabled: !!program?.id,
   });
 
-  // Stats
-  const stats = useMemo(() => {
-    if (!coursesWithInfo)
-      return { total: 0, bachelor: 0, master: 0, mandatory: 0, optional: 0, totalEcts: 0 };
+  // Determine available levels
+  const hasBachelor = programInfo?.hasBachelor ?? false;
+  const hasMaster = programInfo?.hasMaster ?? false;
+  const hasMasterStructure = !!structure && structure.courses.length > 0;
+
+  // Set default selected level based on available data
+  useEffect(() => {
+    if (selectedLevel === null && (hasBachelor || hasMaster)) {
+      // Default to bachelor if available, otherwise master
+      setSelectedLevel(hasBachelor ? 'bachelor' : 'master');
+    }
+  }, [hasBachelor, hasMaster, selectedLevel]);
+
+  // Calculate stats based on selected level
+  const levelStats = useMemo(() => {
+    if (!coursesWithInfo || !selectedLevel) {
+      return { duration: '', courseCount: 0, ects: 0, courses: [] };
+    }
+
+    const levelFilter = selectedLevel === 'bachelor' ? 'Ba' : 'Ma';
+    const filteredCourses = coursesWithInfo.filter((c: any) => c.level === levelFilter);
 
     return {
-      total: coursesWithInfo.length,
-      bachelor: coursesWithInfo.filter((c: any) => c.level === "Ba").length,
-      master: coursesWithInfo.filter((c: any) => c.level === "Ma").length,
-      mandatory: coursesWithInfo.filter((c: any) => c.mandatoryOptional === "Mandatory").length,
-      optional: coursesWithInfo.filter((c: any) => c.mandatoryOptional === "Optional").length,
-      totalEcts: coursesWithInfo.reduce((sum: number, c: any) => sum + (c.ects || 0), 0),
+      duration: selectedLevel === 'bachelor' ? '3 years' : '2 years',
+      ects: selectedLevel === 'bachelor' ? 180 : 120,
+      courseCount: filteredCourses.length,
+      courses: filteredCourses,
     };
-  }, [coursesWithInfo]);
-
-  // Determine if this is a Master program with structure data
-  const isMaster = programInfo?.level?.toLowerCase().includes("master");
-  const hasMasterStructure = !!structure && structure.courses.length > 0;
+  }, [selectedLevel, coursesWithInfo]);
 
   if (isLoading || structureLoading) {
     return (
@@ -149,20 +163,32 @@ const ProgramDetail = () => {
   return (
     <div className="min-h-screen py-6 md:py-8">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header - Always shown */}
+        {/* Header with clickable Bachelor/Master tabs */}
         <ProgramHeader
           program={program}
           programInfo={programInfo}
           structure={structure}
-          courseCount={stats.total}
-          totalEcts={stats.totalEcts}
+          hasBachelor={hasBachelor}
+          hasMaster={hasMaster}
+          selectedLevel={selectedLevel}
+          onLevelChange={setSelectedLevel}
+          stats={levelStats}
         />
 
         {/* Description - Always shown */}
         <ProgramDescription description={program.description} />
 
-        {/* Master-specific sections */}
-        {isMaster && hasMasterStructure && (
+        {/* Bachelor view - Simple course list */}
+        {selectedLevel === 'bachelor' && (
+          <ProgramCoursesFilter
+            courses={levelStats.courses}
+            isLoading={coursesLoading}
+            showLevelFilter={false}
+          />
+        )}
+
+        {/* Master view with structure data */}
+        {selectedLevel === 'master' && hasMasterStructure && (
           <>
             <ProgramSpecializations specializations={structure.specializations} />
             <ProgramCreditsChart components={structure.components} />
@@ -177,12 +203,12 @@ const ProgramDetail = () => {
           </>
         )}
 
-        {/* Bachelor view OR Master without structure data */}
-        {(!isMaster || !hasMasterStructure) && (
+        {/* Master view without structure data - fallback to simple course list */}
+        {selectedLevel === 'master' && !hasMasterStructure && (
           <ProgramCoursesFilter
-            courses={coursesWithInfo}
+            courses={levelStats.courses}
             isLoading={coursesLoading}
-            showLevelFilter={!isMaster}
+            showLevelFilter={false}
           />
         )}
       </div>

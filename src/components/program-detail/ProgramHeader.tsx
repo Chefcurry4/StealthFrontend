@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, GraduationCap, Clock, BookOpen, ExternalLink, Mail, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Program } from "@/hooks/usePrograms";
 import { FullProgramStructure } from "@/hooks/useProgramStructure";
@@ -14,6 +13,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface ProgramHeaderProps {
   program: Program;
@@ -23,21 +23,28 @@ interface ProgramHeaderProps {
     website?: string;
   } | null;
   structure?: FullProgramStructure | null;
-  courseCount: number;
-  totalEcts: number;
+  hasBachelor: boolean;
+  hasMaster: boolean;
+  selectedLevel: 'bachelor' | 'master' | null;
+  onLevelChange: (level: 'bachelor' | 'master') => void;
+  stats: {
+    duration: string;
+    courseCount: number;
+    ects: number;
+  };
 }
 
 export const ProgramHeader = ({
   program,
   programInfo,
   structure,
-  courseCount,
-  totalEcts,
+  hasBachelor,
+  hasMaster,
+  selectedLevel,
+  onLevelChange,
+  stats,
 }: ProgramHeaderProps) => {
   const navigate = useNavigate();
-
-  const isMaster = programInfo?.level?.toLowerCase().includes("master");
-  const isBachelor = programInfo?.level?.toLowerCase().includes("bachelor");
 
   const handleShare = async () => {
     try {
@@ -51,8 +58,6 @@ export const ProgramHeader = ({
     }
   };
 
-  const displayDuration = structure?.structure?.duration || programInfo?.duration;
-  const displayCredits = structure?.structure?.total_credits || totalEcts;
   const displayWebsite = structure?.structure?.website || programInfo?.website;
   const contactEmail = structure?.structure?.contact_email;
 
@@ -117,38 +122,58 @@ export const ProgramHeader = ({
         </div>
       </div>
 
-      {/* Title + Degree Pills */}
+      {/* Title + Icon */}
       <div className="flex items-start gap-4 mb-4">
         <div className="p-3 bg-primary/10 rounded-xl shrink-0">
           <GraduationCap className="h-8 w-8 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <h1 className="text-2xl md:text-3xl font-bold">{program.name}</h1>
-            <div className="flex gap-2">
-              {isBachelor && (
-                <Badge variant="default" className="text-xs">Bachelor</Badge>
-              )}
-              {isMaster && (
-                <Badge variant="secondary" className="text-xs">Master</Badge>
-              )}
-            </div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">{program.name}</h1>
+
+          {/* Bachelor/Master Clickable Tabs */}
+          <div className="flex gap-3 mb-4">
+            {hasBachelor && (
+              <button
+                onClick={() => onLevelChange('bachelor')}
+                className={cn(
+                  "px-6 py-3 rounded-lg font-semibold text-lg transition-all border-2",
+                  selectedLevel === 'bachelor'
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                    : "bg-muted hover:bg-muted/80 border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Bachelor
+              </button>
+            )}
+            {hasMaster && (
+              <button
+                onClick={() => onLevelChange('master')}
+                className={cn(
+                  "px-6 py-3 rounded-lg font-semibold text-lg transition-all border-2",
+                  selectedLevel === 'master'
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                    : "bg-muted hover:bg-muted/80 border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Master
+              </button>
+            )}
           </div>
 
-          {/* Summary Strip */}
+          {/* Dynamic Stats Strip */}
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            {displayDuration && (
+            {stats.duration && (
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                {displayDuration}
+                {stats.duration}
               </span>
             )}
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <BookOpen className="h-4 w-4" />
-              {courseCount} courses
+              {stats.courseCount} courses
             </span>
             <span className="font-bold text-foreground">
-              {displayCredits} ECTS
+              {stats.ects} ECTS
             </span>
           </div>
         </div>
