@@ -123,7 +123,7 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       blendMode: 'multiply',
       ui: {
         cardBackground: 'rgba(255,255,255,0.92)',
-        cardBorder: 'rgba(26,26,46,0.4)',
+        cardBorder: 'rgba(26,26,46,0.45)',
         buttonPrimary: '#9900cc',
         buttonPrimaryText: '#ffffff',
         buttonSecondary: 'rgba(153,0,204,0.12)',
