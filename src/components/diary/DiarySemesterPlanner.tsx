@@ -105,10 +105,7 @@ export const DiarySemesterPlanner = ({ pageId, moduleId, items, courses, onRemov
           variant={selectedSemester === 'winter' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSelectedSemester('winter')}
-          className={cn(
-            "gap-1 h-6 text-[10px] px-2",
-            selectedSemester === 'winter' && "bg-sky-600 hover:bg-sky-700"
-          )}
+          className="gap-1 h-6 text-[10px] px-2"
         >
           <Snowflake className="h-3 w-3" />
           Winter
@@ -117,10 +114,7 @@ export const DiarySemesterPlanner = ({ pageId, moduleId, items, courses, onRemov
           variant={selectedSemester === 'summer' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSelectedSemester('summer')}
-          className={cn(
-            "gap-1 h-6 text-[10px] px-2",
-            selectedSemester === 'summer' && "bg-amber-600 hover:bg-amber-700"
-          )}
+          className="gap-1 h-6 text-[10px] px-2"
         >
           <Sun className="h-3 w-3" />
           Summer
