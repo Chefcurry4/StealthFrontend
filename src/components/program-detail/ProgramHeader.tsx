@@ -66,9 +66,11 @@ export const ProgramHeader = ({
       {/* Breadcrumb + Back Button */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/universities">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
+            </Link>
           </Button>
           <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
@@ -85,23 +87,14 @@ export const ProgramHeader = ({
           </Breadcrumb>
         </div>
 
-        {/* Action Icons + Program Logo */}
-        <div className="flex items-center gap-4">
-          {programLogo && (
-            <img 
-              src={programLogo} 
-              alt={`${program.name} logo`}
-              className="h-12 w-12 object-contain opacity-80"
-            />
-          )}
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
-        </div>
+        {/* Share button only */}
+        <Button variant="outline" size="sm" onClick={handleShare}>
+          <Share2 className="h-4 w-4 mr-2" />
+          Share
+        </Button>
       </div>
 
-      {/* Title + Icon */}
+      {/* Title + Icon + Large Logo */}
       <div className="flex items-start gap-4 mb-4">
         <div className="p-3 bg-primary/10 rounded-xl shrink-0">
           <GraduationCap className="h-8 w-8 text-primary" />
@@ -180,6 +173,17 @@ export const ProgramHeader = ({
             </span>
           </motion.div>
         </div>
+        
+        {/* Large Program Logo in Empty Header Space */}
+        {programLogo && (
+          <div className="hidden md:flex items-center justify-center shrink-0">
+            <img 
+              src={programLogo} 
+              alt={`${program.name} logo`}
+              className="h-32 w-32 lg:h-40 lg:w-40 object-contain opacity-90"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

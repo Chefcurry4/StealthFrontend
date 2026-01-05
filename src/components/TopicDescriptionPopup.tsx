@@ -132,30 +132,36 @@ export const TopicDescriptionPopup = ({
     );
   }
 
-  // For desktop: use hover card that follows mouse position
+  // For desktop: use hover card
   return (
-    <HoverCard openDelay={200} closeDelay={100} onOpenChange={setIsOpen}>
+    <HoverCard openDelay={100} closeDelay={50} open={isOpen} onOpenChange={setIsOpen}>
       <HoverCardTrigger asChild>
         {variant === "badge" ? (
           <Badge
             variant="secondary"
             className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 ${className}`}
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
           >
             {topicName}
           </Badge>
         ) : (
           <span
             className={`cursor-pointer hover:text-primary transition-colors underline decoration-dotted ${className}`}
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
           >
             {topicName}
           </span>
         )}
       </HoverCardTrigger>
       <HoverCardContent 
-        className="w-72 z-50" 
-        align="start"
-        side="right"
+        className="w-72 z-[100]" 
+        align="center"
+        side="top"
         sideOffset={8}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
       >
         <div className="space-y-2">
           <div className="flex items-center gap-2">
