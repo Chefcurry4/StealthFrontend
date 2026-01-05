@@ -3,7 +3,6 @@ import { useDroppable } from "@dnd-kit/core";
 import { X, GraduationCap, Snowflake, Sun, FileText, Mic, CalendarClock } from "lucide-react";
 import { DiaryPageItem } from "@/types/diary";
 import { useDiaryAnalytics } from "@/hooks/useDiaryAnalytics";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface DiarySemesterPlannerProps {
