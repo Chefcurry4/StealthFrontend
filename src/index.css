@@ -207,10 +207,12 @@ All colors MUST be HSL.
   .theme-btn-secondary {
     background: var(--theme-btn-secondary, hsl(var(--secondary)));
     color: var(--theme-btn-secondary-text, hsl(var(--secondary-foreground)));
+    border: 1px solid var(--theme-card-border, hsl(var(--border)));
   }
 
   .theme-btn-secondary:hover {
-    opacity: 0.9;
+    opacity: 0.85;
+    filter: brightness(0.95);
   }
 
   .theme-section {
@@ -218,8 +220,9 @@ All colors MUST be HSL.
   }
 
   .theme-badge {
-    background: var(--theme-card-bg, hsl(var(--muted)));
-    color: var(--theme-text, hsl(var(--foreground)));
+    background: var(--theme-btn-secondary, hsl(var(--muted)));
+    color: var(--theme-btn-secondary-text, hsl(var(--foreground)));
+    border: 1px solid var(--theme-card-border, hsl(var(--border)));
   }
 
   .theme-text {

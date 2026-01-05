@@ -8,17 +8,17 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
     colors: ['#ffc3a0', '#ffafbd', '#ffdde1', '#ffffff', '#ff9a9e'],
     day: {
       background: '#fff0f5',
-      textColor: '#5e3a43',
+      textColor: '#3d2329',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(94,58,67,0.3)',
+        cardBackground: 'rgba(255,255,255,0.92)',
+        cardBorder: 'rgba(94,58,67,0.45)',
         buttonPrimary: '#5e3a43',
         buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(94,58,67,0.15)',
-        buttonSecondaryText: '#5e3a43',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(94,58,67,0.4)',
+        buttonSecondary: 'rgba(94,58,67,0.12)',
+        buttonSecondaryText: '#3d2329',
+        inputBackground: 'rgba(255,255,255,0.95)',
+        inputBorder: 'rgba(94,58,67,0.5)',
       }
     },
     night: {
@@ -45,17 +45,17 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
     colors: ['#4facfe', '#00f2fe', '#a8edea', '#43e97b', '#ffffff'],
     day: {
       background: '#e0f7fa',
-      textColor: '#004d40',
+      textColor: '#00352d',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(0,77,64,0.3)',
+        cardBackground: 'rgba(255,255,255,0.92)',
+        cardBorder: 'rgba(0,77,64,0.45)',
         buttonPrimary: '#004d40',
         buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(0,77,64,0.15)',
-        buttonSecondaryText: '#004d40',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(0,77,64,0.4)',
+        buttonSecondary: 'rgba(0,77,64,0.12)',
+        buttonSecondaryText: '#00352d',
+        inputBackground: 'rgba(255,255,255,0.95)',
+        inputBorder: 'rgba(0,77,64,0.5)',
       }
     },
     night: {
@@ -82,17 +82,17 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
     colors: ['#764ba2', '#667eea', '#43e97b', '#fa709a', '#2980b9'],
     day: {
       background: '#f3e8ff',
-      textColor: '#4c1d95',
+      textColor: '#3b1574',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(76,29,149,0.3)',
+        cardBackground: 'rgba(255,255,255,0.92)',
+        cardBorder: 'rgba(76,29,149,0.45)',
         buttonPrimary: '#764ba2',
         buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(118,75,162,0.15)',
-        buttonSecondaryText: '#4c1d95',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(76,29,149,0.4)',
+        buttonSecondary: 'rgba(118,75,162,0.12)',
+        buttonSecondaryText: '#3b1574',
+        inputBackground: 'rgba(255,255,255,0.95)',
+        inputBorder: 'rgba(76,29,149,0.5)',
       }
     },
     night: {
@@ -119,17 +119,17 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
     colors: ['#ff00cc', '#333399', '#00ff99', '#00ccff', '#9900cc'],
     day: {
       background: '#f5f5f5',
-      textColor: '#1a1a2e',
+      textColor: '#0f0f1a',
       blendMode: 'multiply',
       ui: {
-        cardBackground: 'rgba(255,255,255,0.8)',
-        cardBorder: 'rgba(26,26,46,0.28)',
+        cardBackground: 'rgba(255,255,255,0.92)',
+        cardBorder: 'rgba(26,26,46,0.4)',
         buttonPrimary: '#9900cc',
         buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(153,0,204,0.15)',
-        buttonSecondaryText: '#1a1a2e',
-        inputBackground: 'rgba(255,255,255,0.8)',
-        inputBorder: 'rgba(26,26,46,0.4)',
+        buttonSecondary: 'rgba(153,0,204,0.12)',
+        buttonSecondaryText: '#0f0f1a',
+        inputBackground: 'rgba(255,255,255,0.95)',
+        inputBorder: 'rgba(26,26,46,0.5)',
       }
     },
     night: {
