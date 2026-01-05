@@ -328,7 +328,7 @@ const Courses = () => {
             ) : (
               <>
                 <div className="mb-4 text-sm opacity-70">
-                  Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, allCourses?.length || 0)} of {allCourses?.length || 0} courses
+                  Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, allCourses?.length || 0)} of {allCourses?.length || 0}+ courses
                 </div>
                 <div className={`grid ${getGridCols()} gap-2 sm:gap-3 lg:gap-4`}>
                   {courses?.map((course) => {
