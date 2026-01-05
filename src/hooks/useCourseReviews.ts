@@ -62,6 +62,7 @@ export const useCreateCourseReview = () => {
       workload?: string;
       organization?: string;
       comment?: string;
+      is_anonymous?: boolean;
     }) => {
       if (!user) throw new Error("Must be logged in");
 
@@ -104,6 +105,7 @@ export const useUpdateCourseReview = () => {
       workload?: string;
       organization?: string;
       comment?: string;
+      is_anonymous?: boolean;
     }) => {
       const { error } = await supabase
         .from("course_reviews")
