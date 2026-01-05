@@ -211,8 +211,7 @@ All colors MUST be HSL.
   }
 
   .theme-btn-secondary:hover {
-    opacity: 0.85;
-    filter: brightness(0.95);
+    opacity: 0.8;
   }
 
   .theme-section {
