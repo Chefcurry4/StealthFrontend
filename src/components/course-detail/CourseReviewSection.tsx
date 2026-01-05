@@ -1,6 +1,6 @@
 import { useState, forwardRef, useImperativeHandle } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Star, Pencil, Trash2, ThumbsUp, ArrowUpDown, MessageCircle, Info, Send } from "lucide-react";
+import { Star, Pencil, Trash2, ThumbsUp, ArrowUpDown, MessageCircle, Info, Send, EyeOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote, useCreateReviewReply, useReviewReplies } from "@/hooks/useCourseReviews";
 import { format } from "date-fns";
@@ -214,6 +215,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
     const [workload, setWorkload] = useState("");
     const [organization, setOrganization] = useState("");
     const [comment, setComment] = useState("");
+    const [isAnonymous, setIsAnonymous] = useState(false);
     const [validationError, setValidationError] = useState("");
     
     // Edit state
@@ -223,6 +225,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
     const [editWorkload, setEditWorkload] = useState("");
     const [editOrganization, setEditOrganization] = useState("");
     const [editComment, setEditComment] = useState("");
+    const [editIsAnonymous, setEditIsAnonymous] = useState(false);
     const [editValidationError, setEditValidationError] = useState("");
 
     useImperativeHandle(ref, () => ({
@@ -262,7 +265,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
       
       setValidationError("");
       createReview.mutate(
-        { course_id: courseId, rating, difficulty, workload, organization, comment },
+        { course_id: courseId, rating, difficulty, workload, organization, comment, is_anonymous: isAnonymous },
         {
           onSuccess: () => {
             setRating(5);
@@ -270,6 +273,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
             setWorkload("");
             setOrganization("");
             setComment("");
+            setIsAnonymous(false);
             setShowForm(false);
           },
         }
@@ -283,6 +287,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
       setEditWorkload(review.workload || "");
       setEditOrganization(review.organization || "");
       setEditComment(review.comment || "");
+      setEditIsAnonymous(review.is_anonymous || false);
     };
 
     const handleUpdateReview = () => {
@@ -299,7 +304,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
       }
       
       updateReview.mutate(
-        { id: editingReviewId, rating: editRating, difficulty: editDifficulty, workload: editWorkload, organization: editOrganization, comment: editComment },
+        { id: editingReviewId, rating: editRating, difficulty: editDifficulty, workload: editWorkload, organization: editOrganization, comment: editComment, is_anonymous: editIsAnonymous },
         { onSuccess: () => setEditingReviewId(null) }
       );
     };
@@ -323,6 +328,8 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
       setFormOrganization: (v: string) => void,
       formComment: string,
       setFormComment: (v: string) => void,
+      formIsAnonymous: boolean,
+      setFormIsAnonymous: (v: boolean) => void,
       onSubmit: () => void,
       isPending: boolean,
       submitText: string,
@@ -424,6 +431,20 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
             rows={3}
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="anonymous" 
+            checked={formIsAnonymous}
+            onCheckedChange={(checked) => setFormIsAnonymous(checked === true)}
+          />
+          <label
+            htmlFor="anonymous"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5"
+          >
+            <EyeOff className="h-4 w-4" />
+            Post anonymously
+          </label>
+        </div>
         <div className="flex gap-2">
           <Button onClick={onSubmit} disabled={isPending}>{submitText}</Button>
           {onCancel && <Button variant="outline" onClick={onCancel}>Cancel</Button>}
@@ -481,6 +502,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                 workload, setWorkload,
                 organization, setOrganization,
                 comment, setComment,
+                isAnonymous, setIsAnonymous,
                 handleSubmitReview,
                 createReview.isPending,
                 "Submit Review",
@@ -506,6 +528,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                         editWorkload, setEditWorkload,
                         editOrganization, setEditOrganization,
                         editComment, setEditComment,
+                        editIsAnonymous, setEditIsAnonymous,
                         handleUpdateReview,
                         updateReview.isPending,
                         "Update Review",
@@ -516,25 +539,43 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                   ) : (
                     <>
                       <div className="flex items-center justify-between mb-3">
-                        <Link 
-                          to={`/user/${review.user_id}`}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={review.user?.profile_photo_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {review.user?.username?.charAt(0).toUpperCase() || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <span className="font-medium text-sm hover:underline">
-                              {review.user?.username || "Anonymous"}
-                            </span>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(review.created_at), "MMM d, yyyy")}
-                            </p>
+                        {review.is_anonymous ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs bg-muted">
+                                <EyeOff className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium text-sm text-muted-foreground">
+                                Anonymous
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(review.created_at), "MMM d, yyyy")}
+                              </p>
+                            </div>
                           </div>
-                        </Link>
+                        ) : (
+                          <Link 
+                            to={`/user/${review.user_id}`}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={review.user?.profile_photo_url || undefined} />
+                              <AvatarFallback className="text-xs">
+                                {review.user?.username?.charAt(0).toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium text-sm hover:underline">
+                                {review.user?.username || "Anonymous"}
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(review.created_at), "MMM d, yyyy")}
+                              </p>
+                            </div>
+                          </Link>
+                        )}
                         
                         {user && review.user_id === user.id && (
                           <div className="flex gap-1">

@@ -1,6 +1,6 @@
 import { useState, forwardRef, useImperativeHandle } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Star, Pencil, Trash2, ThumbsUp, ArrowUpDown, Info } from "lucide-react";
+import { Star, Pencil, Trash2, ThumbsUp, ArrowUpDown, Info, EyeOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLabReviews, useCreateLabReview, useUpdateLabReview, useDeleteLabReview, useToggleLabReviewUpvote } from "@/hooks/useLabReviews";
 import { format } from "date-fns";
@@ -109,6 +110,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
     const [mentorship, setMentorship] = useState("");
     const [workEnvironment, setWorkEnvironment] = useState("");
     const [comment, setComment] = useState("");
+    const [isAnonymous, setIsAnonymous] = useState(false);
     const [validationError, setValidationError] = useState("");
     
     const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
@@ -117,6 +119,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
     const [editMentorship, setEditMentorship] = useState("");
     const [editWorkEnvironment, setEditWorkEnvironment] = useState("");
     const [editComment, setEditComment] = useState("");
+    const [editIsAnonymous, setEditIsAnonymous] = useState(false);
     const [editValidationError, setEditValidationError] = useState("");
 
     useImperativeHandle(ref, () => ({
@@ -154,7 +157,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
       
       setValidationError("");
       createReview.mutate(
-        { lab_id: labId, rating, research_quality: researchQuality, mentorship, work_environment: workEnvironment, comment },
+        { lab_id: labId, rating, research_quality: researchQuality, mentorship, work_environment: workEnvironment, comment, is_anonymous: isAnonymous },
         {
           onSuccess: () => {
             setRating(5);
@@ -162,6 +165,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
             setMentorship("");
             setWorkEnvironment("");
             setComment("");
+            setIsAnonymous(false);
             setShowForm(false);
           },
         }
@@ -175,6 +179,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
       setEditMentorship(review.mentorship || "");
       setEditWorkEnvironment(review.work_environment || "");
       setEditComment(review.comment || "");
+      setEditIsAnonymous(review.is_anonymous || false);
     };
 
     const handleUpdateReview = () => {
@@ -191,7 +196,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
       }
       
       updateReview.mutate(
-        { id: editingReviewId, rating: editRating, research_quality: editResearchQuality, mentorship: editMentorship, work_environment: editWorkEnvironment, comment: editComment },
+        { id: editingReviewId, rating: editRating, research_quality: editResearchQuality, mentorship: editMentorship, work_environment: editWorkEnvironment, comment: editComment, is_anonymous: editIsAnonymous },
         { onSuccess: () => setEditingReviewId(null) }
       );
     };
@@ -215,6 +220,8 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
       setFormWorkEnvironment: (v: string) => void,
       formComment: string,
       setFormComment: (v: string) => void,
+      formIsAnonymous: boolean,
+      setFormIsAnonymous: (v: boolean) => void,
       onSubmit: () => void,
       isPending: boolean,
       submitText: string,
@@ -312,6 +319,20 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
             rows={3}
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="lab-anonymous" 
+            checked={formIsAnonymous}
+            onCheckedChange={(checked) => setFormIsAnonymous(checked === true)}
+          />
+          <label
+            htmlFor="lab-anonymous"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5"
+          >
+            <EyeOff className="h-4 w-4" />
+            Post anonymously
+          </label>
+        </div>
         <div className="flex gap-2">
           <Button onClick={onSubmit} disabled={isPending}>{submitText}</Button>
           {onCancel && <Button variant="outline" onClick={onCancel}>Cancel</Button>}
@@ -368,6 +389,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
                 mentorship, setMentorship,
                 workEnvironment, setWorkEnvironment,
                 comment, setComment,
+                isAnonymous, setIsAnonymous,
                 handleSubmitReview,
                 createReview.isPending,
                 "Submit Review",
@@ -392,6 +414,7 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
                         editMentorship, setEditMentorship,
                         editWorkEnvironment, setEditWorkEnvironment,
                         editComment, setEditComment,
+                        editIsAnonymous, setEditIsAnonymous,
                         handleUpdateReview,
                         updateReview.isPending,
                         "Update Review",
@@ -402,25 +425,43 @@ export const LabReviewSection = forwardRef<LabReviewSectionHandle, LabReviewSect
                   ) : (
                     <>
                       <div className="flex items-center justify-between mb-3">
-                        <Link 
-                          to={`/user/${review.user_id}`}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={review.user?.profile_photo_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {review.user?.username?.charAt(0).toUpperCase() || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <span className="font-medium text-sm hover:underline">
-                              {review.user?.username || "Anonymous"}
-                            </span>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(review.created_at), "MMM d, yyyy")}
-                            </p>
+                        {review.is_anonymous ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs bg-muted">
+                                <EyeOff className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium text-sm text-muted-foreground">
+                                Anonymous
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(review.created_at), "MMM d, yyyy")}
+                              </p>
+                            </div>
                           </div>
-                        </Link>
+                        ) : (
+                          <Link 
+                            to={`/user/${review.user_id}`}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={review.user?.profile_photo_url || undefined} />
+                              <AvatarFallback className="text-xs">
+                                {review.user?.username?.charAt(0).toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium text-sm hover:underline">
+                                {review.user?.username || "Anonymous"}
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(review.created_at), "MMM d, yyyy")}
+                              </p>
+                            </div>
+                          </Link>
+                        )}
                         
                         {user && review.user_id === user.id && (
                           <div className="flex gap-1">

@@ -15,6 +15,7 @@ interface LabReview {
   upvote_count: number;
   created_at: string;
   updated_at: string;
+  is_anonymous?: boolean;
   user?: {
     username: string;
     profile_photo_url: string | null;
@@ -75,6 +76,7 @@ export const useCreateLabReview = () => {
       mentorship?: string;
       work_environment?: string;
       comment?: string;
+      is_anonymous?: boolean;
     }) => {
       if (!user) throw new Error("Must be logged in");
 
@@ -111,6 +113,7 @@ export const useUpdateLabReview = () => {
       mentorship?: string;
       work_environment?: string;
       comment?: string;
+      is_anonymous?: boolean;
     }) => {
       const { id, ...updateData } = data;
       const { data: review, error } = await supabase

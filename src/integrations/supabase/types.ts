@@ -380,6 +380,7 @@ export type Database = {
           created_at: string
           difficulty: string | null
           id: string
+          is_anonymous: boolean
           organization: string | null
           rating: number
           updated_at: string
@@ -393,6 +394,7 @@ export type Database = {
           created_at?: string
           difficulty?: string | null
           id?: string
+          is_anonymous?: boolean
           organization?: string | null
           rating: number
           updated_at?: string
@@ -406,6 +408,7 @@ export type Database = {
           created_at?: string
           difficulty?: string | null
           id?: string
+          is_anonymous?: boolean
           organization?: string | null
           rating?: number
           updated_at?: string
@@ -751,6 +754,7 @@ export type Database = {
           comment: string | null
           created_at: string
           id: string
+          is_anonymous: boolean
           lab_id: string
           mentorship: string | null
           rating: number
@@ -764,6 +768,7 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           lab_id: string
           mentorship?: string | null
           rating: number
@@ -777,6 +782,7 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           lab_id?: string
           mentorship?: string | null
           rating?: number
