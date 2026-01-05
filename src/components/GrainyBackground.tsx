@@ -34,6 +34,43 @@ export const GrainyBackground: React.FC<GrainyBackgroundProps> = ({
     root.style.setProperty('--theme-section-bg', modeConfig.ui.cardBackground);
     root.style.setProperty('--theme-popover-bg', modeConfig.ui.inputBackground);
     root.style.setProperty('--theme-popover-border', modeConfig.ui.inputBorder);
+    
+    // Detect if we're in day mode (light background) based on background color
+    const isDayMode = modeConfig.blendMode === 'multiply';
+    
+    // Override Tailwind CSS variables for proper contrast in day mode
+    if (isDayMode) {
+      // Make muted-foreground darker for better readability in day mode
+      root.style.setProperty('--muted-foreground', '0 0% 35%');
+      // Make foreground darker
+      root.style.setProperty('--foreground', '0 0% 9%');
+      // Make card-foreground darker
+      root.style.setProperty('--card-foreground', '0 0% 9%');
+      // Make popover-foreground darker
+      root.style.setProperty('--popover-foreground', '0 0% 9%');
+      // Ensure accent has good contrast
+      root.style.setProperty('--accent', '0 0% 92%');
+      root.style.setProperty('--accent-foreground', '0 0% 9%');
+      // Border should be more visible
+      root.style.setProperty('--border', '0 0% 70%');
+      // Card background slightly darker for distinction
+      root.style.setProperty('--card', '0 0% 99%');
+      // Secondary with good contrast
+      root.style.setProperty('--secondary', '0 0% 90%');
+      root.style.setProperty('--secondary-foreground', '0 0% 9%');
+    } else {
+      // Night mode - restore defaults or set night-friendly values
+      root.style.setProperty('--muted-foreground', '0 0% 64%');
+      root.style.setProperty('--foreground', '0 0% 98%');
+      root.style.setProperty('--card-foreground', '0 0% 98%');
+      root.style.setProperty('--popover-foreground', '0 0% 98%');
+      root.style.setProperty('--accent', '0 0% 15%');
+      root.style.setProperty('--accent-foreground', '0 0% 98%');
+      root.style.setProperty('--border', '0 0% 20%');
+      root.style.setProperty('--card', '0 0% 5%');
+      root.style.setProperty('--secondary', '0 0% 15%');
+      root.style.setProperty('--secondary-foreground', '0 0% 98%');
+    }
   }, [modeConfig]);
 
   const { blobs, keyframesStyle } = useMemo(() => {
