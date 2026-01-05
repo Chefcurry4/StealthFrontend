@@ -59,7 +59,7 @@ export const TopicFilterMultiSelect = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={`min-w-[200px] justify-between ${className}`}
+          className={`w-full justify-between ${className}`}
         >
           <div className="flex items-center gap-2 truncate">
             <Tag className="h-4 w-4 shrink-0" />
@@ -74,7 +74,7 @@ export const TopicFilterMultiSelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[280px] sm:w-[320px] p-0 z-50" 
+        className="w-[calc(100vw-2rem)] sm:w-[320px] max-w-[320px] p-0 z-50" 
         align="start"
         sideOffset={4}
       >
