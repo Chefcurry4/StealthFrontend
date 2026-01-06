@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Globe, LayoutGrid, Mail, Star, Palette, Sun, Moon, Lock, User } from "lucide-react";
+import { Bell, Globe, LayoutGrid, Mail, Star, Palette, Sun, Moon, Lock, User, Crown } from "lucide-react";
 import { Loader } from "@/components/Loader";
 import { ThemePreviewCard } from "./ThemePreviewCard";
 import { ThemeId, ThemeMode } from "@/themes/types";
@@ -367,10 +367,19 @@ export const PreferencesSettings = () => {
                     style.epicOnly && !reviewStats?.isEpic && 'opacity-50 cursor-not-allowed'
                   )}
                 >
-                  <div className={`h-12 w-full rounded-lg bg-gradient-to-br ${style.colors}`} />
+                  <div className={`h-12 w-full rounded-lg bg-gradient-to-br ${style.colors} ${style.epicOnly && !reviewStats?.isEpic ? 'grayscale' : ''}`} />
                   <p className="text-xs text-center mt-2 font-medium">{style.label}</p>
                   {style.epicOnly && (
-                    <span className="absolute top-1 right-1 text-[10px] bg-amber-500/80 text-white px-1.5 py-0.5 rounded-full font-medium">
+                    <span className={`absolute top-1 right-1 flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                      reviewStats?.isEpic 
+                        ? 'bg-amber-500/80 text-white' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {reviewStats?.isEpic ? (
+                        <Crown className="h-2.5 w-2.5" />
+                      ) : (
+                        <Lock className="h-2.5 w-2.5" />
+                      )}
                       Epic
                     </span>
                   )}

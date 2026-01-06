@@ -59,9 +59,6 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
   ],
 };
 
-const EPIC_ORANGE_COLORS = { from: "from-amber-500", via: "via-orange-500", to: "to-yellow-500" };
-const EPIC_DARK_COLORS = { from: "from-zinc-900", via: "via-neutral-800", to: "to-stone-900" };
-
 const UserFlashcard = ({
   username,
   profilePhotoUrl,
@@ -79,27 +76,19 @@ const UserFlashcard = ({
   isEpic = false,
   reviewCount = 0,
 }: UserFlashcardProps) => {
-  // Determine if using epic color override
-  const isEpicOrange = isEpic && colorStyle === 'epic-orange';
-  const isEpicDark = isEpic && colorStyle === 'epic-dark';
+  // Determine if using epic color styles
+  const isEpicOrange = colorStyle === 'epic-orange';
+  const isEpicDark = colorStyle === 'epic-dark';
+  const isEpicStyle = isEpicOrange || isEpicDark;
   
   // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
-    // Epic users with specific epic styles
-    if (isEpicOrange) return EPIC_ORANGE_COLORS;
-    if (isEpicDark) return EPIC_DARK_COLORS;
-    
-    // Epic users default to orange if no specific style chosen
-    if (isEpic && colorStyle !== 'epic-orange' && colorStyle !== 'epic-dark') {
-      return EPIC_ORANGE_COLORS;
-    }
-    
     const colors = COLOR_STYLES[colorStyle] || COLOR_STYLES.gradient;
     
     if (!username) return colors[0];
     const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
-  }, [username, colorStyle, isEpic, isEpicOrange, isEpicDark]);
+  }, [username, colorStyle]);
 
   const userInitial = username?.[0]?.toUpperCase() || "?";
   
@@ -119,11 +108,54 @@ const UserFlashcard = ({
       {/* Background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientColors.from} ${gradientColors.via} ${gradientColors.to} opacity-90`} />
       
-      {/* Animated gradient blobs */}
+      {/* Epic style animated particles and glow effects */}
+      {isEpicStyle && (
+        <>
+          {/* Animated floating particles */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(12)].map((_, i) => (
+              <div
+                key={i}
+                className={`absolute rounded-full ${isEpicDark ? 'bg-amber-400/40' : 'bg-white/50'}`}
+                style={{
+                  width: `${4 + (i % 3) * 2}px`,
+                  height: `${4 + (i % 3) * 2}px`,
+                  left: `${10 + (i * 7) % 80}%`,
+                  top: `${5 + (i * 13) % 90}%`,
+                  animation: `float ${3 + (i % 3)}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.3}s`,
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Pulsing glow effect */}
+          <div 
+            className={`absolute inset-0 ${isEpicDark ? 'bg-amber-500/10' : 'bg-white/10'}`}
+            style={{
+              animation: 'epicGlow 2s ease-in-out infinite',
+            }}
+          />
+          
+          {/* Shimmer effect */}
+          <div 
+            className="absolute inset-0 opacity-30"
+            style={{
+              background: isEpicDark 
+                ? 'linear-gradient(105deg, transparent 40%, rgba(251,191,36,0.4) 45%, rgba(251,191,36,0.6) 50%, rgba(251,191,36,0.4) 55%, transparent 60%)'
+                : 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.5) 55%, transparent 60%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 3s ease-in-out infinite',
+            }}
+          />
+        </>
+      )}
+      
+      {/* Regular animated gradient blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/15 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        <div className={`absolute -top-10 -right-10 w-32 h-32 ${isEpicDark ? 'bg-amber-400/20' : 'bg-white/20'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '4s' }} />
+        <div className={`absolute -bottom-10 -left-10 w-40 h-40 ${isEpicDark ? 'bg-amber-400/15' : 'bg-white/15'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 ${isEpicDark ? 'bg-amber-400/10' : 'bg-white/10'} rounded-full blur-xl animate-pulse`} style={{ animationDuration: '6s', animationDelay: '2s' }} />
       </div>
 
       {/* Noise texture overlay */}
@@ -133,6 +165,22 @@ const UserFlashcard = ({
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
       />
+      
+      {/* CSS Keyframes for epic animations */}
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+          50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+        @keyframes epicGlow {
+          0%, 100% { opacity: 0.1; }
+          50% { opacity: 0.25; }
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
 
       {/* Glass card content */}
       <div className="relative z-10 h-full flex flex-col p-5">
@@ -166,8 +214,8 @@ const UserFlashcard = ({
             className={`relative ${isEditable ? 'cursor-pointer' : ''} transition-transform duration-300 group-hover:scale-105`}
             onClick={isEditable ? onAvatarClick : undefined}
           >
-            <div className={`absolute inset-0 rounded-full blur-lg scale-110 ${isEpic ? 'bg-amber-400/40' : 'bg-white/30'}`} />
-            <Avatar className={`${avatarSize} border-4 ${isEpic ? 'border-amber-400/60' : 'border-white/40'} shadow-2xl relative`}>
+            <div className={`absolute inset-0 rounded-full blur-lg scale-110 ${isEpic || isEpicStyle ? 'bg-amber-400/40' : 'bg-white/30'}`} />
+            <Avatar className={`${avatarSize} border-4 ${isEpic || isEpicStyle ? 'border-amber-400/60' : 'border-white/40'} shadow-2xl relative`}>
               <AvatarImage src={profilePhotoUrl || undefined} />
               <AvatarFallback className="bg-gray-300 text-gray-500">
                 <svg 
@@ -209,7 +257,7 @@ const UserFlashcard = ({
         {/* Bottom info section */}
         <div className="space-y-3 mt-auto">
           {/* Separator line */}
-          <div className={`h-px bg-gradient-to-r from-transparent ${isEpic ? 'via-amber-400/60' : 'via-white/40'} to-transparent`} />
+          <div className={`h-px bg-gradient-to-r from-transparent ${isEpic || isEpicStyle ? 'via-amber-400/60' : 'via-white/40'} to-transparent`} />
           
           {/* University */}
           <div className="flex items-center gap-2 text-white/90">
@@ -245,12 +293,12 @@ const UserFlashcard = ({
       </div>
 
       {/* Card border glow effect */}
-      <div className={`absolute inset-0 rounded-2xl border ${isEpic ? 'border-amber-400/40' : 'border-white/20'} pointer-events-none`} />
+      <div className={`absolute inset-0 rounded-2xl border ${isEpic || isEpicStyle ? 'border-amber-400/40' : 'border-white/20'} pointer-events-none`} />
       
       {/* Hover glow */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
-          boxShadow: isEpic 
+          boxShadow: isEpic || isEpicStyle
             ? 'inset 0 0 30px rgba(251,191,36,0.2), 0 0 60px rgba(251,191,36,0.2)'
             : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
         }}
