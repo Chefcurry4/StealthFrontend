@@ -39,25 +39,28 @@ const CourseDetail = () => {
     if (!reviews || reviews.length === 0) return null;
     
     const difficultyMap: Record<string, number> = { "Easy": 1, "Medium": 2, "Difficult": 3, "Very Difficult": 4 };
-    const workloadMap: Record<string, number> = { "Light": 1, "Moderate": 2, "Heavy": 3 };
+    const workloadMap: Record<string, number> = { "Light": 1, "Okay": 2, "Heavy": 3 };
     const organizationMap: Record<string, number> = { "Poor": 1, "Fair": 2, "Good": 3, "Great": 4 };
     
     const difficulties = reviews.filter(r => r.difficulty).map(r => difficultyMap[r.difficulty!] || 0).filter(v => v > 0);
     const workloads = reviews.filter(r => r.workload).map(r => workloadMap[r.workload!] || 0).filter(v => v > 0);
     const organizations = reviews.filter(r => r.organization).map(r => organizationMap[r.organization!] || 0).filter(v => v > 0);
+    const ratings = reviews.filter(r => r.rating).map(r => Number(r.rating));
     
     const avgDiffNum = difficulties.length ? difficulties.reduce((a, b) => a + b, 0) / difficulties.length : 0;
     const avgWorkNum = workloads.length ? workloads.reduce((a, b) => a + b, 0) / workloads.length : 0;
     const avgOrgNum = organizations.length ? organizations.reduce((a, b) => a + b, 0) / organizations.length : 0;
+    const avgRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
     
     const getDifficultyLabel = (n: number) => n <= 1.5 ? "Easy" : n <= 2.5 ? "Medium" : n <= 3.5 ? "Difficult" : "Very Difficult";
-    const getWorkloadLabel = (n: number) => n <= 1.5 ? "Light" : n <= 2.5 ? "Moderate" : "Heavy";
+    const getWorkloadLabel = (n: number) => n <= 1.5 ? "Light" : n <= 2.5 ? "Okay" : "Heavy";
     const getOrganizationLabel = (n: number) => n <= 1.5 ? "Poor" : n <= 2.5 ? "Fair" : n <= 3.5 ? "Good" : "Great";
     
     return {
       avgDifficulty: difficulties.length ? getDifficultyLabel(avgDiffNum) : null,
       avgWorkload: workloads.length ? getWorkloadLabel(avgWorkNum) : null,
       avgOrganization: organizations.length ? getOrganizationLabel(avgOrgNum) : null,
+      avgRating: ratings.length ? avgRating : null,
       totalReviews: reviews.length,
     };
   }, [reviews]);
