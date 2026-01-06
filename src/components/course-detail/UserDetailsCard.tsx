@@ -106,29 +106,29 @@ export const UserDetailsCard = ({
   const getDifficultyColor = (difficulty: string | null) => {
     if (!difficulty) return "text-muted-foreground";
     const lower = difficulty.toLowerCase();
-    if (lower.includes("easy")) return "text-green-500";
+    if (lower.includes("easy")) return "text-green-600";
     if (lower.includes("medium")) return "text-yellow-500";
-    if (lower.includes("difficult") || lower.includes("hard")) return "text-orange-500";
-    if (lower.includes("very")) return "text-red-500";
+    if (lower.includes("difficult") && lower.includes("very")) return "text-red-600";
+    if (lower.includes("difficult")) return "text-orange-500";
     return "text-muted-foreground";
   };
 
   const getWorkloadColor = (workload: string | null) => {
     if (!workload) return "text-muted-foreground";
     const lower = workload.toLowerCase();
-    if (lower.includes("light")) return "text-green-500";
-    if (lower.includes("moderate")) return "text-yellow-500";
-    if (lower.includes("heavy")) return "text-red-500";
+    if (lower.includes("light")) return "text-green-700";
+    if (lower.includes("okay") || lower.includes("moderate")) return "text-yellow-500";
+    if (lower.includes("heavy")) return "text-red-600";
     return "text-muted-foreground";
   };
 
   const getOrganizationColor = (organization: string | null) => {
     if (!organization) return "text-muted-foreground";
     const lower = organization.toLowerCase();
-    if (lower.includes("great")) return "text-green-500";
-    if (lower.includes("good")) return "text-emerald-400";
-    if (lower.includes("fair")) return "text-yellow-500";
-    if (lower.includes("poor")) return "text-red-500";
+    if (lower.includes("great")) return "text-green-700";
+    if (lower.includes("good")) return "text-green-500";
+    if (lower.includes("fair")) return "text-orange-500";
+    if (lower.includes("poor")) return "text-red-600";
     return "text-muted-foreground";
   };
 

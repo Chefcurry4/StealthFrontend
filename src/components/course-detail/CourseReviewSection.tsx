@@ -396,7 +396,7 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Light">Light</SelectItem>
-                <SelectItem value="Moderate">Moderate</SelectItem>
+                <SelectItem value="Okay">Okay</SelectItem>
                 <SelectItem value="Heavy">Heavy</SelectItem>
               </SelectContent>
             </Select>
