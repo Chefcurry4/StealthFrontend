@@ -119,9 +119,18 @@ const ProgramDetail = () => {
     enabled: !!program?.id,
   });
 
-  // Determine available levels
-  const hasBachelor = programInfo?.hasBachelor ?? false;
-  const hasMaster = programInfo?.hasMaster ?? false;
+  // Determine available levels based on actual course data from bridge_cp(C-P)
+  // This ensures buttons are only shown if courses exist at that level
+  const hasBachelor = useMemo(() => {
+    if (!coursesWithInfo || coursesWithInfo.length === 0) return false;
+    return coursesWithInfo.some((c: any) => c.level === 'Bachelor');
+  }, [coursesWithInfo]);
+
+  const hasMaster = useMemo(() => {
+    if (!coursesWithInfo || coursesWithInfo.length === 0) return false;
+    return coursesWithInfo.some((c: any) => c.level === 'Master');
+  }, [coursesWithInfo]);
+
   const hasMasterStructure = !!structure && structure.courses.length > 0;
 
   // Set default selected level based on available data
