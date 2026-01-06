@@ -1,4 +1,5 @@
-import { User, Wrench, Info, BookOpen, Users } from "lucide-react";
+import { useState } from "react";
+import { User, Wrench, Info, BookOpen, Users, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeacherLink } from "@/components/TeacherLink";
@@ -10,6 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Course } from "@/hooks/useCourses";
+import { getProgramLogoUrl } from "@/lib/programLogosStorage";
+import { Link } from "react-router-dom";
 
 interface CourseInfoCardProps {
   course: Course;
@@ -17,6 +20,8 @@ interface CourseInfoCardProps {
 
 export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
   const topics = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
+  const programs = course.programs?.split(',').map(p => p.trim()).filter(Boolean) || [];
+  const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set());
   
   const getExamTypeExplanation = (examType: string | null) => {
     if (!examType) return null;
@@ -170,6 +175,49 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
           ) : (
             <p className="text-sm text-muted-foreground italic">
               Software & equipment information is not available yet.
+            </p>
+          )}
+        </div>
+
+        {/* Programs Section */}
+        <div>
+          <h3 className="font-semibold text-base text-primary mb-3 uppercase tracking-wide">
+            🎓 Programs
+          </h3>
+          {programs.length > 0 ? (
+            <div className="flex flex-wrap gap-3">
+              {programs.map((program, idx) => {
+                const logoUrl = getProgramLogoUrl(program);
+                const hasFailed = failedLogos.has(program);
+                
+                return (
+                  <Link
+                    key={idx}
+                    to={`/program/EPFL/${program}`}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors group"
+                  >
+                    {logoUrl && !hasFailed ? (
+                      <img
+                        src={logoUrl}
+                        alt={`${program} logo`}
+                        className="h-6 w-6 object-contain"
+                        onError={() => setFailedLogos(prev => new Set(prev).add(program))}
+                      />
+                    ) : (
+                      <div className="h-6 w-6 rounded bg-primary/15 flex items-center justify-center">
+                        <GraduationCap className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                      {program}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              Program information is not available yet.
             </p>
           )}
         </div>
