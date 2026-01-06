@@ -115,6 +115,7 @@ export const UniversityContentTabs = ({ programs, universitySlug }: UniversityCo
                 title={program.name}
                 description={program.description}
                 image={program.image}
+                programSlug={program.slug}
                 type="program"
               />
             </Link>

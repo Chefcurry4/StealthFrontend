@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, GraduationCap, Clock, BookOpen, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { getProgramLogo } from "@/lib/programLogos";
+import { getProgramLogoUrl } from "@/lib/programLogosStorage";
 
 interface ProgramHeaderProps {
   program: Program;
@@ -49,7 +50,8 @@ export const ProgramHeader = ({
   universitySlug,
 }: ProgramHeaderProps) => {
   const navigate = useNavigate();
-  const programLogo = getProgramLogo(program.slug);
+  const programLogoUrl = getProgramLogoUrl(program.slug);
+  const [logoError, setLogoError] = useState(false);
 
   const handleShare = async () => {
     try {
@@ -183,12 +185,13 @@ export const ProgramHeader = ({
         </div>
         
         {/* Large Program Logo in Empty Header Space */}
-        {programLogo && (
+        {programLogoUrl && !logoError && (
           <div className="hidden md:flex items-center justify-center shrink-0">
             <img 
-              src={programLogo} 
+              src={programLogoUrl} 
               alt={`${program.name} logo`}
               className="h-32 w-32 lg:h-40 lg:w-40 object-contain opacity-90"
+              onError={() => setLogoError(true)}
             />
           </div>
         )}
