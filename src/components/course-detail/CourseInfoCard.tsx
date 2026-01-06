@@ -20,7 +20,7 @@ interface CourseInfoCardProps {
 
 export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
   const topics = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
-  const programs = course.programs?.split(',').map(p => p.trim()).filter(Boolean) || [];
+  const programs = course.programs?.split(';').map(p => p.trim()).filter(Boolean) || [];
   const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set());
   
   const getExamTypeExplanation = (examType: string | null) => {
