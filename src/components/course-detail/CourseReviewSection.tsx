@@ -15,6 +15,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCourseReviews, useCreateCourseReview, useUpdateCourseReview, useDeleteCourseReview, useToggleReviewUpvote, useCreateReviewReply, useReviewReplies } from "@/hooks/useCourseReviews";
+import { usePublicUserReviewCount } from "@/hooks/usePublicUserReviewCount";
+import EpicReviewerBadge from "@/components/EpicReviewerBadge";
+import ReviewUserDisplay from "@/components/ReviewUserDisplay";
 import { format } from "date-fns";
 
 interface CourseReviewSectionProps {
@@ -539,43 +542,13 @@ export const CourseReviewSection = forwardRef<CourseReviewSectionHandle, CourseR
                   ) : (
                     <>
                       <div className="flex items-center justify-between mb-3">
-                        {review.is_anonymous ? (
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs bg-muted">
-                                <EyeOff className="h-4 w-4" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <span className="font-medium text-sm text-muted-foreground">
-                                Anonymous
-                              </span>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(review.created_at), "MMM d, yyyy")}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <Link 
-                            to={`/user/${review.user_id}`}
-                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={review.user?.profile_photo_url || undefined} />
-                              <AvatarFallback className="text-xs">
-                                {review.user?.username?.charAt(0).toUpperCase() || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <span className="font-medium text-sm hover:underline">
-                                {review.user?.username || "Anonymous"}
-                              </span>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(review.created_at), "MMM d, yyyy")}
-                              </p>
-                            </div>
-                          </Link>
-                        )}
+                        <ReviewUserDisplay
+                          userId={review.user_id}
+                          username={review.user?.username}
+                          profilePhotoUrl={review.user?.profile_photo_url}
+                          isAnonymous={review.is_anonymous}
+                          createdAt={review.created_at}
+                        />
                         
                         {user && review.user_id === user.id && (
                           <div className="flex gap-1">
