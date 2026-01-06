@@ -287,18 +287,18 @@ const Courses = () => {
                 <span className="text-xs font-medium opacity-70">Level:</span>
                 <div className="flex gap-1">
                   <Button
-                    variant={filters.level === "Ba" ? "default" : "outline"}
+                    variant={filters.level === "Bachelor" ? "default" : "outline"}
                     size="sm"
                     className="h-7 px-3 text-xs"
-                    onClick={() => updateFilter("level", filters.level === "Ba" ? "all" : "Ba")}
+                    onClick={() => updateFilter("level", filters.level === "Bachelor" ? "all" : "Bachelor")}
                   >
                     Bachelor
                   </Button>
                   <Button
-                    variant={filters.level === "Ma" ? "default" : "outline"}
+                    variant={filters.level === "Master" ? "default" : "outline"}
                     size="sm"
                     className="h-7 px-3 text-xs"
-                    onClick={() => updateFilter("level", filters.level === "Ma" ? "all" : "Ma")}
+                    onClick={() => updateFilter("level", filters.level === "Master" ? "all" : "Master")}
                   >
                     Master
                   </Button>

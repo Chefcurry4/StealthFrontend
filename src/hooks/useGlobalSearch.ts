@@ -43,9 +43,9 @@ export const useGlobalSearch = (query: string) => {
             .limit(5),
           supabase
             .from("Courses(C)")
-            .select("id_course, name_course, code, ects, ba_ma")
-            .or(`name_course.ilike.${searchPattern},code.ilike.${searchPattern},topics.ilike.${searchPattern}`)
-            .limit(5),
+            .select("id_course, name_course, code, ects, ba_ma, professor_name")
+            .or(`name_course.ilike.${searchPattern},code.ilike.${searchPattern},professor_name.ilike.${searchPattern},topics.ilike.${searchPattern}`)
+            .limit(8),
           supabase
             .from("Labs(L)")
             .select("id_lab, name, slug, topics")
@@ -78,9 +78,21 @@ export const useGlobalSearch = (query: string) => {
           });
         }
 
-        // Format courses
+        // Format courses - prioritize title and professor matches
         if (courses.data) {
-          courses.data.forEach((course) => {
+          const lowerQuery = trimmedQuery.toLowerCase();
+          // Sort: exact title matches first, then professor matches, then others
+          const sortedCourses = [...courses.data].sort((a, b) => {
+            const aNameMatch = a.name_course.toLowerCase().includes(lowerQuery) ? 0 : 1;
+            const bNameMatch = b.name_course.toLowerCase().includes(lowerQuery) ? 0 : 1;
+            if (aNameMatch !== bNameMatch) return aNameMatch - bNameMatch;
+            
+            const aProfMatch = a.professor_name?.toLowerCase().includes(lowerQuery) ? 0 : 1;
+            const bProfMatch = b.professor_name?.toLowerCase().includes(lowerQuery) ? 0 : 1;
+            return aProfMatch - bProfMatch;
+          });
+          
+          sortedCourses.slice(0, 5).forEach((course) => {
             formattedResults.push({
               id: course.id_course,
               type: "course",
@@ -104,9 +116,18 @@ export const useGlobalSearch = (query: string) => {
           });
         }
 
-        // Format teachers
+        // Format teachers - prioritize name matches
         if (teachers.data) {
-          teachers.data.forEach((teacher) => {
+          const lowerQuery = trimmedQuery.toLowerCase();
+          const sortedTeachers = [...teachers.data].sort((a, b) => {
+            const aName = (a.full_name || a.name || "").toLowerCase();
+            const bName = (b.full_name || b.name || "").toLowerCase();
+            const aMatch = aName.includes(lowerQuery) ? 0 : 1;
+            const bMatch = bName.includes(lowerQuery) ? 0 : 1;
+            return aMatch - bMatch;
+          });
+          
+          sortedTeachers.forEach((teacher) => {
             formattedResults.push({
               id: teacher.id_teacher,
               type: "teacher",

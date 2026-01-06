@@ -9,6 +9,36 @@ import { usePublicUserProfile } from "@/hooks/usePublicUserProfile";
 import { useUserReviews } from "@/hooks/useUserReviews";
 import { format } from "date-fns";
 
+// Color utility functions for review badges
+const getDifficultyColor = (difficulty: string | null) => {
+  if (!difficulty) return "";
+  const lower = difficulty.toLowerCase();
+  if (lower.includes("easy")) return "text-green-600 border-green-600";
+  if (lower.includes("medium")) return "text-yellow-500 border-yellow-500";
+  if (lower.includes("difficult") && lower.includes("very")) return "text-red-600 border-red-600";
+  if (lower.includes("difficult")) return "text-orange-500 border-orange-500";
+  return "";
+};
+
+const getWorkloadColor = (workload: string | null) => {
+  if (!workload) return "";
+  const lower = workload.toLowerCase();
+  if (lower.includes("light")) return "text-green-700 border-green-700";
+  if (lower.includes("okay") || lower.includes("moderate")) return "text-yellow-500 border-yellow-500";
+  if (lower.includes("heavy")) return "text-red-600 border-red-600";
+  return "";
+};
+
+const getOrganizationColor = (organization: string | null) => {
+  if (!organization) return "";
+  const lower = organization.toLowerCase();
+  if (lower.includes("great")) return "text-green-700 border-green-700";
+  if (lower.includes("good")) return "text-green-500 border-green-500";
+  if (lower.includes("fair")) return "text-orange-500 border-orange-500";
+  if (lower.includes("poor")) return "text-red-600 border-red-600";
+  return "";
+};
+
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const { data: profile, isLoading: profileLoading } = usePublicUserProfile(userId!);
@@ -126,9 +156,21 @@ const UserProfile = () => {
                         );
                       })}
                     </div>
-                    {review.difficulty && <Badge variant="outline">{review.difficulty}</Badge>}
-                    {review.workload && <Badge variant="outline">{review.workload}</Badge>}
-                    {review.organization && <Badge variant="outline">{review.organization}</Badge>}
+                    {review.difficulty && (
+                      <Badge variant="outline" className={getDifficultyColor(review.difficulty)}>
+                        {review.difficulty}
+                      </Badge>
+                    )}
+                    {review.workload && (
+                      <Badge variant="outline" className={getWorkloadColor(review.workload)}>
+                        {review.workload === "Moderate" ? "Okay" : review.workload}
+                      </Badge>
+                    )}
+                    {review.organization && (
+                      <Badge variant="outline" className={getOrganizationColor(review.organization)}>
+                        {review.organization}
+                      </Badge>
+                    )}
                   </div>
                   {review.comment && <p className="text-sm">{review.comment}</p>}
                 </div>
