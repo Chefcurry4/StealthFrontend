@@ -59,7 +59,7 @@ export const TopicFilterMultiSelect = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={`w-full justify-between ${className}`}
+          className={`w-full justify-between theme-input backdrop-blur-sm ${className}`}
         >
           <div className="flex items-center gap-2 truncate">
             <Tag className="h-4 w-4 shrink-0" />

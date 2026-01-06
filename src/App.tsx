@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BackgroundThemeProvider, useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { NavigationTrackerProvider } from "@/contexts/NavigationTrackerContext";
 import { GrainyBackground } from "@/components/GrainyBackground";
+import { ThemeModeSync } from "@/components/ThemeModeSync";
 import { PageTransition } from "@/components/PageTransition";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
@@ -96,6 +97,7 @@ const App = () => (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
           <BackgroundThemeProvider>
+            <ThemeModeSync />
             <TooltipProvider>
               <Toaster />
               <Sonner />
