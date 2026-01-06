@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Building, Camera, User, Sparkles } from "lucide-react";
+import { GraduationCap, Building, Camera, User, Sparkles, Crown, Star } from "lucide-react";
 
 export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest';
 
@@ -19,6 +19,8 @@ interface UserFlashcardProps {
   colorStyle?: FlashcardColorStyle;
   isPulsating?: boolean;
   size?: 'default' | 'large';
+  isEpic?: boolean;
+  reviewCount?: number;
 }
 
 const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to: string }[]> = {
@@ -47,6 +49,8 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
   ],
 };
 
+const EPIC_COLORS = { from: "from-amber-500", via: "via-orange-500", to: "to-yellow-500" };
+
 const UserFlashcard = ({
   username,
   profilePhotoUrl,
@@ -61,15 +65,19 @@ const UserFlashcard = ({
   colorStyle = 'gradient',
   isPulsating = false,
   size = 'default',
+  isEpic = false,
+  reviewCount = 0,
 }: UserFlashcardProps) => {
   // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
+    if (isEpic) return EPIC_COLORS;
+    
     const colors = COLOR_STYLES[colorStyle] || COLOR_STYLES.gradient;
     
     if (!username) return colors[0];
     const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
-  }, [username, colorStyle]);
+  }, [username, colorStyle, isEpic]);
 
   const userInitial = username?.[0]?.toUpperCase() || "?";
   
@@ -81,7 +89,7 @@ const UserFlashcard = ({
 
   return (
     <div 
-      className={`relative w-full ${sizeClasses} aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 ${className}`}
+      className={`relative w-full ${sizeClasses} aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 ${className} ${isEpic ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : ''}`}
       style={{
         animation: isPulsating ? 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
       }}
@@ -108,7 +116,14 @@ const UserFlashcard = ({
       <div className="relative z-10 h-full flex flex-col p-5">
         {/* Top badge row */}
         <div className="flex justify-between items-start mb-4">
-          {studentLevel ? (
+          {isEpic ? (
+            <Badge 
+              className="bg-gradient-to-r from-amber-400 to-orange-500 border-amber-300 text-white font-bold px-3 py-1 gap-1"
+            >
+              <Crown className="h-3 w-3" />
+              EPIC
+            </Badge>
+          ) : studentLevel ? (
             <Badge 
               variant="secondary" 
               className="bg-white/20 backdrop-blur-sm border-white/30 text-white font-semibold px-3 py-1"
@@ -129,11 +144,10 @@ const UserFlashcard = ({
             className={`relative ${isEditable ? 'cursor-pointer' : ''} transition-transform duration-300 group-hover:scale-105`}
             onClick={isEditable ? onAvatarClick : undefined}
           >
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-lg scale-110" />
-            <Avatar className={`${avatarSize} border-4 border-white/40 shadow-2xl relative`}>
+            <div className={`absolute inset-0 rounded-full blur-lg scale-110 ${isEpic ? 'bg-amber-400/40' : 'bg-white/30'}`} />
+            <Avatar className={`${avatarSize} border-4 ${isEpic ? 'border-amber-400/60' : 'border-white/40'} shadow-2xl relative`}>
               <AvatarImage src={profilePhotoUrl || undefined} />
               <AvatarFallback className="bg-gray-300 text-gray-500">
-                {/* Default profile silhouette like Facebook/Instagram */}
                 <svg 
                   viewBox="0 0 24 24" 
                   fill="currentColor" 
@@ -160,12 +174,20 @@ const UserFlashcard = ({
               </span>
             )}
           </h3>
+          
+          {/* Review count for EPIC users */}
+          {isEpic && reviewCount > 0 && (
+            <div className="flex items-center gap-1 mt-2 text-white/90">
+              <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
+              <span className="text-sm font-medium">{reviewCount} reviews</span>
+            </div>
+          )}
         </div>
 
         {/* Bottom info section */}
         <div className="space-y-3 mt-auto">
           {/* Separator line */}
-          <div className="h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+          <div className={`h-px bg-gradient-to-r from-transparent ${isEpic ? 'via-amber-400/60' : 'via-white/40'} to-transparent`} />
           
           {/* University */}
           <div className="flex items-center gap-2 text-white/90">
@@ -201,12 +223,14 @@ const UserFlashcard = ({
       </div>
 
       {/* Card border glow effect */}
-      <div className="absolute inset-0 rounded-2xl border border-white/20 pointer-events-none" />
+      <div className={`absolute inset-0 rounded-2xl border ${isEpic ? 'border-amber-400/40' : 'border-white/20'} pointer-events-none`} />
       
       {/* Hover glow */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
-          boxShadow: 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
+          boxShadow: isEpic 
+            ? 'inset 0 0 30px rgba(251,191,36,0.2), 0 0 60px rgba(251,191,36,0.2)'
+            : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
         }}
       />
     </div>

@@ -1,9 +1,9 @@
 import { ColorPalette, ThemeId } from './types';
 
 export const THEMES: Record<ThemeId, ColorPalette> = {
-  [ThemeId.QUARTZ]: {
-    name: 'Quartz',
-    description: 'Soft pinks and peaches with a gentle, fine grain.',
+  [ThemeId.BASE]: {
+    name: 'Base',
+    description: 'Clean and minimal base theme.',
     grain: { intensity: 0.3, size: 1.8, type: 'fractalNoise' },
     colors: ['#ffc3a0', '#ffafbd', '#ffdde1', '#ffffff', '#ff9a9e'],
     day: {
@@ -22,18 +22,18 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     },
     night: {
-      background: '#2d1f24',
-      textColor: '#ffeef3',
+      background: '#000000',
+      textColor: '#ffffff',
       blendMode: 'screen',
       ui: {
-        cardBackground: 'rgba(0,0,0,0.3)',
-        cardBorder: 'rgba(255,238,243,0.2)',
-        buttonPrimary: '#ffafbd',
-        buttonPrimaryText: '#2d1f24',
-        buttonSecondary: 'rgba(255,175,189,0.2)',
-        buttonSecondaryText: '#ffeef3',
-        inputBackground: 'rgba(0,0,0,0.4)',
-        inputBorder: 'rgba(255,238,243,0.3)',
+        cardBackground: 'rgba(255,255,255,0.05)',
+        cardBorder: 'rgba(255,255,255,0.2)',
+        buttonPrimary: '#ff00cc',
+        buttonPrimaryText: '#000000',
+        buttonSecondary: 'rgba(255,0,204,0.2)',
+        buttonSecondaryText: '#ffffff',
+        inputBackground: 'rgba(255,255,255,0.1)',
+        inputBorder: 'rgba(255,255,255,0.3)',
       }
     }
   },
@@ -111,42 +111,4 @@ export const THEMES: Record<ThemeId, ColorPalette> = {
       }
     }
   },
-
-  [ThemeId.NEON]: {
-    name: 'Neon',
-    description: 'Digital void with sharp, high-frequency static.',
-    grain: { intensity: 0.35, size: 2.5, type: 'fractalNoise' },
-    colors: ['#ff00cc', '#333399', '#00ff99', '#00ccff', '#9900cc'],
-    day: {
-      background: '#f5f5f5',
-      textColor: '#0f0f1a',
-      blendMode: 'multiply',
-      ui: {
-        cardBackground: 'rgba(255,255,255,0.92)',
-        cardBorder: 'rgba(26,26,46,0.45)',
-        buttonPrimary: '#9900cc',
-        buttonPrimaryText: '#ffffff',
-        buttonSecondary: 'rgba(153,0,204,0.12)',
-        buttonSecondaryText: '#0f0f1a',
-        inputBackground: 'rgba(255,255,255,0.95)',
-        inputBorder: 'rgba(26,26,46,0.5)',
-      }
-    },
-    night: {
-      background: '#000000',
-      textColor: '#ffffff',
-      blendMode: 'screen',
-      ui: {
-        cardBackground: 'rgba(255,255,255,0.05)',
-        cardBorder: 'rgba(255,255,255,0.2)',
-        buttonPrimary: '#ff00cc',
-        buttonPrimaryText: '#000000',
-        buttonSecondary: 'rgba(255,0,204,0.2)',
-        buttonSecondaryText: '#ffffff',
-        inputBackground: 'rgba(255,255,255,0.1)',
-        inputBorder: 'rgba(255,255,255,0.3)',
-      }
-    }
-  },
-
 };

@@ -1,23 +1,23 @@
 import { Link } from "react-router-dom";
-import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
+import { useSavedCourses, useSavedLabs } from "@/hooks/useSavedItems";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FlaskConical, GraduationCap, ExternalLink, Bot } from "lucide-react";
+import { BookOpen, FlaskConical, ExternalLink, Bot } from "lucide-react";
 import { Loader } from "@/components/Loader";
+
 export const WorkbenchSavedItems = () => {
   const { data: savedCourses, isLoading: loadingCourses } = useSavedCourses();
   const { data: savedLabs, isLoading: loadingLabs } = useSavedLabs();
-  const { data: savedPrograms, isLoading: loadingPrograms } = useSavedPrograms();
 
-  const isLoading = loadingCourses || loadingLabs || loadingPrograms;
+  const isLoading = loadingCourses || loadingLabs;
 
   if (isLoading) {
     return <Loader />;
   }
 
-  const totalSaved = (savedCourses?.length || 0) + (savedLabs?.length || 0) + (savedPrograms?.length || 0);
+  const totalSaved = (savedCourses?.length || 0) + (savedLabs?.length || 0);
 
   return (
     <div className="space-y-4">
@@ -35,7 +35,7 @@ export const WorkbenchSavedItems = () => {
       </div>
 
       <Tabs defaultValue="courses" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="courses" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             Courses ({savedCourses?.length || 0})
@@ -43,10 +43,6 @@ export const WorkbenchSavedItems = () => {
           <TabsTrigger value="labs" className="flex items-center gap-2">
             <FlaskConical className="h-4 w-4" />
             Labs ({savedLabs?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="programs" className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4" />
-            Programs ({savedPrograms?.length || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -99,29 +95,6 @@ export const WorkbenchSavedItems = () => {
                     </div>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/labs/${item.Labs?.slug || item.lab_id}`}>
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="programs" className="mt-4">
-          {savedPrograms?.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No saved programs yet</p>
-          ) : (
-            <div className="grid gap-3">
-              {savedPrograms?.map((item: any) => (
-                <Card key={item.id} className="bg-card/50">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate">{item.Programs?.name}</h4>
-                    </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/programs/${item.Programs?.slug || item.id_program}`}>
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>
