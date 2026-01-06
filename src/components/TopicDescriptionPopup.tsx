@@ -7,6 +7,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -75,33 +81,43 @@ export const TopicDescriptionPopup = ({
     </>
   );
 
-  // Always use centered dialog for consistent behavior
+  const trigger = variant === "badge" ? (
+    <Badge
+      variant="secondary"
+      className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 ${className}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsOpen(true);
+        if (!topicData) fetchTopicDescription();
+      }}
+    >
+      {topicName}
+    </Badge>
+  ) : (
+    <span
+      className={`cursor-pointer hover:text-primary transition-colors underline decoration-dotted ${className}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsOpen(true);
+        if (!topicData) fetchTopicDescription();
+      }}
+    >
+      {topicName}
+    </span>
+  );
+
   return (
     <>
-      {variant === "badge" ? (
-        <Badge
-          variant="secondary"
-          className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 ${className}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(true);
-            if (!topicData) fetchTopicDescription();
-          }}
-        >
-          {topicName}
-        </Badge>
-      ) : (
-        <span
-          className={`cursor-pointer hover:text-primary transition-colors underline decoration-dotted ${className}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(true);
-            if (!topicData) fetchTopicDescription();
-          }}
-        >
-          {topicName}
-        </span>
-      )}
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {trigger}
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            Click to see topic description
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -22,7 +22,7 @@ const MODE_STORAGE_KEY = 'background-theme-mode';
 
 export const BackgroundThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [themeId, setThemeId] = useState<ThemeId>(ThemeId.QUARTZ);
+  const [themeId, setThemeId] = useState<ThemeId>(ThemeId.BASE);
   const [mode, setMode] = useState<ThemeMode>('day');
   const [isLoading, setIsLoading] = useState(true);
 

@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProfile";
 import { useProfilePictureUpload } from "@/hooks/useProfilePicture";
 import { useUniversities } from "@/hooks/useUniversities";
+import { useUserReviewCount } from "@/hooks/useUserReviewCount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { Loader } from "@/components/Loader";
 import { PreferencesSettings } from "@/components/profile/PreferencesSettings";
 import UserFlashcard, { FlashcardColorStyle } from "@/components/UserFlashcard";
@@ -41,10 +43,11 @@ import {
   X,
   Check,
   Settings,
-  Palette,
   Trash2,
   LogOut,
-  Heart
+  Heart,
+  Star,
+  Crown
 } from "lucide-react";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -94,6 +97,7 @@ const Profile = () => {
   const isMobile = useIsMobile();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: universities } = useUniversities();
+  const { data: reviewStats } = useUserReviewCount();
   const updateProfile = useUpdateProfile();
   const uploadPicture = useProfilePictureUpload();
 
@@ -370,6 +374,35 @@ const Profile = () => {
                   )}
                 </div>
               </div>
+
+              <Separator />
+
+              {/* Reviews Counter */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  Your Reviews
+                </Label>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">{reviewStats?.total || 0}</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({reviewStats?.courseReviews || 0} courses, {reviewStats?.labReviews || 0} labs)
+                    </span>
+                  </div>
+                  {reviewStats?.isEpic && (
+                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 gap-1">
+                      <Crown className="h-3 w-3" />
+                      EPIC Reviewer
+                    </Badge>
+                  )}
+                </div>
+                {!reviewStats?.isEpic && (
+                  <p className="text-xs text-muted-foreground">
+                    {10 - (reviewStats?.total || 0)} more reviews to reach EPIC status!
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         );
@@ -493,6 +526,8 @@ const Profile = () => {
                 colorStyle={(profile?.flashcard_color_style as FlashcardColorStyle) || 'gradient'}
                 isEditable
                 onAvatarClick={() => fileInputRef.current?.click()}
+                isEpic={reviewStats?.isEpic}
+                reviewCount={reviewStats?.total}
               />
               <input
                 ref={fileInputRef}

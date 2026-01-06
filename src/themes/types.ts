@@ -33,8 +33,7 @@ export interface ColorPalette {
 }
 
 export enum ThemeId {
-  QUARTZ = 'QUARTZ',
+  BASE = 'BASE',
   OCEAN = 'OCEAN',
-  AURORA = 'AURORA',
-  NEON = 'NEON'
+  AURORA = 'AURORA'
 }

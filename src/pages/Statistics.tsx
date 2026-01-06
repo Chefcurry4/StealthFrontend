@@ -1,41 +1,42 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, BookOpen, GraduationCap, Microscope, Users, Globe, Star, Bookmark, MessageSquare, TrendingUp, Calendar } from "lucide-react";
+import { BarChart3, BookOpen, GraduationCap, Microscope, Users, Globe, Star, Bookmark, MessageSquare, TrendingUp, Calendar, Tag } from "lucide-react";
 import { useCourses } from "@/hooks/useCourses";
 import { usePrograms } from "@/hooks/usePrograms";
 import { useLabs } from "@/hooks/useLabs";
 import { useTeachers } from "@/hooks/useTeachers";
-import { useUniversities } from "@/hooks/useUniversities";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from "recharts";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, subMonths } from "date-fns";
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
 const Statistics = () => {
   const { data: courses } = useCourses({});
   const { data: programs } = usePrograms();
   const { data: labs } = useLabs();
   const { data: teachers } = useTeachers();
-  const { data: universities } = useUniversities();
 
   // Fetch user-related stats with signup timeline
   const { data: userStats } = useQuery({
     queryKey: ["user-stats-enhanced"],
     queryFn: async () => {
-      const [usersRes, reviewsRes, savedCoursesRes, savedLabsRes, usersTimelineRes] = await Promise.all([
+      const [usersRes, courseReviewsRes, labReviewsRes, savedCoursesRes, savedLabsRes, usersTimelineRes] = await Promise.all([
         supabase.from("Users(US)").select("id", { count: "exact", head: true }),
         supabase.from("course_reviews").select("id, rating", { count: "exact" }),
+        supabase.from("lab_reviews").select("id, rating", { count: "exact" }),
         supabase.from("user_saved_courses(US-C)").select("id", { count: "exact", head: true }),
         supabase.from("user_saved_labs(US-L)").select("id", { count: "exact", head: true }),
         supabase.from("Users(US)").select("created_at"),
       ]);
       
-      const reviews = reviewsRes.data || [];
-      const avgRating = reviews.length > 0 
-        ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+      const courseReviews = courseReviewsRes.data || [];
+      const labReviews = labReviewsRes.data || [];
+      const allReviews = [...courseReviews, ...labReviews];
+      const avgRating = allReviews.length > 0 
+        ? (allReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / allReviews.length).toFixed(1)
         : "0";
       
       // Group users by month for timeline
@@ -65,7 +66,9 @@ const Statistics = () => {
       
       return {
         totalUsers: usersRes.count || 0,
-        totalReviews: reviewsRes.count || 0,
+        totalCourseReviews: courseReviewsRes.count || 0,
+        totalLabReviews: labReviewsRes.count || 0,
+        totalReviews: (courseReviewsRes.count || 0) + (labReviewsRes.count || 0),
         totalSavedCourses: savedCoursesRes.count || 0,
         totalSavedLabs: savedLabsRes.count || 0,
         avgRating,
@@ -74,10 +77,55 @@ const Statistics = () => {
     },
   });
 
+  // Fetch topic statistics from courses
+  const { data: courseTopicStats } = useQuery({
+    queryKey: ["course-topic-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bridge_topc(TOP-C)")
+        .select("topic_name");
+
+      if (error) throw error;
+      
+      const topicCounts: Record<string, number> = {};
+      data?.forEach(item => {
+        if (item.topic_name) {
+          topicCounts[item.topic_name] = (topicCounts[item.topic_name] || 0) + 1;
+        }
+      });
+      
+      return Object.entries(topicCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 15);
+    },
+  });
+
+  // Fetch topic statistics from labs
+  const { data: labTopicStats } = useQuery({
+    queryKey: ["lab-topic-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bridge_topl(TOP-L)")
+        .select("topic_name");
+
+      if (error) throw error;
+      
+      const topicCounts: Record<string, number> = {};
+      data?.forEach(item => {
+        if (item.topic_name) {
+          topicCounts[item.topic_name] = (topicCounts[item.topic_name] || 0) + 1;
+        }
+      });
+      
+      return Object.entries(topicCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 15);
+    },
+  });
+
   // Course stats
-  const baCourses = courses?.filter(c => c.ba_ma === "Bachelor's").length || 565;
-  const maCourses = courses?.filter(c => c.ba_ma === "Master's").length || 940;
-  const totalCourses = courses?.length || 1505;
+  const baCourses = courses?.filter(c => c.ba_ma === "Bachelor's").length || 0;
+  const maCourses = courses?.filter(c => c.ba_ma === "Master's").length || 0;
   
   // Language distribution for pie chart
   const languageStats = courses?.reduce((acc: Record<string, number>, course) => {
@@ -121,7 +169,7 @@ const Statistics = () => {
     { name: 'Master', value: maCourses },
   ].filter(d => d.value > 0);
 
-  // Top research topics
+  // Top research topics from teachers
   const topicStats: Record<string, number> = {};
   teachers?.forEach(teacher => {
     teacher.topics?.forEach(topic => {
@@ -133,15 +181,15 @@ const Statistics = () => {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10);
 
-  // Country distribution
-  const countryStats = universities?.reduce((acc: Record<string, number>, uni) => {
-    const country = uni.country || 'Unknown';
-    acc[country] = (acc[country] || 0) + 1;
-    return acc;
-  }, {}) || {};
+  // Topic bar data for courses
+  const courseTopicBarData = (courseTopicStats || [])
+    .slice(0, 10)
+    .map(([name, value]) => ({ name: name.length > 20 ? name.substring(0, 20) + '...' : name, value, fullName: name }));
 
-  const countryDistribution = Object.entries(countryStats)
-    .sort(([, a], [, b]) => b - a);
+  // Topic bar data for labs
+  const labTopicBarData = (labTopicStats || [])
+    .slice(0, 10)
+    .map(([name, value]) => ({ name: name.length > 20 ? name.substring(0, 20) + '...' : name, value, fullName: name }));
 
   return (
     <div className="min-h-screen py-12">
@@ -153,6 +201,9 @@ const Statistics = () => {
           </h1>
           <p className="text-lg opacity-80">
             Comprehensive overview of academic resources and community activity
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Currently featuring EPFL data
           </p>
         </div>
 
@@ -166,8 +217,8 @@ const Statistics = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{1}</div>
-              <p className="text-xs opacity-70 mt-1">Tracked institutions</p>
+              <div className="text-3xl font-bold">1</div>
+              <p className="text-xs opacity-70 mt-1">EPFL</p>
             </CardContent>
           </Card>
 
@@ -241,7 +292,7 @@ const Statistics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{userStats?.totalReviews || 0}</div>
-              <p className="text-xs opacity-70 mt-1">Course reviews</p>
+              <p className="text-xs opacity-70 mt-1">{userStats?.totalCourseReviews || 0} course • {userStats?.totalLabReviews || 0} lab</p>
             </CardContent>
           </Card>
 
@@ -254,7 +305,7 @@ const Statistics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{userStats?.avgRating || "0"}/5</div>
-              <p className="text-xs opacity-70 mt-1">Average course rating</p>
+              <p className="text-xs opacity-70 mt-1">Average review rating</p>
             </CardContent>
           </Card>
 
@@ -306,6 +357,7 @@ const Statistics = () => {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }} 
+                    animationDuration={200}
                   />
                   <Legend />
                   <Line 
@@ -316,6 +368,8 @@ const Statistics = () => {
                     strokeWidth={3}
                     dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
                     activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
+                    animationDuration={1000}
+                    animationEasing="ease-out"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -347,12 +401,14 @@ const Statistics = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                     >
                       {levelPieData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip animationDuration={200} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -391,12 +447,14 @@ const Statistics = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name.substring(0, 3)} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                     >
                       {languagePieData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip animationDuration={200} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -433,12 +491,14 @@ const Statistics = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name.replace(' ECTS', '')} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                     >
                       {ectsPieData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip animationDuration={200} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -475,55 +535,134 @@ const Statistics = () => {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }} 
+                    animationDuration={200}
                   />
-                  <Bar dataKey="value" name="Courses" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Bar 
+                    dataKey="value" 
+                    name="Courses" 
+                    fill="hsl(var(--primary))" 
+                    radius={[0, 4, 4, 0]} 
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Universities by Country */}
+        {/* Topic Statistics Section */}
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <Tag className="h-6 w-6" />
+          Topic Distribution
+        </h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Topics in Courses */}
           <Card className="backdrop-blur-md bg-white/10 border-white/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Universities by Country
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {countryDistribution.map(([country, count]) => (
-                <div key={country}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">{country}</span>
-                    <span className="text-sm opacity-70">{count}</span>
-                  </div>
-                  <Progress value={(count / (universities?.length || 1)) * 100} className="h-2" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Top Research Topics */}
-          <Card className="backdrop-blur-md bg-white/10 border-white/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Top Research Topics
+                <BookOpen className="h-5 w-5" />
+                Top Topics in Courses
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {topResearchTopics.map(([topic, count]) => (
-                  <Badge key={topic} variant="secondary" className="text-xs bg-white/20">
-                    {topic} ({count})
-                  </Badge>
-                ))}
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={courseTopicBarData} layout="vertical" margin={{ left: 10, right: 30 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      tick={{ fontSize: 10 }} 
+                      width={120}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number, name: string, props: any) => [value, props.payload.fullName]}
+                      animationDuration={200}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      name="Courses" 
+                      fill="#10b981" 
+                      radius={[0, 4, 4, 0]}
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Topics in Labs */}
+          <Card className="backdrop-blur-md bg-white/10 border-white/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Microscope className="h-5 w-5" />
+                Top Topics in Labs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={labTopicBarData} layout="vertical" margin={{ left: 10, right: 30 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      tick={{ fontSize: 10 }} 
+                      width={120}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number, name: string, props: any) => [value, props.payload.fullName]}
+                      animationDuration={200}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      name="Labs" 
+                      fill="#8b5cf6" 
+                      radius={[0, 4, 4, 0]}
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Top Research Topics from Teachers */}
+        <Card className="backdrop-blur-md bg-white/10 border-white/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Top Research Topics (Professors)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {topResearchTopics.map(([topic, count]) => (
+                <Badge key={topic} variant="secondary" className="text-xs bg-white/20">
+                  {topic} ({count})
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Mail } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Mail, Users, MessageSquare, Bookmark, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useCourses } from "@/hooks/useCourses";
@@ -14,6 +14,8 @@ import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { useGuide } from "@/hooks/useGuide";
 import { WebsiteGuide } from "@/components/guide/WebsiteGuide";
 import { GuidePromptDialog } from "@/components/guide/GuidePromptDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
   const { user } = useAuth();
@@ -33,6 +35,26 @@ const Index = () => {
     completeGuide,
     openGuide,
   } = useGuide();
+
+  // Fetch platform stats
+  const { data: platformStats } = useQuery({
+    queryKey: ["platform-stats-home"],
+    queryFn: async () => {
+      const [usersRes, courseReviewsRes, labReviewsRes, savedCoursesRes, savedLabsRes] = await Promise.all([
+        supabase.from("Users(US)").select("id", { count: "exact", head: true }),
+        supabase.from("course_reviews").select("id", { count: "exact", head: true }),
+        supabase.from("lab_reviews").select("id", { count: "exact", head: true }),
+        supabase.from("user_saved_courses(US-C)").select("id", { count: "exact", head: true }),
+        supabase.from("user_saved_labs(US-L)").select("id", { count: "exact", head: true }),
+      ]);
+
+      return {
+        users: usersRes.count || 0,
+        reviews: (courseReviewsRes.count || 0) + (labReviewsRes.count || 0),
+        savedItems: (savedCoursesRes.count || 0) + (savedLabsRes.count || 0),
+      };
+    },
+  });
 
   const hubs = [
     {
@@ -261,6 +283,70 @@ const Index = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Statistics Section */}
+      <section className="py-16 border-t border-border/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              Platform Overview
+            </h2>
+            <p className="text-muted-foreground">
+              Real-time statistics from our community
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
+            <Card className="backdrop-blur-md bg-background/50 border-border/50">
+              <CardContent className="p-4 text-center">
+                <Users className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                <div className="text-2xl font-bold">{platformStats?.users || 0}</div>
+                <p className="text-xs text-muted-foreground">Users</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="backdrop-blur-md bg-background/50 border-border/50">
+              <CardContent className="p-4 text-center">
+                <MessageSquare className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                <div className="text-2xl font-bold">{platformStats?.reviews || 0}</div>
+                <p className="text-xs text-muted-foreground">Reviews</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="backdrop-blur-md bg-background/50 border-border/50">
+              <CardContent className="p-4 text-center">
+                <Bookmark className="h-6 w-6 mx-auto mb-2 text-purple-500" />
+                <div className="text-2xl font-bold">{platformStats?.savedItems || 0}</div>
+                <p className="text-xs text-muted-foreground">Saved Items</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="backdrop-blur-md bg-background/50 border-border/50">
+              <CardContent className="p-4 text-center">
+                <BookOpen className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                <div className="text-2xl font-bold">{courses?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">Courses</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="backdrop-blur-md bg-background/50 border-border/50">
+              <CardContent className="p-4 text-center">
+                <Microscope className="h-6 w-6 mx-auto mb-2 text-orange-500" />
+                <div className="text-2xl font-bold">{labs?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">Labs</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="backdrop-blur-md bg-background/50 border-border/50">
+              <CardContent className="p-4 text-center">
+                <Globe className="h-6 w-6 mx-auto mb-2 text-rose-500" />
+                <div className="text-2xl font-bold">1</div>
+                <p className="text-xs text-muted-foreground">Universities</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
