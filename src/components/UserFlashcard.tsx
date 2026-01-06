@@ -78,6 +78,8 @@ const UserFlashcard = ({
 }: UserFlashcardProps) => {
   // Determine if using epic color styles
   const isEpicStyle = colorStyle === 'epic-orange' || colorStyle === 'epic-dark';
+  const isEpicDark = colorStyle === 'epic-dark';
+  const isEpicOrange = colorStyle === 'epic-orange';
   
   // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
@@ -98,7 +100,13 @@ const UserFlashcard = ({
 
   return (
     <div 
-      className={`relative w-full ${sizeClasses} aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 ${className} ${isEpic ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : ''}`}
+      className={`relative w-full ${sizeClasses} aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 ${className} ${
+        isEpic 
+          ? isEpicDark 
+            ? 'ring-2 ring-black ring-offset-2 ring-offset-background' 
+            : 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background' 
+          : ''
+      }`}
       style={{
         animation: isPulsating ? 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
       }}
@@ -183,7 +191,13 @@ const UserFlashcard = ({
         <div className="flex justify-between items-start mb-4">
           {isEpic ? (
             <Badge 
-              className="bg-gradient-to-r from-amber-400 to-orange-500 border-amber-300 text-white font-bold px-3 py-1 gap-1"
+              className={`font-bold px-3 py-1 gap-1 ${
+                isEpicDark 
+                  ? 'bg-black border-black text-white' 
+                  : isEpicOrange 
+                    ? 'bg-white border-white text-black' 
+                    : 'bg-gradient-to-r from-amber-400 to-orange-500 border-amber-300 text-white'
+              }`}
             >
               <Crown className="h-3 w-3" />
               EPIC
@@ -209,8 +223,24 @@ const UserFlashcard = ({
             className={`relative ${isEditable ? 'cursor-pointer' : ''} transition-transform duration-300 group-hover:scale-105`}
             onClick={isEditable ? onAvatarClick : undefined}
           >
-            <div className={`absolute inset-0 rounded-full blur-lg scale-110 ${isEpic || isEpicStyle ? 'bg-amber-400/40' : 'bg-white/30'}`} />
-            <Avatar className={`${avatarSize} border-4 ${isEpic || isEpicStyle ? 'border-amber-400/60' : 'border-white/40'} shadow-2xl relative`}>
+            <div className={`absolute inset-0 rounded-full blur-lg scale-110 ${
+              isEpicDark 
+                ? 'bg-black/40' 
+                : isEpicOrange 
+                  ? 'bg-white/40' 
+                  : isEpic || isEpicStyle 
+                    ? 'bg-amber-400/40' 
+                    : 'bg-white/30'
+            }`} />
+            <Avatar className={`${avatarSize} border-4 ${
+              isEpicDark 
+                ? 'border-black/60' 
+                : isEpicOrange 
+                  ? 'border-white/60' 
+                  : isEpic || isEpicStyle 
+                    ? 'border-amber-400/60' 
+                    : 'border-white/40'
+            } shadow-2xl relative`}>
               <AvatarImage src={profilePhotoUrl || undefined} />
               <AvatarFallback className="bg-gray-300 text-gray-500">
                 <svg 
@@ -252,7 +282,13 @@ const UserFlashcard = ({
         {/* Bottom info section */}
         <div className="space-y-3 mt-auto">
           {/* Separator line */}
-          <div className={`h-px bg-gradient-to-r from-transparent ${isEpic || isEpicStyle ? 'via-amber-400/60' : 'via-white/40'} to-transparent`} />
+          <div className={`h-px bg-gradient-to-r from-transparent ${
+            isEpicDark 
+              ? 'via-black/60' 
+              : isEpicOrange || isEpic || isEpicStyle 
+                ? 'via-amber-400/60' 
+                : 'via-white/40'
+          } to-transparent`} />
           
           {/* University */}
           <div className="flex items-center gap-2 text-white/90">
@@ -288,14 +324,22 @@ const UserFlashcard = ({
       </div>
 
       {/* Card border glow effect */}
-      <div className={`absolute inset-0 rounded-2xl border ${isEpic || isEpicStyle ? 'border-amber-400/40' : 'border-white/20'} pointer-events-none`} />
+      <div className={`absolute inset-0 rounded-2xl border ${
+        isEpicDark 
+          ? 'border-black/40' 
+          : isEpicOrange || isEpic || isEpicStyle 
+            ? 'border-amber-400/40' 
+            : 'border-white/20'
+      } pointer-events-none`} />
       
       {/* Hover glow */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
-          boxShadow: isEpic || isEpicStyle
-            ? 'inset 0 0 30px rgba(251,191,36,0.2), 0 0 60px rgba(251,191,36,0.2)'
-            : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
+          boxShadow: isEpicDark
+            ? 'inset 0 0 30px rgba(0,0,0,0.3), 0 0 60px rgba(0,0,0,0.3)'
+            : isEpicOrange || isEpic || isEpicStyle
+              ? 'inset 0 0 30px rgba(251,191,36,0.2), 0 0 60px rgba(251,191,36,0.2)'
+              : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
         }}
       />
     </div>
