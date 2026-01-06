@@ -22,6 +22,7 @@ interface UserDetailsCardProps {
     avgDifficulty: string | null;
     avgWorkload: string | null;
     avgOrganization: string | null;
+    avgRating: number | null;
     totalReviews: number;
   };
 }
@@ -153,6 +154,26 @@ export const UserDetailsCard = ({
               <Separator />
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Review Summary</p>
+                
+                {/* Average Rating */}
+                {reviewSummary.avgRating !== null && (
+                  <div className="flex items-center justify-center gap-2 py-2 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${
+                            star <= Math.round(reviewSummary.avgRating!)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-semibold">{reviewSummary.avgRating.toFixed(1)}</span>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground">Difficulty</p>
@@ -248,6 +269,25 @@ export const UserDetailsCard = ({
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">📊 User Review Summary</p>
           {reviewSummary && reviewSummary.totalReviews > 0 ? (
             <>
+              {/* Average Rating */}
+              {reviewSummary.avgRating !== null && (
+                <div className="flex items-center justify-center gap-2 py-2 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= Math.round(reviewSummary.avgRating!)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold">{reviewSummary.avgRating.toFixed(1)}</span>
+                </div>
+              )}
+              
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 bg-muted/50 rounded-lg">
                   <p className="text-xs text-muted-foreground">Difficulty</p>
