@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useTeachers, Teacher } from "@/hooks/useTeachers";
 import { useAIEmailDraft } from "@/hooks/useAI";
 import { useCreateEmailDraft } from "@/hooks/useEmailDrafts";
+import { useSavedCourses } from "@/hooks/useSavedItems";
+import { useSavedLabs } from "@/hooks/useSavedItems";
+import { useUserDocuments } from "@/hooks/useUserDocuments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,8 +16,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { 
   Sparkles, 
@@ -27,7 +39,11 @@ import {
   Copy,
   Check,
   Search,
-  X
+  X,
+  BookOpen,
+  FlaskConical,
+  File,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +52,13 @@ interface EmailComposeModalProps {
   onOpenChange: (open: boolean) => void;
   onEmailSent?: () => void;
 }
+
+const AI_MODELS = [
+  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Fast & efficient" },
+  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", description: "High quality" },
+  { id: "openai/gpt-4.1-mini", name: "GPT-4.1 Mini", description: "Balanced" },
+  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", description: "Creative" },
+];
 
 export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComposeModalProps) {
   const [recipient, setRecipient] = useState("");
@@ -47,12 +70,18 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedProfessor, setSelectedProfessor] = useState<Teacher | null>(null);
+  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0].id);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [selectedLabs, setSelectedLabs] = useState<string[]>([]);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   
   const recipientInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   
-  // Fetch all teachers for better matching
   const { data: allTeachers, isLoading: isLoadingTeachers } = useTeachers();
+  const { data: savedCourses } = useSavedCourses();
+  const { data: savedLabs } = useSavedLabs();
+  const { data: userDocuments } = useUserDocuments();
   const generateAI = useAIEmailDraft();
   const createDraft = useCreateEmailDraft();
 
@@ -69,7 +98,6 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
         t.email?.toLowerCase().includes(searchLower)
       )
       .sort((a, b) => {
-        // Prioritize exact matches
         const aName = (a.full_name || a.name || "").toLowerCase();
         const bName = (b.full_name || b.name || "").toLowerCase();
         const aStarts = aName.startsWith(searchLower);
@@ -81,7 +109,6 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
       .slice(0, 8);
   }, [allTeachers, recipientSearch]);
 
-  // Show suggestions when typing
   useEffect(() => {
     if (recipientSearch.length >= 2 && matchingTeachers.length > 0 && !selectedProfessor) {
       setShowSuggestions(true);
@@ -90,7 +117,6 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
     }
   }, [recipientSearch, matchingTeachers.length, selectedProfessor]);
 
-  // Click outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
@@ -115,6 +141,24 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
     setRecipientSearch("");
   };
 
+  const toggleCourse = (courseId: string) => {
+    setSelectedCourses(prev => 
+      prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
+    );
+  };
+
+  const toggleLab = (labId: string) => {
+    setSelectedLabs(prev => 
+      prev.includes(labId) ? prev.filter(id => id !== labId) : [...prev, labId]
+    );
+  };
+
+  const toggleDoc = (docId: string) => {
+    setSelectedDocs(prev => 
+      prev.includes(docId) ? prev.filter(id => id !== docId) : [...prev, docId]
+    );
+  };
+
   const handleGenerateAI = async () => {
     if (!purpose.trim()) {
       toast.error("Please specify the purpose of the email");
@@ -123,17 +167,29 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
 
     try {
       const recipientName = selectedProfessor?.full_name || selectedProfessor?.name || recipient || "Professor";
+      
+      // Get selected items data - savedCourses/Labs have nested Courses/Labs objects
+      const coursesData = savedCourses?.filter(c => selectedCourses.includes(c.course_id || '')).map(c => c.Courses) || [];
+      const labsData = savedLabs?.filter(l => selectedLabs.includes(l.lab_id || '')).map(l => l.Labs) || [];
+      const docsData = userDocuments?.filter(d => selectedDocs.includes(d.id)) || [];
+      
       const result = await generateAI.mutateAsync({
         purpose,
         recipient: recipientName,
         context: context || undefined,
+        model: selectedModel,
+        savedCourses: coursesData.length > 0 ? coursesData : undefined,
+        savedLabs: labsData.length > 0 ? labsData : undefined,
+        documents: docsData.length > 0 ? docsData : undefined,
+        teacherInfo: selectedProfessor || undefined,
       });
 
       if (result.subject) setSubject(result.subject);
       if (result.body) setBody(result.body);
       toast.success("Email generated successfully!");
-    } catch (error) {
-      toast.error("Failed to generate email");
+    } catch (error: any) {
+      const errorMsg = error?.message || "Failed to generate email";
+      toast.error(errorMsg);
     }
   };
 
@@ -183,12 +239,15 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
     setPurpose("");
     setContext("");
     setSelectedProfessor(null);
+    setSelectedCourses([]);
+    setSelectedLabs([]);
+    setSelectedDocs([]);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] md:max-h-[85vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] md:max-h-[85vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-4 pt-4 md:px-6 md:pt-6 pb-2">
           <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
             <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
@@ -197,7 +256,7 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
             Compose Email
           </DialogTitle>
           <DialogDescription className="text-xs md:text-sm">
-            Write an email with AI assistance. Start typing a professor's name to auto-fill their email.
+            Write an email with AI assistance. Include your courses, labs, and documents for context.
           </DialogDescription>
         </DialogHeader>
 
@@ -205,9 +264,27 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
           <div className="space-y-4 md:space-y-6 pb-4">
             {/* AI Generation Section */}
             <div className="p-3 md:p-4 rounded-xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 border border-primary/20 space-y-3 md:space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                <Sparkles className="h-4 w-4" />
-                AI Email Generation
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Sparkles className="h-4 w-4" />
+                  AI Email Generation
+                </div>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="w-[180px] h-8 text-xs">
+                    <Brain className="h-3 w-3 mr-1" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AI_MODELS.map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-3">
@@ -237,7 +314,7 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                   />
                 </div>
 
-                {/* Recipient with autocomplete inside AI section */}
+                {/* Recipient with autocomplete */}
                 <div className="relative">
                   <Label htmlFor="recipient-search" className="text-xs text-muted-foreground flex items-center gap-1.5">
                     <User className="h-3 w-3" />
@@ -285,7 +362,6 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                       </>
                     )}
                     
-                    {/* Professor suggestions dropdown */}
                     {showSuggestions && (
                       <div 
                         ref={suggestionsRef}
@@ -333,6 +409,102 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                     )}
                   </div>
                 </div>
+
+                {/* Context Tabs - Courses, Labs, Documents */}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">
+                    Include context from your saved items (optional)
+                  </Label>
+                  <Tabs defaultValue="courses" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 h-8">
+                      <TabsTrigger value="courses" className="text-xs gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        Courses {selectedCourses.length > 0 && `(${selectedCourses.length})`}
+                      </TabsTrigger>
+                      <TabsTrigger value="labs" className="text-xs gap-1">
+                        <FlaskConical className="h-3 w-3" />
+                        Labs {selectedLabs.length > 0 && `(${selectedLabs.length})`}
+                      </TabsTrigger>
+                      <TabsTrigger value="docs" className="text-xs gap-1">
+                        <File className="h-3 w-3" />
+                        Docs {selectedDocs.length > 0 && `(${selectedDocs.length})`}
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="courses" className="mt-2">
+                      <ScrollArea className="h-[100px] border rounded-lg p-2">
+                        {savedCourses && savedCourses.length > 0 ? (
+                          <div className="space-y-1">
+                            {savedCourses.map((item) => (
+                              <label
+                                key={item.course_id}
+                                className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/50 cursor-pointer"
+                              >
+                                <Checkbox
+                                  checked={selectedCourses.includes(item.course_id || '')}
+                                  onCheckedChange={() => toggleCourse(item.course_id || '')}
+                                />
+                                <span className="text-xs truncate flex-1">{item.Courses?.name_course}</span>
+                                <span className="text-[10px] text-muted-foreground">{item.Courses?.code}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center py-4">No saved courses</p>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+                    
+                    <TabsContent value="labs" className="mt-2">
+                      <ScrollArea className="h-[100px] border rounded-lg p-2">
+                        {savedLabs && savedLabs.length > 0 ? (
+                          <div className="space-y-1">
+                            {savedLabs.map((item) => (
+                              <label
+                                key={item.lab_id}
+                                className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/50 cursor-pointer"
+                              >
+                                <Checkbox
+                                  checked={selectedLabs.includes(item.lab_id || '')}
+                                  onCheckedChange={() => toggleLab(item.lab_id || '')}
+                                />
+                                <span className="text-xs truncate flex-1">{item.Labs?.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center py-4">No saved labs</p>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+                    
+                    <TabsContent value="docs" className="mt-2">
+                      <ScrollArea className="h-[100px] border rounded-lg p-2">
+                        {userDocuments && userDocuments.length > 0 ? (
+                          <div className="space-y-1">
+                            {userDocuments.map((doc) => (
+                              <label
+                                key={doc.id}
+                                className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/50 cursor-pointer"
+                              >
+                                <Checkbox
+                                  checked={selectedDocs.includes(doc.id)}
+                                  onCheckedChange={() => toggleDoc(doc.id)}
+                                />
+                                <span className="text-xs truncate flex-1">{doc.name}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {doc.file_type?.split('/')[1] || 'file'}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center py-4">No uploaded documents</p>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+                  </Tabs>
+                </div>
                 
                 <Button 
                   onClick={handleGenerateAI}
@@ -348,12 +520,12 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                           <Sparkles className="h-2.5 w-2.5 animate-pulse" />
                         </div>
                       </div>
-                      <span className="animate-pulse">Crafting your email...</span>
+                      <span className="animate-pulse">Generating email...</span>
                     </div>
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4" />
-                      Generate with AI
+                      Generate Email
                     </>
                   )}
                 </Button>
@@ -436,7 +608,7 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
           
           <Button
             onClick={handleSendEmail}
-            disabled={!recipient.trim() || !subject.trim()}
+            disabled={!recipient || (!subject && !body)}
             className="gap-2 h-10 order-1 sm:order-2"
           >
             <ExternalLink className="h-4 w-4" />

@@ -12,58 +12,96 @@ serve(async (req) => {
   }
 
   try {
-    const { purpose, recipient, context } = await req.json();
-    console.log("Received email draft request:", { purpose, recipient, context: context?.slice(0, 100) });
+    const { purpose, recipient, context, model, savedCourses, savedLabs, documents, teacherInfo } = await req.json();
+    console.log("Received email draft request:", { 
+      purpose, 
+      recipient, 
+      model,
+      coursesCount: savedCourses?.length || 0,
+      labsCount: savedLabs?.length || 0,
+      documentsCount: documents?.length || 0,
+      hasTeacherInfo: !!teacherInfo
+    });
 
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      console.error("OPENAI_API_KEY is not configured");
-      throw new Error("OPENAI_API_KEY is not configured");
+    // Build context from user data
+    let enrichedContext = context || "";
+    
+    if (savedCourses?.length > 0) {
+      const coursesList = savedCourses.map((c: any) => `- ${c.name_course} (${c.code})`).join("\n");
+      enrichedContext += `\n\nUser's saved courses:\n${coursesList}`;
+    }
+    
+    if (savedLabs?.length > 0) {
+      const labsList = savedLabs.map((l: any) => `- ${l.name}`).join("\n");
+      enrichedContext += `\n\nUser's saved labs of interest:\n${labsList}`;
+    }
+    
+    if (documents?.length > 0) {
+      const docsList = documents.map((d: any) => `- ${d.name} (${d.file_type || 'document'})`).join("\n");
+      enrichedContext += `\n\nUser's uploaded documents (e.g., CV, transcripts):\n${docsList}`;
+    }
+    
+    if (teacherInfo) {
+      enrichedContext += `\n\nRecipient professor information:
+- Name: ${teacherInfo.full_name || teacherInfo.name}
+- Email: ${teacherInfo.email || 'Not available'}
+- Research topics: ${teacherInfo.topics?.join(", ") || 'Not specified'}`;
     }
 
     const prompt = `You are helping a university student draft a professional email.
 
 Purpose: ${purpose}
 Recipient: ${recipient}
-Context: ${context || "None provided"}
+Context and Background: ${enrichedContext || "None provided"}
 
 Generate a professional email draft with:
 1. Appropriate subject line
 2. Proper greeting
-3. Clear, concise body
+3. Clear, concise body that references relevant context when appropriate
 4. Professional closing
 
-The tone should be respectful and academic. Format your response as JSON:
+The tone should be respectful and academic. If the user has provided their courses, labs, or documents, reference them naturally where relevant.
+
+Format your response as JSON:
 {
   "subject": "Subject line here",
   "body": "Email body here"
 }`;
 
-    console.log("Calling OpenAI GPT-5 for email draft...");
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Use Lovable AI Gateway
+    const selectedModel = model || "google/gemini-2.5-flash";
+    console.log("Calling Lovable AI Gateway with model:", selectedModel);
+    
+    const response = await fetch("https://ai-gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "gpt-5-2025-08-07",
+        model: selectedModel,
         messages: [{ role: "user", content: prompt }],
-        max_completion_tokens: 1000,
+        max_tokens: 1500,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
+      console.error("AI Gateway error:", response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`OpenAI API error: ${response.status}`);
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "AI usage limit reached. Please try again later." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const data = await response.json();
