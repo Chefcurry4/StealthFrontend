@@ -36,9 +36,15 @@ serve(async (req) => {
       enrichedContext += `\n\nUser's saved labs of interest:\n${labsList}`;
     }
     
+    // Build document links for inclusion in email
+    let documentLinksSection = "";
     if (documents?.length > 0) {
       const docsList = documents.map((d: any) => `- ${d.name} (${d.file_type || 'document'})`).join("\n");
       enrichedContext += `\n\nUser's uploaded documents (e.g., CV, transcripts):\n${docsList}`;
+      
+      // Create document links for email body
+      const docLinks = documents.map((d: any) => `- ${d.name}: ${d.file_url}`).join("\n");
+      documentLinksSection = `\n\nAttached documents:\n${docLinks}`;
     }
     
     if (teacherInfo) {
@@ -47,6 +53,8 @@ serve(async (req) => {
 - Email: ${teacherInfo.email || 'Not available'}
 - Research topics: ${teacherInfo.topics?.join(", ") || 'Not specified'}`;
     }
+    
+    const includeDocLinks = documents?.length > 0;
 
     const prompt = `You are helping a university student draft a professional email.
 
@@ -59,6 +67,7 @@ Generate a professional email draft with:
 2. Proper greeting
 3. Clear, concise body that references relevant context when appropriate
 4. Professional closing
+${includeDocLinks ? `5. Include at the end of the email body a section titled "Attached Documents:" with the following document links:\n${documentLinksSection}\n   Format them as clickable links.` : ""}
 
 The tone should be respectful and academic. If the user has provided their courses, labs, or documents, reference them naturally where relevant.
 
