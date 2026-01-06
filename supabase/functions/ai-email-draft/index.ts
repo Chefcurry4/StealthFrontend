@@ -81,7 +81,7 @@ Format your response as JSON:
     const selectedModel = model || "google/gemini-2.5-flash";
     console.log("Calling Lovable AI Gateway with model:", selectedModel);
     
-    const response = await fetch("https://ai-gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
