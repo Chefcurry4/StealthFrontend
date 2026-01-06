@@ -34,6 +34,7 @@ interface ProgramHeaderProps {
     courseCount: number;
     ects: number;
   };
+  universitySlug: string;
 }
 
 export const ProgramHeader = ({
@@ -45,6 +46,7 @@ export const ProgramHeader = ({
   selectedLevel,
   onLevelChange,
   stats,
+  universitySlug,
 }: ProgramHeaderProps) => {
   const navigate = useNavigate();
   const programLogo = getProgramLogo(program.slug);
@@ -67,7 +69,7 @@ export const ProgramHeader = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/universities">
+            <Link to={`/universities/${universitySlug}`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Link>
@@ -77,6 +79,12 @@ export const ProgramHeader = ({
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Link to="/universities">Universities</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to={`/universities/${universitySlug}`}>{universitySlug.toUpperCase()}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

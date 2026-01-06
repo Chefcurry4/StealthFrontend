@@ -20,9 +20,9 @@ import {
 } from "@/components/program-detail";
 
 const ProgramDetail = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { uniSlug, programSlug } = useParams<{ uniSlug: string; programSlug: string }>();
   const navigate = useNavigate();
-  const { data: program, isLoading, error } = useProgram(slug!);
+  const { data: program, isLoading, error } = useProgram(programSlug!);
   const { data: courses, isLoading: coursesLoading } = useProgramCourses(program?.id || "");
   const { data: structure, isLoading: structureLoading } = useProgramStructure(program?.id);
   const { addItem } = useRecentlyViewed();
@@ -37,7 +37,7 @@ const ProgramDetail = () => {
         id: program.id,
         type: "program",
         name: program.name,
-        href: `/programs/${program.slug}`,
+        href: `/programs/${uniSlug}/${program.slug}`,
       });
     }
   }, [program, addItem]);
@@ -194,6 +194,7 @@ const ProgramDetail = () => {
           selectedLevel={selectedLevel}
           onLevelChange={setSelectedLevel}
           stats={levelStats}
+          universitySlug={uniSlug || ''}
         />
 
         {/* Description - Always shown */}

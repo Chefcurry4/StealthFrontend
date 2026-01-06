@@ -26,7 +26,7 @@ const Courses = () => {
   const [filters, setFilters] = useState<CourseFilters>({});
   const [ectsRange, setEctsRange] = useState<[number, number]>([0, 30]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
+  const [displaySize, setDisplaySize] = useState<DisplaySize>('7');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const displayPrefs = useDisplayPreferences();
   const itemsPerPage = displayPrefs.display_items_per_page;

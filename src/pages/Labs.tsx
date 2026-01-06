@@ -14,7 +14,6 @@ import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { useLabSaveCounts } from "@/hooks/useLabSaveCounts";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
-import { CATEGORY_FILTER_OPTIONS } from "@/lib/labCategories";
 import { SEO } from "@/components/SEO";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { TopicFilterMultiSelect } from "@/components/TopicFilterMultiSelect";
@@ -24,10 +23,9 @@ type DisplaySize = '5' | '7' | '10';
 
 const Labs = () => {
   const [filters, setFilters] = useState<LabFilters>({});
-  const [researchDomain, setResearchDomain] = useState<string>('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
-  const [displaySize, setDisplaySize] = useState<DisplaySize>('5');
+  const [displaySize, setDisplaySize] = useState<DisplaySize>('7');
   const displayPrefs = useDisplayPreferences();
   const { data: labs, isLoading, error, refetch } = useLabs(filters);
   const { user } = useAuth();
@@ -37,14 +35,13 @@ const Labs = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const hasActiveFilters = filters.search || filters.facultyArea || researchDomain || selectedTopics.length > 0;
+  const hasActiveFilters = filters.search || filters.facultyArea || selectedTopics.length > 0;
 
   const resetFilters = () => {
     setFilters({});
-    setResearchDomain('');
     setSelectedTopics([]);
     setSortBy('name-asc');
-    setDisplaySize('5');
+    setDisplaySize('7');
   };
 
   const getGridCols = () => {
@@ -97,7 +94,7 @@ const Labs = () => {
     return Array.from(allFaculties).sort();
   }, [labs]);
 
-  // Filter labs by topic and research domain
+  // Filter labs by topic
   const filteredLabs = labs?.filter(lab => {
     // Topic filter - support multiple topics
     if (selectedTopics.length > 0) {
@@ -108,36 +105,7 @@ const Labs = () => {
       if (!hasMatchingTopic) return false;
     }
     
-    // Research domain filter
-    if (!researchDomain) return true;
-    
-    const combined = `${lab.topics || ''} ${lab.faculty_match || ''}`.toLowerCase();
-    const domainCategory = CATEGORY_FILTER_OPTIONS.find(opt => opt.value === researchDomain);
-    
-    if (!domainCategory || !researchDomain) return true;
-    
-    // Match based on the category keywords
-    const keywordPatterns: Record<string, RegExp> = {
-      'ai-ml': /artificial intelligence|machine learning|neural|deep learning|nlp|natural language|computer vision|ai\b|ml\b|data science|big data|analytics/i,
-      'robotics': /robot|automation|mechatronics|motion control|autonomous|drone|uav|manipulator/i,
-      'architecture': /architect|urban|building design|heritage|typology|construction|spatial|housing|landscape/i,
-      'biomedical': /biomedical|cancer|medical|imaging|therapy|diagnostics|biology|genetic|cell|tissue|pharma|drug/i,
-      'chemistry': /chemistry|catalysis|synthesis|molecular|polymer|material|composite|nano|crystal/i,
-      'physics': /physics|astrophysics|cosmology|photonics|optics|laser|plasma|particle|spectroscopy/i,
-      'quantum': /quantum|qubits|quantum computing|superconducting|quantum mechanics/i,
-      'environment': /environmental|climate|atmospheric|ecology|sustainability|hydrology|water|pollution|ecosystem/i,
-      'mathematics': /mathematics|statistics|algorithm|numerical|optimization|probability|stochastic|geometry/i,
-      'cs-security': /computer science|cybersecurity|formal methods|verification|cryptography|network|software|distributed/i,
-      'energy': /energy|solar|fuel cell|battery|power system|renewable|electric|grid|thermal/i,
-      'mechanical': /mechanical|structural|fluid dynamics|thermodynamics|civil|geotechnical|bridge|infrastructure/i,
-      'neuroscience': /neuro|brain|cognition|neural systems|cognitive|psychology|perception/i,
-      'electronics': /electronics|semiconductor|mems|microelectronics|integrated circuit|chip|sensor|signal/i,
-      'telecommunications': /telecom|wireless|communication|antenna|radio|5g|signal processing|network/i,
-      'transportation': /transport|mobility|traffic|vehicle|rail|automotive|logistics|aviation/i,
-    };
-    
-    const pattern = keywordPatterns[researchDomain];
-    return pattern ? pattern.test(combined) : true;
+    return true;
   });
 
   // Get aggregate save counts for each lab from all users
@@ -226,19 +194,6 @@ const Labs = () => {
                   {uniqueFacultyAreas.map((area) => (
                     <SelectItem key={area} value={area}>
                       {area}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={researchDomain} onValueChange={setResearchDomain}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Research Domain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_FILTER_OPTIONS.map((option) => (
-                    <SelectItem key={option.value || 'all'} value={option.value || 'all'}>
-                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

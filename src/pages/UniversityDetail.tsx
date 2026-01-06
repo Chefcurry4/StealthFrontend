@@ -153,7 +153,7 @@ const UniversityDetail = () => {
         </div>
 
         {/* Main Content - Programs Only */}
-        <UniversityContentTabs programs={programs || []} />
+        <UniversityContentTabs programs={programs || []} universitySlug={slug || ''} />
 
         {/* Statistics Section at Bottom */}
         <UniversityStatsSection

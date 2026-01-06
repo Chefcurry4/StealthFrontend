@@ -9,7 +9,8 @@ export const useDisplayPreferences = (): DisplayPreferences => {
   const { data: profile } = useUserProfile();
   
   return {
-    display_compact: profile?.display_compact ?? false,
+    // Default to compact view (true) when no profile/preference is set
+    display_compact: profile?.display_compact ?? true,
     display_items_per_page: profile?.display_items_per_page ?? 20,
   };
 };
