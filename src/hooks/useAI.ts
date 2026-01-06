@@ -155,13 +155,18 @@ export const streamAIStudyAdvisor = async ({
 
 export const useAIEmailDraft = () => {
   return useMutation({
-    mutationFn: async ({ purpose, recipient, context }: {
+    mutationFn: async ({ purpose, recipient, context, model, savedCourses, savedLabs, documents, teacherInfo }: {
       purpose: string;
       recipient: string;
       context?: string;
+      model?: string;
+      savedCourses?: any[];
+      savedLabs?: any[];
+      documents?: any[];
+      teacherInfo?: any;
     }) => {
       const { data, error } = await supabase.functions.invoke("ai-email-draft", {
-        body: { purpose, recipient, context },
+        body: { purpose, recipient, context, model, savedCourses, savedLabs, documents, teacherInfo },
       });
 
       if (error) throw error;
