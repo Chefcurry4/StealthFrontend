@@ -351,8 +351,8 @@ export const PreferencesSettings = () => {
                 { id: 'ocean' as FlashcardColorStyle, label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400', epicOnly: false },
                 { id: 'sunset' as FlashcardColorStyle, label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500', epicOnly: false },
                 { id: 'forest' as FlashcardColorStyle, label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500', epicOnly: false },
-                { id: 'epic-orange' as FlashcardColorStyle, label: 'Epic Orange', colors: 'from-amber-500 via-orange-500 to-yellow-500', epicOnly: true },
-                { id: 'epic-dark' as FlashcardColorStyle, label: 'Epic Dark', colors: 'from-zinc-900 via-neutral-800 to-stone-900', epicOnly: true },
+                { id: 'epic-orange' as FlashcardColorStyle, label: 'Epic Sunset', colors: 'from-orange-500 via-rose-500 to-fuchsia-600', epicOnly: true },
+                { id: 'epic-dark' as FlashcardColorStyle, label: 'Epic Black', colors: 'from-gray-950 via-black to-gray-900', epicOnly: true },
               ]).map((style) => (
                 <button
                   key={style.id}
