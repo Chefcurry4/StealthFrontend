@@ -247,8 +247,8 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] md:max-h-[85vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-4 pt-4 md:px-6 md:pt-6 pb-2">
+      <DialogContent className="w-[95vw] max-w-3xl h-[90vh] md:h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-4 pt-4 md:px-6 md:pt-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
             <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <Mail className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
@@ -260,7 +260,7 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4 md:px-6">
+        <ScrollArea className="flex-1 min-h-0 px-4 md:px-6">
           <div className="space-y-4 md:space-y-6 pb-4">
             {/* AI Generation Section */}
             <div className="p-3 md:p-4 rounded-xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 border border-primary/20 space-y-3 md:space-y-4">
@@ -589,7 +589,7 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
         </ScrollArea>
 
         {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 md:p-6 pt-4 border-t border-border bg-muted/20">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 md:p-6 pt-4 border-t border-border bg-muted/20 shrink-0">
           <Button
             variant="outline"
             onClick={handleSaveDraft}
