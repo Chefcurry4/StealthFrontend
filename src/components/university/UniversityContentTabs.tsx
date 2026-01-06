@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UniversityListCard } from "./UniversityListCard";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 interface Program {
   id: string;
@@ -20,11 +20,12 @@ interface Program {
 
 interface UniversityContentTabsProps {
   programs: Program[];
+  universitySlug: string;
 }
 
 type FilterType = "all" | "bachelor" | "master";
 
-export const UniversityContentTabs = ({ programs }: UniversityContentTabsProps) => {
+export const UniversityContentTabs = ({ programs, universitySlug }: UniversityContentTabsProps) => {
   const [filter, setFilter] = useState<FilterType>("all");
   const [showAll, setShowAll] = useState(false);
   const INITIAL_COUNT = 10;
@@ -109,7 +110,7 @@ export const UniversityContentTabs = ({ programs }: UniversityContentTabsProps) 
           </div>
         ) : (
           displayedPrograms.map((program) => (
-            <Link key={program.id} to={`/programs/${program.slug || program.id}`}>
+            <Link key={program.id} to={`/programs/${universitySlug}/${program.slug || program.id}`}>
               <UniversityListCard
                 title={program.name}
                 description={program.description}

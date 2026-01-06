@@ -7,11 +7,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -80,97 +75,46 @@ export const TopicDescriptionPopup = ({
     </>
   );
 
-  // For mobile: use dialog
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  if (isMobile) {
-    return (
-      <>
-        {variant === "badge" ? (
-          <Badge
-            variant="secondary"
-            className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 ${className}`}
-            onClick={() => {
-              setIsOpen(true);
-              if (!topicData) fetchTopicDescription();
-            }}
-          >
-            {topicName}
-          </Badge>
-        ) : (
-          <span
-            className={`cursor-pointer hover:text-primary transition-colors ${className}`}
-            onClick={() => {
-              setIsOpen(true);
-              if (!topicData) fetchTopicDescription();
-            }}
-          >
-            {topicName}
-          </span>
-        )}
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Tag className="h-5 w-5 text-primary" />
-                {topicName}
-              </DialogTitle>
-              <DialogDescription asChild>
-                <div className="pt-2">{content}</div>
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
-  // For desktop: use hover card
+  // Always use centered dialog for consistent behavior
   return (
-    <HoverCard openDelay={100} closeDelay={50} open={isOpen} onOpenChange={setIsOpen}>
-      <HoverCardTrigger asChild>
-        {variant === "badge" ? (
-          <Badge
-            variant="secondary"
-            className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 ${className}`}
-            onMouseEnter={() => setIsOpen(true)}
-            onMouseLeave={() => setIsOpen(false)}
-          >
-            {topicName}
-          </Badge>
-        ) : (
-          <span
-            className={`cursor-pointer hover:text-primary transition-colors underline decoration-dotted ${className}`}
-            onMouseEnter={() => setIsOpen(true)}
-            onMouseLeave={() => setIsOpen(false)}
-          >
-            {topicName}
-          </span>
-        )}
-      </HoverCardTrigger>
-      <HoverCardContent 
-        className="w-72 z-[100]" 
-        align="center"
-        side="top"
-        sideOffset={8}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-      >
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-primary" />
-            <h4 className="font-semibold">{topicName}</h4>
-          </div>
-          {content}
-        </div>
-      </HoverCardContent>
-    </HoverCard>
+    <>
+      {variant === "badge" ? (
+        <Badge
+          variant="secondary"
+          className={`cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 ${className}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(true);
+            if (!topicData) fetchTopicDescription();
+          }}
+        >
+          {topicName}
+        </Badge>
+      ) : (
+        <span
+          className={`cursor-pointer hover:text-primary transition-colors underline decoration-dotted ${className}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(true);
+            if (!topicData) fetchTopicDescription();
+          }}
+        >
+          {topicName}
+        </span>
+      )}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-primary" />
+              {topicName}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="pt-2">{content}</div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

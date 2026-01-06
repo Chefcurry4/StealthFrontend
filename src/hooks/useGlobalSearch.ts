@@ -117,14 +117,14 @@ export const useGlobalSearch = (query: string) => {
           });
         }
 
-        // Format programs
+        // Format programs - default to EPFL for now (TODO: look up proper university)
         if (programs.data) {
           programs.data.forEach((program) => {
             formattedResults.push({
               id: program.id,
               type: "program",
               title: program.name,
-              href: `/programs/${program.slug}`,
+              href: `/programs/EPFL/${program.slug}`,
             });
           });
         }
