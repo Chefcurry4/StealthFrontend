@@ -327,7 +327,7 @@ const Index = () => {
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
               <CardContent className="p-4 text-center">
                 <BookOpen className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
-                <div className="text-2xl font-bold">{courses?.length || 0}</div>
+                <div className="text-2xl font-bold">{courses?.length + || 0}</div>
                 <p className="text-xs text-muted-foreground">Courses</p>
               </CardContent>
             </Card>
