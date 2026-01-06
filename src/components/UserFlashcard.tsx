@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Building, Camera, User, Sparkles, Crown, Star } from "lucide-react";
 
-export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest';
+export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-orange' | 'epic-dark';
 
 interface UserFlashcardProps {
   username?: string;
@@ -47,9 +47,20 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
     { from: "from-green-500", via: "via-emerald-500", to: "to-cyan-500" },
     { from: "from-teal-600", via: "via-emerald-500", to: "to-green-400" },
   ],
+  'epic-orange': [
+    { from: "from-amber-500", via: "via-orange-500", to: "to-yellow-500" },
+    { from: "from-orange-600", via: "via-amber-500", to: "to-yellow-400" },
+    { from: "from-yellow-500", via: "via-orange-500", to: "to-red-400" },
+  ],
+  'epic-dark': [
+    { from: "from-zinc-900", via: "via-neutral-800", to: "to-stone-900" },
+    { from: "from-slate-900", via: "via-gray-800", to: "to-zinc-900" },
+    { from: "from-neutral-900", via: "via-stone-800", to: "to-zinc-800" },
+  ],
 };
 
-const EPIC_COLORS = { from: "from-amber-500", via: "via-orange-500", to: "to-yellow-500" };
+const EPIC_ORANGE_COLORS = { from: "from-amber-500", via: "via-orange-500", to: "to-yellow-500" };
+const EPIC_DARK_COLORS = { from: "from-zinc-900", via: "via-neutral-800", to: "to-stone-900" };
 
 const UserFlashcard = ({
   username,
@@ -68,16 +79,27 @@ const UserFlashcard = ({
   isEpic = false,
   reviewCount = 0,
 }: UserFlashcardProps) => {
+  // Determine if using epic color override
+  const isEpicOrange = isEpic && colorStyle === 'epic-orange';
+  const isEpicDark = isEpic && colorStyle === 'epic-dark';
+  
   // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
-    if (isEpic) return EPIC_COLORS;
+    // Epic users with specific epic styles
+    if (isEpicOrange) return EPIC_ORANGE_COLORS;
+    if (isEpicDark) return EPIC_DARK_COLORS;
+    
+    // Epic users default to orange if no specific style chosen
+    if (isEpic && colorStyle !== 'epic-orange' && colorStyle !== 'epic-dark') {
+      return EPIC_ORANGE_COLORS;
+    }
     
     const colors = COLOR_STYLES[colorStyle] || COLOR_STYLES.gradient;
     
     if (!username) return colors[0];
     const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
-  }, [username, colorStyle, isEpic]);
+  }, [username, colorStyle, isEpic, isEpicOrange, isEpicDark]);
 
   const userInitial = username?.[0]?.toUpperCase() || "?";
   

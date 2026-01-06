@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProfile";
 import { useUpdatePreferences } from "@/hooks/useUserPreferences";
+import { useUserReviewCount } from "@/hooks/useUserReviewCount";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -19,6 +20,7 @@ export const PreferencesSettings = () => {
   const { data: profile, isLoading } = useUserProfile();
   const updatePreferences = useUpdatePreferences();
   const updateProfile = useUpdateProfile();
+  const { data: reviewStats } = useUserReviewCount();
   const { themeId: currentThemeId, mode: currentMode, setBackgroundTheme, toggleMode } = useBackgroundTheme();
 
   const [preferences, setPreferences] = useState({
@@ -343,29 +345,43 @@ export const PreferencesSettings = () => {
               <Palette className="h-4 w-4" />
               Flashcard Color Style
             </Label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { id: 'gradient', label: 'Default', colors: 'from-violet-500 via-purple-500 to-fuchsia-500' },
-                { id: 'ocean', label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400' },
-                { id: 'sunset', label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500' },
-                { id: 'forest', label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500' },
-              ].map((style) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {([
+                { id: 'gradient' as FlashcardColorStyle, label: 'Default', colors: 'from-violet-500 via-purple-500 to-fuchsia-500', epicOnly: false },
+                { id: 'ocean' as FlashcardColorStyle, label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400', epicOnly: false },
+                { id: 'sunset' as FlashcardColorStyle, label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500', epicOnly: false },
+                { id: 'forest' as FlashcardColorStyle, label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500', epicOnly: false },
+                { id: 'epic-orange' as FlashcardColorStyle, label: 'Epic Orange', colors: 'from-amber-500 via-orange-500 to-yellow-500', epicOnly: true },
+                { id: 'epic-dark' as FlashcardColorStyle, label: 'Epic Dark', colors: 'from-zinc-900 via-neutral-800 to-stone-900', epicOnly: true },
+              ]).map((style) => (
                 <button
                   key={style.id}
                   type="button"
                   onClick={() => updateProfile.mutate({ flashcard_color_style: style.id as FlashcardColorStyle })}
+                  disabled={style.epicOnly && !reviewStats?.isEpic}
                   className={cn(
                     "relative p-3 rounded-xl border-2 transition-all",
                     profile?.flashcard_color_style === style.id || (!profile?.flashcard_color_style && style.id === 'gradient')
                       ? 'border-primary ring-2 ring-primary/20'
-                      : 'border-border hover:border-primary/50'
+                      : 'border-border hover:border-primary/50',
+                    style.epicOnly && !reviewStats?.isEpic && 'opacity-50 cursor-not-allowed'
                   )}
                 >
                   <div className={`h-12 w-full rounded-lg bg-gradient-to-br ${style.colors}`} />
                   <p className="text-xs text-center mt-2 font-medium">{style.label}</p>
+                  {style.epicOnly && (
+                    <span className="absolute top-1 right-1 text-[10px] bg-amber-500/80 text-white px-1.5 py-0.5 rounded-full font-medium">
+                      Epic
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
+            {!reviewStats?.isEpic && (
+              <p className="text-xs text-muted-foreground mt-2">
+                🔒 Epic color styles are unlocked when you reach EPIC status (10+ reviews)
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
