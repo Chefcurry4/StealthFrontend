@@ -18,7 +18,7 @@ jobs:
         id: loc
         run: |
           LOC=$(git ls-files -z \
-            | grep -zvE '\.(png|jpg|jpeg|gif|webp|svg|pdf|ico)$' \
+            | grep -zvE '\.(png|jpg|jpeg|gif|webp|svg|pdf|ico|json)$' \
             | xargs -0 wc -l \
             | tail -n 1 | awk '{print $1}')
           echo "loc=$LOC" >> "$GITHUB_OUTPUT"
