@@ -118,7 +118,7 @@ const UserFlashcard = ({
     if (isEpicDark) return 'ring-2 ring-black ring-offset-2 ring-offset-background';
     if (isEpicPink) return 'ring-2 ring-pink-400 ring-offset-2 ring-offset-background';
     if (isEpicWhite) return 'ring-2 ring-cyan-200 ring-offset-2 ring-offset-background';
-    if (isEpicSunset) return 'ring-2 ring-white ring-offset-2 ring-offset-background';
+    if (isEpicSunset) return 'ring-2 ring-yellow ring-offset-2 ring-offset-background';
     return 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background';
   };
 
@@ -193,7 +193,7 @@ const UserFlashcard = ({
           />
           {/* Main sun body with realistic gradient */}
           <div 
-            className="relative w-24 h-24 rounded-full"
+            className="relative w-28 h-28 rounded-full"
             style={{
               background: 'radial-gradient(circle at 35% 35%, #FEF3C7 0%, #FDE68A 15%, #FBBF24 35%, #F59E0B 60%, #D97706 85%, #B45309 100%)',
               boxShadow: '0 0 20px rgba(251, 191, 36, 0.7), 0 0 40px rgba(251, 146, 60, 0.5), inset -3px -3px 8px rgba(217, 119, 6, 0.4), inset 2px 2px 6px rgba(254, 243, 199, 0.6)',
