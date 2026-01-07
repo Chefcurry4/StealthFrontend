@@ -167,6 +167,7 @@ export const WorkbenchSidebar = ({
 
   const handleDocumentClick = (e: React.MouseEvent, doc: any) => {
     e.preventDefault();
+    e.stopPropagation();
     if (onReferenceDocument) {
       onReferenceDocument(doc.name, doc.file_url);
       if (isMobile) onToggle();
@@ -175,6 +176,7 @@ export const WorkbenchSidebar = ({
 
   const handleEmailDraftClick = (e: React.MouseEvent, draft: any) => {
     e.preventDefault();
+    e.stopPropagation();
     if (onReferenceEmailDraft) {
       onReferenceEmailDraft(draft.subject || "Untitled", draft.body || "");
       if (isMobile) onToggle();
