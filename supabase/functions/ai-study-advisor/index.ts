@@ -514,7 +514,18 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       }
       
       if (!docs || docs.length === 0) {
-        return { error: `Document "${args.document_name}" not found in user's uploaded documents` };
+        // Try searching without extension
+        const nameWithoutExt = args.document_name.replace(/\.[^/.]+$/, "");
+        const { data: docsRetry } = await supabase
+          .from("user_documents")
+          .select("*")
+          .ilike("name", `%${nameWithoutExt}%`)
+          .limit(1);
+        
+        if (!docsRetry || docsRetry.length === 0) {
+          return { error: `Document "${args.document_name}" not found in user's uploaded documents` };
+        }
+        docs.push(...docsRetry);
       }
       
       const doc = docs[0];
@@ -522,15 +533,28 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       
       // Extract the file path from the URL
       // URL format: https://xxx.supabase.co/storage/v1/object/public/user-documents/userId/timestamp-filename
-      const urlParts = doc.file_url.split("/user-documents/");
-      if (urlParts.length < 2) {
+      // For private buckets it might not have /public/ in the path
+      let filePath = "";
+      
+      if (doc.file_url.includes("/user-documents/")) {
+        const urlParts = doc.file_url.split("/user-documents/");
+        filePath = urlParts[1];
+      } else {
+        // Try to extract from the end of the URL
+        const pathMatch = doc.file_url.match(/\/([^\/]+\/[^\/]+)$/);
+        if (pathMatch) {
+          filePath = pathMatch[1];
+        }
+      }
+      
+      if (!filePath) {
+        console.error("Could not extract file path from URL:", doc.file_url);
         return { error: "Invalid document URL format" };
       }
       
-      const filePath = urlParts[1];
       console.log("Downloading file from path:", filePath);
       
-      // Download the file using Supabase storage with service role
+      // Download the file using Supabase storage with service role (handles private buckets)
       const { data: fileData, error: downloadError } = await supabase.storage
         .from("user-documents")
         .download(filePath);
@@ -545,20 +569,49 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       const fileName = doc.name.toLowerCase();
       
       if (fileName.endsWith(".pdf")) {
-        // For PDFs, we can't easily parse them in Deno, so we'll provide what info we have
-        // and note that it's a PDF
-        content = `[PDF Document: ${doc.name}]\n\nNote: This is a PDF file. The raw binary content cannot be displayed as text directly. However, based on the filename "${doc.name}", this appears to be a resume/CV document. The user should include relevant details from their CV in their message, or the document name suggests the user's name might be extracted from the filename.`;
-        
-        // Try to extract name from filename
-        const nameMatch = doc.name.replace(".pdf", "").replace(/-/g, " ").replace(/_/g, " ");
-        if (nameMatch && !nameMatch.toLowerCase().includes("resume") && !nameMatch.toLowerCase().includes("cv")) {
-          content += `\n\nExtracted from filename: The user's name appears to be "${nameMatch}".`;
-        } else {
-          // Try to extract name before "Resume" or "CV"
-          const parts = nameMatch.split(/resume|cv/i);
-          if (parts[0] && parts[0].trim()) {
-            content += `\n\nExtracted from filename: The user's name appears to be "${parts[0].trim()}".`;
+        // For PDFs, extract any text we can from the binary data
+        try {
+          const arrayBuffer = await fileData.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          
+          // Simple PDF text extraction - look for text streams
+          let pdfText = "";
+          const decoder = new TextDecoder('utf-8', { fatal: false });
+          const rawText = decoder.decode(bytes);
+          
+          // Extract text between parentheses (common PDF text format) and /TX tags
+          const textMatches = rawText.match(/\(([^)]{2,})\)/g) || [];
+          const cleanedTexts = textMatches
+            .map(t => t.slice(1, -1))
+            .filter(t => t.length > 3 && /[a-zA-Z]{3,}/.test(t) && !/^[\\\/\w]+$/.test(t))
+            .join(" ");
+          
+          if (cleanedTexts.length > 100) {
+            pdfText = cleanedTexts.substring(0, 5000);
           }
+          
+          // Try to extract name from filename
+          const nameFromFile = doc.name.replace(/\.pdf$/i, "").replace(/[-_]/g, " ");
+          const nameParts = nameFromFile.split(/resume|cv/i);
+          const extractedName = nameParts[0]?.trim() || nameFromFile;
+          
+          if (pdfText.length > 100) {
+            content = `[PDF Document: ${doc.name}]\n\nExtracted text content:\n${pdfText}`;
+          } else {
+            content = `[PDF Document: ${doc.name}]\n\nNote: This is a PDF file. Limited text was extracted. Based on the filename, the user's name appears to be "${extractedName}".`;
+          }
+          
+          // Always add the name extraction
+          if (extractedName && !extractedName.toLowerCase().includes("resume") && !extractedName.toLowerCase().includes("cv")) {
+            content += `\n\n**Extracted from filename:** The user's name appears to be "${extractedName}".`;
+          }
+        } catch (e) {
+          console.error("Error extracting PDF text:", e);
+          // Fallback to filename-based extraction
+          const nameFromFile = doc.name.replace(/\.pdf$/i, "").replace(/[-_]/g, " ");
+          const nameParts = nameFromFile.split(/resume|cv/i);
+          const extractedName = nameParts[0]?.trim() || nameFromFile;
+          content = `[PDF Document: ${doc.name}]\n\nNote: Could not extract text from PDF. Based on the filename, the user's name appears to be "${extractedName}".`;
         }
       } else {
         // For text files, read the content
