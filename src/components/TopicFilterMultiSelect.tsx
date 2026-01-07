@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTopics, Topic } from "@/hooks/useTopics";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TopicFilterMultiSelectProps {
   selectedTopics: string[];
@@ -26,7 +25,6 @@ export const TopicFilterMultiSelect = ({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { data: topics, isLoading } = useTopics();
-  const isMobile = useIsMobile();
 
   const filteredTopics = useMemo(() => {
     if (!topics) return [];
@@ -155,11 +153,6 @@ export const TopicFilterMultiSelect = ({
                       <p className="text-sm font-medium truncate">
                         {topic.topic_name}
                       </p>
-                      {!isMobile && topic.descriptions && (
-                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 truncate">
-                          {topic.descriptions}
-                        </p>
-                      )}
                     </div>
                   </button>
                 );
