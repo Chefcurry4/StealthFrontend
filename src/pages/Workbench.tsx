@@ -35,7 +35,7 @@ import { AIResultCards } from "@/components/AIResultCard";
 import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/KeyboardShortcutsHelp";
 import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
-import { EmailComposeModal } from "@/components/EmailComposeModal";
+import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
 import { 
   Send, 
   Loader2, 
@@ -201,7 +201,10 @@ const Workbench = () => {
   const [showMentionPopup, setShowMentionPopup] = useState(false);
   const [mentionSearchQuery, setMentionSearchQuery] = useState("");
   const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
-  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showEmailCompose, setShowEmailCompose] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [showRefinePopup, setShowRefinePopup] = useState(false);
+  const [refinePopupPosition, setRefinePopupPosition] = useState({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -306,6 +309,7 @@ const Workbench = () => {
     setInput("");
     setAttachments([]);
     setReferencedItems([]);
+    setShowEmailCompose(false);
   };
 
   const handleSelectConversation = (id: string) => {
@@ -314,6 +318,7 @@ const Workbench = () => {
     setInput("");
     setAttachments([]);
     setReferencedItems([]);
+    setShowEmailCompose(false);
   };
 
   // Drag and drop handlers for referenced items
@@ -797,6 +802,93 @@ const Workbench = () => {
     toast.success(`Conversation exported as ${format.toUpperCase()}`);
   };
 
+  // Handle email compose submission - generates email via AI in chat
+  const handleEmailComposeSubmit = async (data: EmailComposeData) => {
+    setShowEmailCompose(false);
+    
+    // Build the email generation prompt
+    let prompt = `Generate a professional email for me.\n\n`;
+    prompt += `**Purpose:** ${data.purpose}\n`;
+    prompt += `**Recipient:** ${data.recipientName}\n`;
+    
+    if (data.context) {
+      prompt += `**Additional context:** ${data.context}\n`;
+    }
+    
+    if (data.selectedCourses.length > 0) {
+      prompt += `\n**Relevant courses I'm taking:**\n`;
+      data.selectedCourses.forEach(c => {
+        prompt += `- ${c?.code || ''} ${c?.name_course || ''}\n`;
+      });
+    }
+    
+    if (data.selectedLabs.length > 0) {
+      prompt += `\n**Labs I'm interested in:**\n`;
+      data.selectedLabs.forEach(l => {
+        prompt += `- ${l?.name || ''}\n`;
+      });
+    }
+    
+    if (data.teacherInfo) {
+      prompt += `\n**About the recipient:**\n`;
+      if (data.teacherInfo.topics && data.teacherInfo.topics.length > 0) {
+        prompt += `Research topics: ${data.teacherInfo.topics.join(', ')}\n`;
+      }
+    }
+    
+    prompt += `\nPlease write the complete email with subject line and body. Format it clearly with "Subject:" on the first line, then a blank line, then the email body.`;
+    prompt += `\n\n💡 **Tip:** You can select any part of this email and ask me to refine it!`;
+    
+    // Set the input and send
+    setInput(prompt);
+    
+    // Trigger send after a brief delay to ensure state is updated
+    setTimeout(() => {
+      const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement;
+      if (sendButton) sendButton.click();
+    }, 100);
+  };
+
+  // Handle text selection for refinement
+  const handleTextSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 10) {
+      const text = selection.toString().trim();
+      setSelectedText(text);
+      
+      // Get position for popup
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      setRefinePopupPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      });
+      setShowRefinePopup(true);
+    } else {
+      setShowRefinePopup(false);
+      setSelectedText("");
+    }
+  }, []);
+
+  // Handle refine request
+  const handleRefineText = () => {
+    if (!selectedText) return;
+    
+    const refinePrompt = `Please refine this part of the email:\n\n"${selectedText}"\n\nMake it more professional and polished while keeping the same meaning.`;
+    setInput(refinePrompt);
+    setShowRefinePopup(false);
+    setSelectedText("");
+    
+    // Clear selection
+    window.getSelection()?.removeAllRanges();
+  };
+
+  // Add mouseup listener for text selection
+  useEffect(() => {
+    document.addEventListener('mouseup', handleTextSelection);
+    return () => document.removeEventListener('mouseup', handleTextSelection);
+  }, [handleTextSelection]);
+
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Sidebar */}
@@ -806,6 +898,10 @@ const Workbench = () => {
         onOpen={() => setSidebarOpen(true)}
         onClose={() => setSidebarOpen(false)}
         onNewChat={handleNewChat}
+        onComposeEmail={() => {
+          handleNewChat();
+          setShowEmailCompose(true);
+        }}
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
         onReferenceCourse={handleReferenceCourse}
@@ -929,7 +1025,10 @@ const Workbench = () => {
           variant="outline"
           size="sm"
           className="gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20"
-          onClick={() => setShowEmailModal(true)}
+          onClick={() => {
+            handleNewChat();
+            setShowEmailCompose(true);
+          }}
         >
           <Mail className="h-4 w-4" />
           <span className="hidden sm:inline">Compose Email</span>
@@ -962,7 +1061,36 @@ const Workbench = () => {
       {/* Chat Area */}
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-8 space-y-6">
-          {messages.length === 0 ? (
+          {/* Email Compose Form - shows when composing email */}
+          {showEmailCompose && messages.length === 0 && (
+            <EmailComposeInChat
+              onSubmit={handleEmailComposeSubmit}
+              onCancel={() => setShowEmailCompose(false)}
+            />
+          )}
+          
+          {/* Text Selection Refine Popup */}
+          {showRefinePopup && selectedText && (
+            <div 
+              className="fixed z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+              style={{ 
+                left: refinePopupPosition.x, 
+                top: refinePopupPosition.y,
+                transform: 'translate(-50%, -100%)'
+              }}
+            >
+              <Button
+                size="sm"
+                className="gap-1.5 shadow-lg"
+                onClick={handleRefineText}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Refine with AI
+              </Button>
+            </div>
+          )}
+          
+          {messages.length === 0 && !showEmailCompose ? (
             <div className="flex flex-col items-center justify-end min-h-[40vh] text-center px-4 pb-4">
               <p className="text-foreground/70 dark:text-muted-foreground max-w-md mb-4 leading-relaxed">
                 Answering any question about your academic journey, such as:
@@ -1364,6 +1492,7 @@ const Workbench = () => {
             ) : (
               <Button
                 size="icon"
+                data-send-button
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleSend}
                 disabled={!input.trim() && attachments.length === 0}
@@ -1408,12 +1537,6 @@ const Workbench = () => {
       
       {/* Keyboard shortcuts help */}
       <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
-      
-      {/* Email Compose Modal */}
-      <EmailComposeModal 
-        open={showEmailModal} 
-        onOpenChange={setShowEmailModal}
-      />
     </div>
   );
 };
