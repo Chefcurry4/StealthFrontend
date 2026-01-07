@@ -58,9 +58,9 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
     { from: "from-fuchsia-400", via: "via-pink-500", to: "to-rose-400" },
   ],
   'epic-white': [
-    { from: "from-white", via: "via-blue-50", to: "to-cyan-100" },
-    { from: "from-blue-50", via: "via-sky-50", to: "to-cyan-50" },
-    { from: "from-white", via: "via-sky-50", to: "to-blue-100" },
+    { from: "from-white", via: "via-blue-20", to: "to-cyan-50" },
+    { from: "from-blue-50", via: "via-cyan-30", to: "to-white-50" },
+    { from: "from-white", via: "via-cyan-50", to: "to-blue-100" },
   ],
   'epic-sunset': [
     { from: "from-orange-400", via: "via-rose-400", to: "to-purple-500" },
@@ -176,7 +176,7 @@ const UserFlashcard = ({
       
       {/* Sunset sun icon */}
       {isEpicSunset && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
           {/* Outer glow layers */}
           <div 
             className="absolute -inset-3 rounded-full opacity-40"
@@ -193,7 +193,7 @@ const UserFlashcard = ({
           />
           {/* Main sun body with realistic gradient */}
           <div 
-            className="relative w-12 h-12 rounded-full"
+            className="relative w-20 h-20 rounded-full"
             style={{
               background: 'radial-gradient(circle at 35% 35%, #FEF3C7 0%, #FDE68A 15%, #FBBF24 35%, #F59E0B 60%, #D97706 85%, #B45309 100%)',
               boxShadow: '0 0 20px rgba(251, 191, 36, 0.7), 0 0 40px rgba(251, 146, 60, 0.5), inset -3px -3px 8px rgba(217, 119, 6, 0.4), inset 2px 2px 6px rgba(254, 243, 199, 0.6)',
@@ -326,9 +326,9 @@ const UserFlashcard = ({
           </div>
 
           {/* Username */}
-          <h3 className={`mt-4 text-xl font-bold ${isEpicWhite ? 'text-amber-100' : 'text-white'} text-center truncate max-w-full px-2`}>
+          <h3 className={`mt-4 text-xl font-bold ${isEpicWhite ? 'text-amber-100' : 'text-sky'} text-center truncate max-w-full px-2`}>
             {username || (
-              <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-white/50'} italic flex items-center gap-2`}>
+              <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-sky/50'} italic flex items-center gap-2`}>
                 <User className="h-4 w-4" />
                 Username
               </span>
@@ -337,7 +337,7 @@ const UserFlashcard = ({
           
           {/* Review count for EPIC users */}
           {isEpic && reviewCount > 0 && (
-            <div className={`flex items-center gap-1 mt-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-white/90'}`}>
+            <div className={`flex items-center gap-1 mt-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-sky/90'}`}>
               <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
               <span className="text-sm font-medium">{reviewCount} reviews</span>
             </div>
@@ -362,15 +362,15 @@ const UserFlashcard = ({
           } to-transparent`} />
           
           {/* University */}
-          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-white/90'}`}>
+          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-sky/90'}`}>
             {universityLogo ? (
               <img src={universityLogo} alt="" className="h-5 w-5 rounded object-cover" />
             ) : (
-              <Building className={`h-4 w-4 ${isEpicWhite ? 'text-amber-100/70' : 'text-white/70'}`} />
+              <Building className={`h-4 w-4 ${isEpicWhite ? 'text-amber-100/70' : 'text-sky/70'}`} />
             )}
             <span className="text-sm truncate flex-1">
               {universityName || (
-                <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-white/50'} italic`}>Select university</span>
+                <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-sky/50'} italic`}>Select university</span>
               )}
             </span>
           </div>
