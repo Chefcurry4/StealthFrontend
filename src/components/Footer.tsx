@@ -39,7 +39,7 @@ export const Footer = () => {
           <div className="flex flex-col gap-4">
             <Link to="/" className="flex items-center gap-2">
               <GraduationCap className="h-8 w-8" />
-              <span className="text-xl font-bold">Students Hub</span>
+              <span className="text-xl font-bold">Student Hub</span>
             </Link>
             <p className="text-sm opacity-70">
               Plan your international study semester with AI-powered guidance
