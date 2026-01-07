@@ -58,8 +58,8 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
     { from: "from-fuchsia-400", via: "via-pink-500", to: "to-rose-400" },
   ],
   'epic-white': [
-    { from: "from-white", via: "via-blue-20", to: "to-cyan-50" },
-    { from: "from-blue-50", via: "via-cyan-30", to: "to-white-50" },
+    { from: "from-white", via: "via-sky-50", to: "to-cyan-100" },
+    { from: "from-white", via: "via-blue-50", to: "to-sky-100" },
     { from: "from-white", via: "via-cyan-50", to: "to-blue-100" },
   ],
   'epic-sunset': [
@@ -117,7 +117,7 @@ const UserFlashcard = ({
   const getEpicRingClass = () => {
     if (isEpicDark) return 'ring-2 ring-black ring-offset-2 ring-offset-background';
     if (isEpicPink) return 'ring-2 ring-pink-400 ring-offset-2 ring-offset-background';
-    if (isEpicWhite) return 'ring-2 ring-cyan-200 ring-offset-2 ring-offset-background';
+    if (isEpicWhite) return 'ring-2 ring-amber-700 ring-offset-2 ring-offset-background';
     if (isEpicSunset) return 'ring-2 ring-yellow ring-offset-2 ring-offset-background';
     return 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background';
   };
@@ -205,9 +205,9 @@ const UserFlashcard = ({
       
       {/* Regular animated gradient blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className={`absolute -top-10 -right-10 w-32 h-32 ${isEpicWhite ? 'bg-cyan-200/20' : isEpicStyle ? 'bg-white/15' : 'bg-white/20'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '4s' }} />
-        <div className={`absolute -bottom-10 -left-10 w-40 h-40 ${isEpicWhite ? 'bg-blue-200/15' : isEpicStyle ? 'bg-white/12' : 'bg-white/15'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '5s', animationDelay: '1s' }} />
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 ${isEpicWhite ? 'bg-sky-200/10' : isEpicStyle ? 'bg-white/8' : 'bg-white/10'} rounded-full blur-xl animate-pulse`} style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        <div className={`absolute -top-10 -right-10 w-32 h-32 ${isEpicWhite ? 'bg-amber-200/20' : isEpicStyle ? 'bg-white/15' : 'bg-white/20'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '4s' }} />
+        <div className={`absolute -bottom-10 -left-10 w-40 h-40 ${isEpicWhite ? 'bg-amber-100/15' : isEpicStyle ? 'bg-white/12' : 'bg-white/15'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 ${isEpicWhite ? 'bg-stone-200/10' : isEpicStyle ? 'bg-white/8' : 'bg-white/10'} rounded-full blur-xl animate-pulse`} style={{ animationDuration: '6s', animationDelay: '2s' }} />
       </div>
 
       {/* Noise texture overlay */}
@@ -250,7 +250,7 @@ const UserFlashcard = ({
                   : isEpicPink 
                     ? 'bg-pink-400 border-pink-400 text-white'
                     : isEpicWhite 
-                      ? 'bg-blue-100 border-blue-200 text-amber-100'
+                      ? 'bg-amber-700 border-amber-800 text-white'
                       : isEpicSunset 
                         ? 'bg-white border-white text-orange-600'
                         : 'bg-gradient-to-r from-amber-400 to-orange-500 border-amber-300 text-white'
@@ -271,7 +271,7 @@ const UserFlashcard = ({
           )}
           
           {/* Decorative sparkle */}
-          <Fingerprint className={`h-5 w-5 ${isEpicWhite ? 'text-amber-100/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '5s' }} />
+          <Fingerprint className={`h-5 w-5 ${isEpicWhite ? 'text-amber-700/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '5s' }} />
         </div>
 
         {/* Avatar section */}
@@ -286,7 +286,7 @@ const UserFlashcard = ({
                 : isEpicPink 
                   ? 'bg-pink-400/40'
                   : isEpicWhite 
-                    ? 'bg-cyan-300/40'
+                    ? 'bg-amber-300/40'
                     : isEpicSunset 
                       ? 'bg-white/40'
                       : isEpic || isEpicStyle 
@@ -299,7 +299,7 @@ const UserFlashcard = ({
                 : isEpicPink 
                   ? 'border-pink-400/60'
                   : isEpicWhite 
-                    ? 'border-cyan-200/60'
+                    ? 'border-amber-600/60'
                     : isEpicSunset 
                       ? 'border-white/60'
                       : isEpic || isEpicStyle 
@@ -326,9 +326,9 @@ const UserFlashcard = ({
           </div>
 
           {/* Username */}
-          <h3 className={`mt-4 text-xl font-bold ${isEpicWhite ? 'text-amber-100' : 'text-sky'} text-center truncate max-w-full px-2`}>
+          <h3 className={`mt-4 text-xl font-bold ${isEpicWhite ? 'text-amber-800' : 'text-white'} text-center truncate max-w-full px-2`}>
             {username || (
-              <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-sky/50'} italic flex items-center gap-2`}>
+              <span className={`${isEpicWhite ? 'text-amber-700/50' : 'text-white/50'} italic flex items-center gap-2`}>
                 <User className="h-4 w-4" />
                 Username
               </span>
@@ -337,7 +337,7 @@ const UserFlashcard = ({
           
           {/* Review count for EPIC users */}
           {isEpic && reviewCount > 0 && (
-            <div className={`flex items-center gap-1 mt-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-sky/90'}`}>
+            <div className={`flex items-center gap-1 mt-2 ${isEpicWhite ? 'text-amber-700/90' : 'text-white/90'}`}>
               <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
               <span className="text-sm font-medium">{reviewCount} reviews</span>
             </div>
@@ -353,7 +353,7 @@ const UserFlashcard = ({
               : isEpicPink 
                 ? 'via-pink-400/60'
                 : isEpicWhite 
-                  ? 'via-cyan-300/60'
+                  ? 'via-amber-600/60'
                   : isEpicSunset 
                     ? 'via-white/60'
                     : isEpic || isEpicStyle 
@@ -362,32 +362,32 @@ const UserFlashcard = ({
           } to-transparent`} />
           
           {/* University */}
-          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-sky/90'}`}>
+          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-800/90' : 'text-white/90'}`}>
             {universityLogo ? (
               <img src={universityLogo} alt="" className="h-5 w-5 rounded object-cover" />
             ) : (
-              <Building className={`h-4 w-4 ${isEpicWhite ? 'text-amber-100/70' : 'text-sky/70'}`} />
+              <Building className={`h-4 w-4 ${isEpicWhite ? 'text-amber-700/70' : 'text-white/70'}`} />
             )}
             <span className="text-sm truncate flex-1">
               {universityName || (
-                <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-sky/50'} italic`}>Select university</span>
+                <span className={`${isEpicWhite ? 'text-amber-700/50' : 'text-white/50'} italic`}>Select university</span>
               )}
             </span>
           </div>
 
           {/* Student level indicator (visual) */}
-          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-100/90' : 'text-white/90'}`}>
-            <GraduationCap className={`h-4 w-4 ${isEpicWhite ? 'text-amber-100/70' : 'text-white/70'}`} />
+          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-800/90' : 'text-white/90'}`}>
+            <GraduationCap className={`h-4 w-4 ${isEpicWhite ? 'text-amber-700/70' : 'text-white/70'}`} />
             <span className="text-sm">
               {studentLevel ? `${studentLevel} Student` : (
-                <span className={`${isEpicWhite ? 'text-amber-100/50' : 'text-white/50'} italic`}>Select level</span>
+                <span className={`${isEpicWhite ? 'text-amber-700/50' : 'text-white/50'} italic`}>Select level</span>
               )}
             </span>
           </div>
 
           {/* Member since (only show when not preview) */}
           {memberSince && !isPreview && (
-            <p className={`text-xs ${isEpicWhite ? 'text-amber-100/60' : 'text-white/60'} text-center mt-2`}>
+            <p className={`text-xs ${isEpicWhite ? 'text-amber-700/60' : 'text-white/60'} text-center mt-2`}>
               Member since {memberSince}
             </p>
           )}
@@ -401,7 +401,7 @@ const UserFlashcard = ({
           : isEpicPink 
             ? 'border-pink-400/40'
             : isEpicWhite 
-              ? 'border-cyan-200/40'
+              ? 'border-amber-600/40'
               : isEpicSunset 
                 ? 'border-white/40'
                 : isEpic || isEpicStyle 
@@ -417,7 +417,7 @@ const UserFlashcard = ({
             : isEpicPink
               ? 'inset 0 0 30px rgba(244,114,182,0.3), 0 0 60px rgba(244,114,182,0.3)'
               : isEpicWhite
-                ? 'inset 0 0 30px rgba(165,243,252,0.2), 0 0 60px rgba(165,243,252,0.2)'
+                ? 'inset 0 0 30px rgba(180,83,9,0.2), 0 0 60px rgba(217,119,6,0.2)'
                 : isEpicSunset
                   ? 'inset 0 0 30px rgba(255,255,255,0.3), 0 0 60px rgba(255,255,255,0.3)'
                   : isEpic || isEpicStyle
