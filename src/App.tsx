@@ -9,6 +9,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackgroundThemeProvider, useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { NavigationTrackerProvider } from "@/contexts/NavigationTrackerContext";
+import { SectionNavigationProvider } from "@/contexts/SectionNavigationContext";
 import { GrainyBackground } from "@/components/GrainyBackground";
 import { ThemeModeSync } from "@/components/ThemeModeSync";
 import { PageTransition } from "@/components/PageTransition";
@@ -103,10 +104,12 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <NavigationTrackerProvider>
-                  <ScrollToTop />
-                  <ErrorBoundary>
-                    <AppContent />
-                  </ErrorBoundary>
+                  <SectionNavigationProvider>
+                    <ScrollToTop />
+                    <ErrorBoundary>
+                      <AppContent />
+                    </ErrorBoundary>
+                  </SectionNavigationProvider>
                 </NavigationTrackerProvider>
               </BrowserRouter>
             </TooltipProvider>

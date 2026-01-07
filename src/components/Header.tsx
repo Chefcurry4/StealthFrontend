@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { useSectionNavigation } from "@/contexts/SectionNavigationContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
@@ -23,6 +24,7 @@ export const Header = () => {
   const [authDialogFeature, setAuthDialogFeature] = useState("");
   const { user, signOut } = useAuth();
   const { mode, modeConfig, toggleMode } = useBackgroundTheme();
+  const { getNavigationTarget } = useSectionNavigation();
   const { data: profile } = useUserProfile();
   const navigate = useNavigate();
 
@@ -43,9 +45,16 @@ export const Header = () => {
     navigate("/");
   };
 
-  const handleProtectedNavClick = (name: string, href: string) => {
+  // In-session section restore: navigate to last visited route in section
+  const handleSectionNavClick = (sectionRoot: string) => {
+    const target = getNavigationTarget(sectionRoot);
+    navigate(target);
+  };
+
+  const handleProtectedNavClick = (name: string, sectionRoot: string) => {
     if (user) {
-      navigate(href);
+      const target = getNavigationTarget(sectionRoot);
+      navigate(target);
     } else {
       setAuthDialogFeature(name);
       setAuthDialogOpen(true);
@@ -64,22 +73,25 @@ export const Header = () => {
       }}
     >
       <nav className="container mx-auto flex items-center justify-between p-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
+        {/* Logo - always goes to root "/" */}
+        <button 
+          onClick={() => handleSectionNavClick("/")}
+          className="flex items-center gap-2 cursor-pointer"
+        >
           <GraduationCap className="h-8 w-8" />
           <span className="text-xl font-bold">Students Hub</span>
-        </Link>
+        </button>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4">
           {navigation.map((item) => (
-            <Link
+            <button
               key={item.name}
-              to={item.href}
-              className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
+              onClick={() => handleSectionNavClick(item.href)}
+              className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
             >
               {item.name}
-            </Link>
+            </button>
           ))}
           {userNavigation.map((item) => (
             <button
@@ -131,7 +143,7 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="backdrop-blur-md">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <DropdownMenuItem onClick={() => handleSectionNavClick("/profile")}>
                   <User className="h-4 w-4 mr-2" />
                   My Profile
                 </DropdownMenuItem>
@@ -246,15 +258,17 @@ export const Header = () => {
           style={{ background: modeConfig.ui.cardBackground }}
         >
           {navigation.map((item) => (
-            <Link
+            <button
               key={item.name}
-              to={item.href}
-              className="text-base font-medium opacity-70 hover:opacity-100 transition-opacity py-3 px-2 rounded-lg active:scale-98"
+              className="text-base font-medium opacity-70 hover:opacity-100 transition-opacity py-3 px-2 rounded-lg active:scale-98 w-full text-left"
               style={{ color: modeConfig.textColor }}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleSectionNavClick(item.href);
+              }}
             >
               {item.name}
-            </Link>
+            </button>
           ))}
           <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
           {userNavigation.map((item) => (
@@ -274,26 +288,28 @@ export const Header = () => {
           <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
           {user ? (
             <>
-              <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
-                <Button 
-                  variant="outline" 
-                  size="default" 
-                  className="w-full mb-2 active:scale-95"
-                  style={{ 
-                    background: modeConfig.ui.buttonSecondary,
-                    borderColor: modeConfig.ui.cardBorder,
-                    color: modeConfig.ui.buttonSecondaryText
-                  }}
-                >
-                  <Avatar className="h-5 w-5 mr-2">
-                    <AvatarImage src={profile?.profile_photo_url || ""} />
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                      {userInitial}
-                    </AvatarFallback>
-                  </Avatar>
-                  My Profile
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                size="default" 
+                className="w-full mb-2 active:scale-95"
+                style={{ 
+                  background: modeConfig.ui.buttonSecondary,
+                  borderColor: modeConfig.ui.cardBorder,
+                  color: modeConfig.ui.buttonSecondaryText
+                }}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSectionNavClick("/profile");
+                }}
+              >
+                <Avatar className="h-5 w-5 mr-2">
+                  <AvatarImage src={profile?.profile_photo_url || ""} />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                My Profile
+              </Button>
               <Button 
                 variant="secondary" 
                 size="default" 
