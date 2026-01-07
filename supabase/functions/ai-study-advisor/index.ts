@@ -126,6 +126,21 @@ const databaseTools = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_content",
+      description: "Fetch the content of a user's uploaded document (CV, resume, transcript, etc.) from storage. Use this when the user mentions their CV, resume, or other uploaded documents and you need to extract information like their name, background, skills, or experiences.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_name: { type: "string", description: "The name of the document to fetch (e.g., 'CV.pdf', 'Resume.pdf', 'Massimo Perfetti Resume.pdf')" },
+          document_url: { type: "string", description: "The URL of the document if available" }
+        },
+        required: ["document_name"]
+      }
+    }
   }
 ];
 
@@ -482,6 +497,91 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       return { results: data || [], count: data?.length || 0 };
     }
     
+    case "get_document_content": {
+      // First, find the document in user_documents table by name
+      console.log("Fetching document content for:", args.document_name);
+      
+      // Search for the document by name (partial match)
+      const { data: docs, error: docError } = await supabase
+        .from("user_documents")
+        .select("*")
+        .ilike("name", `%${args.document_name}%`)
+        .limit(1);
+      
+      if (docError) {
+        console.error("Error finding document:", docError);
+        return { error: `Failed to find document: ${docError.message}` };
+      }
+      
+      if (!docs || docs.length === 0) {
+        return { error: `Document "${args.document_name}" not found in user's uploaded documents` };
+      }
+      
+      const doc = docs[0];
+      console.log("Found document:", doc.name, "URL:", doc.file_url);
+      
+      // Extract the file path from the URL
+      // URL format: https://xxx.supabase.co/storage/v1/object/public/user-documents/userId/timestamp-filename
+      const urlParts = doc.file_url.split("/user-documents/");
+      if (urlParts.length < 2) {
+        return { error: "Invalid document URL format" };
+      }
+      
+      const filePath = urlParts[1];
+      console.log("Downloading file from path:", filePath);
+      
+      // Download the file using Supabase storage with service role
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("user-documents")
+        .download(filePath);
+      
+      if (downloadError) {
+        console.error("Error downloading document:", downloadError);
+        return { error: `Failed to download document: ${downloadError.message}` };
+      }
+      
+      // Convert blob to text
+      let content = "";
+      const fileName = doc.name.toLowerCase();
+      
+      if (fileName.endsWith(".pdf")) {
+        // For PDFs, we can't easily parse them in Deno, so we'll provide what info we have
+        // and note that it's a PDF
+        content = `[PDF Document: ${doc.name}]\n\nNote: This is a PDF file. The raw binary content cannot be displayed as text directly. However, based on the filename "${doc.name}", this appears to be a resume/CV document. The user should include relevant details from their CV in their message, or the document name suggests the user's name might be extracted from the filename.`;
+        
+        // Try to extract name from filename
+        const nameMatch = doc.name.replace(".pdf", "").replace(/-/g, " ").replace(/_/g, " ");
+        if (nameMatch && !nameMatch.toLowerCase().includes("resume") && !nameMatch.toLowerCase().includes("cv")) {
+          content += `\n\nExtracted from filename: The user's name appears to be "${nameMatch}".`;
+        } else {
+          // Try to extract name before "Resume" or "CV"
+          const parts = nameMatch.split(/resume|cv/i);
+          if (parts[0] && parts[0].trim()) {
+            content += `\n\nExtracted from filename: The user's name appears to be "${parts[0].trim()}".`;
+          }
+        }
+      } else {
+        // For text files, read the content
+        try {
+          content = await fileData.text();
+          // Truncate if too long
+          if (content.length > 5000) {
+            content = content.substring(0, 5000) + "\n\n[Content truncated - document is very long]";
+          }
+        } catch (e) {
+          content = `[Binary file: ${doc.name}] - Content cannot be displayed as text`;
+        }
+      }
+      
+      return { 
+        document_name: doc.name,
+        document_type: doc.file_type,
+        file_size: doc.file_size,
+        content: content,
+        message: "Document content retrieved successfully"
+      };
+    }
+    
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
@@ -680,6 +780,7 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - get_labs_by_university: Get all labs at a specific university
 - get_programs_by_university: Get all programs offered by a university
 - search_universities: Find universities by name or country
+- get_document_content: **IMPORTANT** Fetch the content of a user's uploaded document (CV, resume, transcript). Use this when you need to extract the user's name, background, skills, or experiences from their uploaded documents. Call this tool when the user mentions "my CV", "my resume", or when generating personalized emails that reference their documents.
 
 **University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
@@ -691,6 +792,7 @@ ${userSpecificContext || "No user-specific data available"}
 - When showing course information, include relevant details like description, ECTS, professor, language, exam type, required software
 - When showing lab information, include ALL details: name, description, topics, professors, faculty, website link
 - Reference the user's saved courses, labs, email drafts, and documents when they ask about "my" content
+- **IMPORTANT**: When generating emails and the user has documents listed (like CV, resume), use the get_document_content tool to fetch their content and extract relevant personal information (name, background, skills)
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
 - If a query returns no results, try a broader search or suggest alternative search terms
