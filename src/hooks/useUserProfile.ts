@@ -49,7 +49,7 @@ export const useUpdateProfile = () => {
       birthday?: string;
       university_id?: string | null;
       student_level?: 'Bachelor' | 'Master' | null;
-      flashcard_color_style?: 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink' | 'epic-white' | 'epic-sunset';
+      flashcard_color_style?: 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink';
       login_count?: number;
       guide_completed?: boolean;
     }) => {
