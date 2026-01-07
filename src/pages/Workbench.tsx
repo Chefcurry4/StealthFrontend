@@ -64,7 +64,9 @@ import {
   Square,
   Mail,
   BookOpen,
-  Beaker
+  Beaker,
+  ExternalLink,
+  Edit3
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -815,6 +817,21 @@ const Workbench = () => {
       prompt += `**Additional context:** ${data.context}\n`;
     }
     
+    // Fetch and include document content (CV, etc.) for context extraction
+    if (data.selectedDocs.length > 0) {
+      prompt += `\n**My documents (extract my name, background, interests, skills from these):**\n`;
+      for (const doc of data.selectedDocs) {
+        try {
+          const response = await fetch(doc.file_url);
+          const text = await response.text();
+          const truncatedContent = text.substring(0, 5000);
+          prompt += `\n--- ${doc.name} ---\n${truncatedContent}\n`;
+        } catch {
+          prompt += `- ${doc.name} (couldn't load content)\n`;
+        }
+      }
+    }
+    
     if (data.selectedCourses.length > 0) {
       prompt += `\n**Relevant courses I'm taking:**\n`;
       data.selectedCourses.forEach(c => {
@@ -836,8 +853,12 @@ const Workbench = () => {
       }
     }
     
-    prompt += `\nPlease write the complete email with subject line and body. Format it clearly with "Subject:" on the first line, then a blank line, then the email body.`;
-    prompt += `\n\n💡 **Tip:** You can select any part of this email and ask me to refine it!`;
+    prompt += `\nPlease write the complete email with subject line and body. Format it clearly with "**Subject:**" on the first line, then a blank line, then the email body.`;
+    prompt += `\n\nAfter generating the email, I'll be able to:
+- Copy it to clipboard
+- Open it in my email client (Gmail, Outlook, etc.)
+- Edit it directly
+- Select any part to refine with AI`;
     
     // Set the input and send
     setInput(prompt);
@@ -1201,29 +1222,58 @@ const Workbench = () => {
                           {(message.content.toLowerCase().includes('subject:') || 
                             message.content.toLowerCase().includes('dear ') ||
                             message.content.toLowerCase().includes('email')) && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 rounded-lg hover:bg-accent/50"
-                              title="Save to Email Drafts"
-                              onClick={async () => {
-                                let content = message.content;
-                                let previous: string | undefined;
-                                do {
-                                  previous = content;
-                                  content = content.replace(/<!--[\s\S]*?-->/g, "");
-                                } while (content !== previous);
-                                const cleanContent = content.trim();
-                                await createEmailDraft.mutateAsync({
-                                  subject: "AI Generated Email",
-                                  body: cleanContent,
-                                  recipient: "",
-                                });
-                                toast.success("Email saved to drafts");
-                              }}
-                            >
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                            </Button>
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                                title="Copy email content"
+                                onClick={() => {
+                                  // Extract just the email part (after Subject: line)
+                                  let emailContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  navigator.clipboard.writeText(emailContent);
+                                  toast.success("Email copied to clipboard");
+                                }}
+                              >
+                                <Copy className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                                title="Open in email client"
+                                onClick={() => {
+                                  const content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  // Try to extract subject
+                                  const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
+                                  const subject = subjectMatch ? subjectMatch[1].trim() : 'Email';
+                                  // Get body (everything after subject line)
+                                  const bodyStart = content.indexOf('\n', content.toLowerCase().indexOf('subject:'));
+                                  const body = bodyStart > -1 ? content.substring(bodyStart).trim() : content;
+                                  window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                                }}
+                              >
+                                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                                title="Save to Email Drafts"
+                                onClick={async () => {
+                                  let content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
+                                  await createEmailDraft.mutateAsync({
+                                    subject: subjectMatch ? subjectMatch[1].trim() : "AI Generated Email",
+                                    body: content,
+                                    recipient: "",
+                                  });
+                                  toast.success("Email saved to drafts");
+                                }}
+                              >
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </>
                           )}
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
                             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
