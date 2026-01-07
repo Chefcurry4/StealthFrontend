@@ -27,8 +27,6 @@ type FilterType = "all" | "bachelor" | "master";
 
 export const UniversityContentTabs = ({ programs, universitySlug }: UniversityContentTabsProps) => {
   const [filter, setFilter] = useState<FilterType>("all");
-  const [showAll, setShowAll] = useState(false);
-  const INITIAL_COUNT = 10;
 
   const filteredPrograms = programs.filter((p) => {
     if (filter === "all") return true;
@@ -43,16 +41,6 @@ export const UniversityContentTabs = ({ programs, universitySlug }: UniversityCo
       );
     return true;
   });
-
-  const displayedPrograms = showAll
-    ? filteredPrograms
-    : filteredPrograms.slice(0, INITIAL_COUNT);
-
-  const hasMore = filteredPrograms.length > INITIAL_COUNT && !showAll;
-
-  const handleShowAll = () => {
-    setShowAll(true);
-  };
 
   return (
     <div className="space-y-6">
@@ -104,12 +92,12 @@ export const UniversityContentTabs = ({ programs, universitySlug }: UniversityCo
 
       {/* List Items */}
       <div className="space-y-3">
-        {displayedPrograms.length === 0 ? (
+        {filteredPrograms.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No programs found
           </div>
         ) : (
-          displayedPrograms.map((program) => (
+          filteredPrograms.map((program) => (
             <Link key={program.id} to={`/programs/${universitySlug}/${program.slug || program.id}`}>
               <UniversityListCard
                 title={program.name}
@@ -122,27 +110,6 @@ export const UniversityContentTabs = ({ programs, universitySlug }: UniversityCo
           ))
         )}
       </div>
-
-      {/* View More Button */}
-      {hasMore && (
-        <Button
-          variant="ghost"
-          className="w-full text-muted-foreground hover:text-foreground"
-          onClick={handleShowAll}
-        >
-          VIEW ALL {filteredPrograms.length} PROGRAMS
-        </Button>
-      )}
-
-      {showAll && filteredPrograms.length > INITIAL_COUNT && (
-        <Button
-          variant="ghost"
-          className="w-full text-muted-foreground hover:text-foreground"
-          onClick={() => setShowAll(false)}
-        >
-          Show Less
-        </Button>
-      )}
     </div>
   );
 };
