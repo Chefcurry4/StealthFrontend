@@ -15,7 +15,7 @@ import {
   useAIConversations 
 } from "@/hooks/useAIConversations";
 import { useConversationSearch } from "@/hooks/useConversationSearch";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { supabase } from "@/integrations/supabase/client";
 import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +55,6 @@ import {
   PanelLeft,
   Database,
   Search,
-  Mic,
-  MicOff,
   Download,
   FileText,
   FileJson,
@@ -66,7 +64,8 @@ import {
   BookOpen,
   Beaker,
   ExternalLink,
-  Edit3
+  Edit3,
+  Image
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -475,10 +474,15 @@ const Workbench = () => {
     }
   };
 
-  // Auto-scroll to bottom when new messages arrive
+  // Smooth auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollElement = scrollRef.current;
+      // Use smooth scroll for better UX
+      scrollElement.scrollTo({
+        top: scrollElement.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages, isStreaming, isThinking]);
 
@@ -491,9 +495,21 @@ const Workbench = () => {
     const files = e.target.files;
     if (!files) return;
 
+    // Supported file types
+    const supportedExtensions = ['.txt', '.md', '.json', '.csv', '.pdf', '.docx', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    const supportedMimeTypes = [
+      'text/', 'application/json', 'application/pdf', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/png', 'image/jpeg', 'image/gif', 'image/webp'
+    ];
+
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith("text/") && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx")) {
-        toast.error(`${file.name}: Only text files are supported`);
+      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+      const isSupported = supportedExtensions.includes(extension) || 
+        supportedMimeTypes.some(mime => file.type.startsWith(mime));
+      
+      if (!isSupported) {
+        toast.error(`${file.name}: Unsupported file type. Supported: txt, md, json, csv, pdf, docx, png, jpg, gif, webp`);
         continue;
       }
 
@@ -503,12 +519,37 @@ const Workbench = () => {
       }
 
       try {
-        const content = await file.text();
+        let content = "";
+        
+        // Handle images - convert to base64 data URL
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          content = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          content = `[Image: ${file.name}]\n${content.substring(0, 500)}...`; // Truncate base64 for display
+        } else if (file.type === 'application/json') {
+          // Parse JSON for better display
+          const text = await file.text();
+          try {
+            const parsed = JSON.parse(text);
+            content = JSON.stringify(parsed, null, 2).substring(0, 10000);
+          } catch {
+            content = text.substring(0, 10000);
+          }
+        } else if (file.name.endsWith('.pdf')) {
+          content = `[PDF Document: ${file.name}] - Content will be processed by AI`;
+        } else {
+          content = (await file.text()).substring(0, 10000);
+        }
+        
         setAttachments(prev => [...prev, {
           id: generateId(),
           name: file.name,
           type: file.type,
-          content: content.substring(0, 10000)
+          content
         }]);
       } catch {
         toast.error(`Failed to read ${file.name}`);
@@ -780,18 +821,6 @@ const Workbench = () => {
 
   const selectedModelData = models.find(m => m.id === selectedModel)!;
 
-  // Voice input hook
-  const { 
-    isListening, 
-    isSupported: voiceSupported, 
-    startListening, 
-    stopListening, 
-    transcript 
-  } = useVoiceInput({
-    onTranscript: (text) => {
-      setInput(prev => prev + (prev ? ' ' : '') + text);
-    }
-  });
 
   // Handle export
   const handleExport = (format: 'markdown' | 'text' | 'json') => {
@@ -817,17 +846,33 @@ const Workbench = () => {
       prompt += `**Additional context:** ${data.context}\n`;
     }
     
-    // Fetch and include document content (CV, etc.) for context extraction
+    // Fetch document content using signed URLs for private bucket
     if (data.selectedDocs.length > 0) {
       prompt += `\n**My documents (extract my name, background, interests, skills from these):**\n`;
       for (const doc of data.selectedDocs) {
         try {
-          const response = await fetch(doc.file_url);
-          const text = await response.text();
-          const truncatedContent = text.substring(0, 5000);
-          prompt += `\n--- ${doc.name} ---\n${truncatedContent}\n`;
+          // Extract file path from URL for private bucket access
+          const urlParts = doc.file_url.split("/user-documents/");
+          if (urlParts.length > 1) {
+            const filePath = urlParts[1];
+            // Create a signed URL for private bucket access
+            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+              .from("user-documents")
+              .createSignedUrl(filePath, 60); // 60 seconds validity
+            
+            if (!signedUrlError && signedUrlData?.signedUrl) {
+              const response = await fetch(signedUrlData.signedUrl);
+              const text = await response.text();
+              const truncatedContent = text.substring(0, 5000);
+              prompt += `\n--- ${doc.name} ---\n${truncatedContent}\n`;
+            } else {
+              prompt += `- ${doc.name} (Please use the get_document_content tool to access this document)\n`;
+            }
+          } else {
+            prompt += `- ${doc.name} (document path issue)\n`;
+          }
         } catch {
-          prompt += `- ${doc.name} (couldn't load content)\n`;
+          prompt += `- ${doc.name} (Please use the get_document_content tool to access this document)\n`;
         }
       }
     }
@@ -1429,7 +1474,7 @@ const Workbench = () => {
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".txt,.md,.json,.csv,.pdf,.docx"
+            accept=".txt,.md,.json,.csv,.pdf,.docx,.png,.jpg,.jpeg,.gif,.webp,text/*,application/json,application/pdf,image/*"
             onChange={handleFileSelect}
             className="hidden"
           />
@@ -1443,27 +1488,6 @@ const Workbench = () => {
             <Paperclip className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
           </Button>
 
-          {/* Voice Input Button */}
-          {voiceSupported && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`shrink-0 h-11 w-11 rounded-xl transition-colors ${
-                isListening 
-                  ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' 
-                  : 'bg-transparent hover:bg-accent/30'
-              }`}
-              onClick={isListening ? stopListening : startListening}
-              disabled={isStreaming}
-              title={isListening ? "Stop recording" : "Start voice input"}
-            >
-              {isListening ? (
-                <MicOff className="h-5 w-5 animate-pulse" />
-              ) : (
-                <Mic className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
-              )}
-            </Button>
-          )}
 
           {/* Export Button */}
           {messages.length > 0 && (
@@ -1512,7 +1536,7 @@ const Workbench = () => {
             
             <Input
               ref={inputRef}
-              placeholder={isListening ? "Listening..." : "Message hubAI... (type @ to mention courses/labs)"}
+              placeholder="Message hubAI... (type @ to mention courses/labs)"
               value={input}
               onChange={handleInputChange}
               onKeyDown={(e) => {
@@ -1525,9 +1549,7 @@ const Workbench = () => {
                 }
               }}
               disabled={isStreaming}
-              className={`pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground ${
-                isListening ? 'border-destructive/50' : 'border-foreground/20 dark:border-border'
-              }`}
+              className="pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border"
             />
             {isStreaming ? (
               <Button
@@ -1553,12 +1575,6 @@ const Workbench = () => {
           </div>
         </div>
 
-        {/* Voice transcript indicator */}
-        {isListening && transcript && (
-          <div className="mt-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-            <span className="font-medium">Listening:</span> {transcript}
-          </div>
-        )}
 
         <div className="flex flex-col items-center gap-2 mt-3">
           <p className="text-xs text-foreground/40 dark:text-muted-foreground/70">
