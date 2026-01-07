@@ -258,8 +258,8 @@ const UserFlashcard = ({
           50% { transform: scale(1.03); filter: brightness(1.1); }
         }
         @keyframes rayPulse {
-          0%, 100% { opacity: 0.6; transform: rotate(var(--ray-rotation, 0deg)) translateY(var(--ray-translate, -32px)) scaleY(1); }
-          50% { opacity: 1; transform: rotate(var(--ray-rotation, 0deg)) translateY(var(--ray-translate, -32px)) scaleY(1.2); }
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
       `}</style>
 

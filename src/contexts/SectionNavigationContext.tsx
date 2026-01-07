@@ -100,7 +100,9 @@ export const SectionNavigationProvider = ({ children }: SectionNavigationProvide
       lastRouteBySection.current[section] = fullPath;
       
       // Update the reactive set of sections with nested routes
-      const isNestedRoute = fullPath !== section && !fullPath.startsWith(section + "?");
+      // A nested route is when the pathname extends beyond the section root
+      // (e.g., /universities/epfl is nested, /universities is not, /universities?filter=x is not)
+      const isNestedRoute = location.pathname !== section && location.pathname.length > section.length;
       setSectionsWithNestedRoutes(prev => {
         const newSet = new Set(prev);
         if (isNestedRoute) {
