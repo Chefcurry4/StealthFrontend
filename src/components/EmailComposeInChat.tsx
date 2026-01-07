@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Sparkles, 
   X, 
   User, 
   Search,
@@ -21,8 +20,16 @@ import {
   File,
   ChevronDown,
   ChevronUp,
-  Mail
+  Mail,
+  Send,
+  Info
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface EmailComposeInChatProps {
@@ -321,6 +328,16 @@ export function EmailComposeInChat({ onSubmit, onCancel }: EmailComposeInChatPro
                     <TabsTrigger value="docs" className="text-xs gap-1">
                       <File className="h-3 w-3" />
                       Docs {selectedDocs.length > 0 && `(${selectedDocs.length})`}
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">Include your CV or resume to extract your name, background, interests and skills for a personalized email</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TabsTrigger>
                   </TabsList>
                   
@@ -410,7 +427,7 @@ export function EmailComposeInChat({ onSubmit, onCancel }: EmailComposeInChatPro
               disabled={!purpose.trim()}
               className="flex-1 gap-2"
             >
-              <Sparkles className="h-4 w-4" />
+              <Send className="h-4 w-4" />
               Generate Email
             </Button>
             <Button variant="outline" onClick={onCancel}>
