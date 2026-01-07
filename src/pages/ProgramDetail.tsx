@@ -122,7 +122,12 @@ const ProgramDetail = () => {
   // Determine available levels
   const hasBachelor = programInfo?.hasBachelor ?? false;
   const hasMaster = programInfo?.hasMaster ?? false;
-  const hasMasterStructure = !!structure && structure.courses.length > 0;
+  // Show master structure view if we have structure data with courses, components, OR specializations
+  const hasMasterStructure = !!structure && (
+    structure.courses.length > 0 || 
+    structure.components.length > 0 || 
+    structure.specializations.length > 0
+  );
 
   // Set default selected level based on available data
   useEffect(() => {
