@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Building, Camera, User, Sparkles, Crown, Star } from "lucide-react";
 
-export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-orange' | 'epic-dark' | 'epic-pink' | 'epic-white' | 'epic-sunset';
+export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink' | 'epic-white' | 'epic-sunset';
 
 interface UserFlashcardProps {
   username?: string;
@@ -47,11 +47,6 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
     { from: "from-green-500", via: "via-emerald-500", to: "to-cyan-500" },
     { from: "from-teal-600", via: "via-emerald-500", to: "to-green-400" },
   ],
-  'epic-orange': [
-    { from: "from-orange-500", via: "via-rose-500", to: "to-fuchsia-600" },
-    { from: "from-amber-500", via: "via-orange-600", to: "to-rose-600" },
-    { from: "from-orange-600", via: "via-rose-600", to: "to-purple-600" },
-  ],
   'epic-dark': [
     { from: "from-gray-950", via: "via-black", to: "to-gray-900" },
     { from: "from-black", via: "via-gray-950", to: "to-neutral-900" },
@@ -92,9 +87,8 @@ const UserFlashcard = ({
   reviewCount = 0,
 }: UserFlashcardProps) => {
   // Determine if using epic color styles
-  const isEpicStyle = colorStyle === 'epic-orange' || colorStyle === 'epic-dark' || colorStyle === 'epic-pink' || colorStyle === 'epic-white' || colorStyle === 'epic-sunset';
+  const isEpicStyle = colorStyle === 'epic-dark' || colorStyle === 'epic-pink' || colorStyle === 'epic-white' || colorStyle === 'epic-sunset';
   const isEpicDark = colorStyle === 'epic-dark';
-  const isEpicOrange = colorStyle === 'epic-orange';
   const isEpicPink = colorStyle === 'epic-pink';
   const isEpicWhite = colorStyle === 'epic-white';
   const isEpicSunset = colorStyle === 'epic-sunset';
@@ -183,22 +177,46 @@ const UserFlashcard = ({
       {/* Sunset sun icon */}
       {isEpicSunset && (
         <div className="absolute top-4 right-4 pointer-events-none">
+          {/* Outer glow layers */}
           <div 
-            className="w-12 h-12 rounded-full bg-gradient-to-b from-yellow-300 via-orange-400 to-orange-500"
+            className="absolute -inset-3 rounded-full opacity-40"
             style={{
-              boxShadow: '0 0 30px rgba(251, 191, 36, 0.6), 0 0 60px rgba(251, 146, 60, 0.4)',
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.8) 0%, rgba(251, 146, 60, 0.4) 40%, transparent 70%)',
               animation: 'epicGlow 3s ease-in-out infinite',
             }}
           />
-          {/* Sun rays */}
+          <div 
+            className="absolute -inset-1 rounded-full opacity-60"
+            style={{
+              background: 'radial-gradient(circle, rgba(253, 224, 71, 0.6) 0%, rgba(251, 191, 36, 0.3) 50%, transparent 80%)',
+            }}
+          />
+          {/* Main sun body with realistic gradient */}
+          <div 
+            className="relative w-12 h-12 rounded-full"
+            style={{
+              background: 'radial-gradient(circle at 35% 35%, #FEF3C7 0%, #FDE68A 15%, #FBBF24 35%, #F59E0B 60%, #D97706 85%, #B45309 100%)',
+              boxShadow: '0 0 20px rgba(251, 191, 36, 0.7), 0 0 40px rgba(251, 146, 60, 0.5), inset -3px -3px 8px rgba(217, 119, 6, 0.4), inset 2px 2px 6px rgba(254, 243, 199, 0.6)',
+              animation: 'sunPulse 4s ease-in-out infinite',
+            }}
+          />
+          {/* Sun rays - tapered and animated */}
           <div className="absolute inset-0 flex items-center justify-center">
-            {[...Array(8)].map((_, i) => (
+            {[...Array(12)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-0.5 h-3 bg-yellow-300/60"
+                className="absolute"
                 style={{
-                  transform: `rotate(${i * 45}deg) translateY(-10px)`,
-                  transformOrigin: 'center 22px',
+                  width: i % 2 === 0 ? '2px' : '1.5px',
+                  height: i % 2 === 0 ? '8px' : '5px',
+                  background: i % 2 === 0 
+                    ? 'linear-gradient(to bottom, rgba(253, 224, 71, 0.9), rgba(251, 191, 36, 0.3))'
+                    : 'linear-gradient(to bottom, rgba(253, 224, 71, 0.7), rgba(251, 191, 36, 0.1))',
+                  borderRadius: '1px',
+                  transform: `rotate(${i * 30}deg) translateY(${i % 2 === 0 ? '-32px' : '-28px'})`,
+                  transformOrigin: 'center 24px',
+                  animation: `rayPulse ${2 + (i % 3) * 0.5}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.1}s`,
                 }}
               />
             ))}
@@ -235,6 +253,14 @@ const UserFlashcard = ({
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
+        @keyframes sunPulse {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.03); filter: brightness(1.1); }
+        }
+        @keyframes rayPulse {
+          0%, 100% { opacity: 0.6; transform: rotate(var(--ray-rotation, 0deg)) translateY(var(--ray-translate, -32px)) scaleY(1); }
+          50% { opacity: 1; transform: rotate(var(--ray-rotation, 0deg)) translateY(var(--ray-translate, -32px)) scaleY(1.2); }
+        }
       `}</style>
 
       {/* Glass card content */}
@@ -252,9 +278,7 @@ const UserFlashcard = ({
                       ? 'bg-stone-200 border-stone-300 text-stone-700'
                       : isEpicSunset 
                         ? 'bg-white border-white text-orange-600'
-                        : isEpicOrange 
-                          ? 'bg-white border-white text-black' 
-                          : 'bg-gradient-to-r from-amber-400 to-orange-500 border-amber-300 text-white'
+                        : 'bg-gradient-to-r from-amber-400 to-orange-500 border-amber-300 text-white'
               }`}
             >
               <Crown className="h-3 w-3" />
@@ -290,11 +314,9 @@ const UserFlashcard = ({
                     ? 'bg-stone-300/40'
                     : isEpicSunset 
                       ? 'bg-white/40'
-                      : isEpicOrange 
-                        ? 'bg-white/40' 
-                        : isEpic || isEpicStyle 
-                          ? 'bg-amber-400/40' 
-                          : 'bg-white/30'
+                      : isEpic || isEpicStyle 
+                        ? 'bg-amber-400/40' 
+                        : 'bg-white/30'
             }`} />
             <Avatar className={`${avatarSize} border-4 ${
               isEpicDark 
@@ -305,11 +327,9 @@ const UserFlashcard = ({
                     ? 'border-stone-300/60'
                     : isEpicSunset 
                       ? 'border-white/60'
-                      : isEpicOrange 
-                        ? 'border-white/60' 
-                        : isEpic || isEpicStyle 
-                          ? 'border-amber-400/60' 
-                          : 'border-white/40'
+                      : isEpic || isEpicStyle 
+                        ? 'border-amber-400/60' 
+                        : 'border-white/40'
             } shadow-2xl relative`}>
               <AvatarImage src={profilePhotoUrl || undefined} />
               <AvatarFallback className="bg-gray-300 text-gray-500">
@@ -361,7 +381,7 @@ const UserFlashcard = ({
                   ? 'via-stone-400/60'
                   : isEpicSunset 
                     ? 'via-white/60'
-                    : isEpicOrange || isEpic || isEpicStyle 
+                    : isEpic || isEpicStyle 
                       ? 'via-amber-400/60' 
                       : 'via-white/40'
           } to-transparent`} />
@@ -409,7 +429,7 @@ const UserFlashcard = ({
               ? 'border-stone-300/40'
               : isEpicSunset 
                 ? 'border-white/40'
-                : isEpicOrange || isEpic || isEpicStyle 
+                : isEpic || isEpicStyle 
                   ? 'border-amber-400/40' 
                   : 'border-white/20'
       } pointer-events-none`} />
@@ -425,7 +445,7 @@ const UserFlashcard = ({
                 ? 'inset 0 0 30px rgba(168,162,158,0.2), 0 0 60px rgba(168,162,158,0.2)'
                 : isEpicSunset
                   ? 'inset 0 0 30px rgba(255,255,255,0.3), 0 0 60px rgba(255,255,255,0.3)'
-                  : isEpicOrange || isEpic || isEpicStyle
+                  : isEpic || isEpicStyle
                     ? 'inset 0 0 30px rgba(251,191,36,0.2), 0 0 60px rgba(251,191,36,0.2)'
                     : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
         }}

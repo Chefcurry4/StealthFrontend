@@ -24,7 +24,7 @@ export const Header = () => {
   const [authDialogFeature, setAuthDialogFeature] = useState("");
   const { user, signOut } = useAuth();
   const { mode, modeConfig, toggleMode } = useBackgroundTheme();
-  const { getNavigationTarget } = useSectionNavigation();
+  const { getNavigationTarget, hasNestedRoute } = useSectionNavigation();
   const { data: profile } = useUserProfile();
   const navigate = useNavigate();
 
@@ -88,19 +88,31 @@ export const Header = () => {
             <button
               key={item.name}
               onClick={() => handleSectionNavClick(item.href)}
-              className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+              className="relative text-sm font-medium opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
             >
               {item.name}
+              {hasNestedRoute(item.href) && (
+                <span 
+                  className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
+                  title="You'll return to a subpage"
+                />
+              )}
             </button>
           ))}
           {userNavigation.map((item) => (
             <button
               key={item.name}
               onClick={() => handleProtectedNavClick(item.name, item.href)}
-              className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1"
+              className="relative text-sm font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1"
             >
               <item.icon className="h-4 w-4" />
               {item.name}
+              {hasNestedRoute(item.href) && (
+                <span 
+                  className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
+                  title="You'll return to a subpage"
+                />
+              )}
             </button>
           ))}
           
@@ -260,7 +272,7 @@ export const Header = () => {
           {navigation.map((item) => (
             <button
               key={item.name}
-              className="text-base font-medium opacity-70 hover:opacity-100 transition-opacity py-3 px-2 rounded-lg active:scale-98 w-full text-left"
+              className="relative text-base font-medium opacity-70 hover:opacity-100 transition-opacity py-3 px-2 rounded-lg active:scale-98 w-full text-left flex items-center justify-between"
               style={{ color: modeConfig.textColor }}
               onClick={() => {
                 setMobileMenuOpen(false);
@@ -268,13 +280,19 @@ export const Header = () => {
               }}
             >
               {item.name}
+              {hasNestedRoute(item.href) && (
+                <span 
+                  className="w-1.5 h-1.5 rounded-full bg-current opacity-60"
+                  title="You'll return to a subpage"
+                />
+              )}
             </button>
           ))}
           <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
           {userNavigation.map((item) => (
             <button
               key={item.name}
-              className="text-base font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 py-3 px-2 rounded-lg active:scale-98 w-full text-left"
+              className="relative text-base font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 py-3 px-2 rounded-lg active:scale-98 w-full text-left"
               style={{ color: modeConfig.textColor }}
               onClick={() => {
                 setMobileMenuOpen(false);
@@ -282,7 +300,13 @@ export const Header = () => {
               }}
             >
               <item.icon className="h-5 w-5" />
-              {item.name}
+              <span className="flex-1">{item.name}</span>
+              {hasNestedRoute(item.href) && (
+                <span 
+                  className="w-1.5 h-1.5 rounded-full bg-current opacity-60"
+                  title="You'll return to a subpage"
+                />
+              )}
             </button>
           ))}
           <div style={{ borderTopColor: modeConfig.ui.cardBorder }} className="border-t my-2" />
