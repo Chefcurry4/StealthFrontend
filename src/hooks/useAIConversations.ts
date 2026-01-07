@@ -10,12 +10,35 @@ export interface AIConversation {
   updated_at: string;
 }
 
+export interface AIMessageAttachment {
+  id: string;
+  name: string;
+  type: string;
+  content: string;
+}
+
+export interface AIMessageReferencedItem {
+  type: 'course' | 'lab';
+  data: {
+    id: string;
+    name: string;
+    code?: string;
+    ects?: number;
+    description?: string;
+    professor?: string;
+    topics?: string;
+    link?: string;
+  };
+}
+
 export interface AIMessage {
   id: string;
   conversation_id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  attachments?: AIMessageAttachment[] | null;
+  referenced_items?: AIMessageReferencedItem[] | null;
 }
 
 export const useAIConversations = () => {
@@ -52,7 +75,7 @@ export const useAIMessages = (conversationId: string | null) => {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data as AIMessage[];
+      return data as unknown as AIMessage[];
     },
     enabled: !!conversationId,
   });
@@ -113,10 +136,14 @@ export const useSaveMessage = () => {
       conversationId,
       role,
       content,
+      attachments,
+      referencedItems,
     }: {
       conversationId: string;
       role: "user" | "assistant";
       content: string;
+      attachments?: AIMessageAttachment[];
+      referencedItems?: AIMessageReferencedItem[];
     }) => {
       const { data, error } = await supabase
         .from("ai_messages")
@@ -124,7 +151,9 @@ export const useSaveMessage = () => {
           conversation_id: conversationId,
           role,
           content,
-        })
+          attachments: attachments && attachments.length > 0 ? attachments : null,
+          referenced_items: referencedItems && referencedItems.length > 0 ? referencedItems : null,
+        } as any)
         .select()
         .single();
 
@@ -136,7 +165,7 @@ export const useSaveMessage = () => {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", conversationId);
 
-      return data as AIMessage;
+      return data as unknown as AIMessage;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["ai-messages", variables.conversationId] });

@@ -40,24 +40,30 @@ export type Database = {
       }
       ai_messages: {
         Row: {
+          attachments: Json | null
           content: string
           conversation_id: string
           created_at: string
           id: string
+          referenced_items: Json | null
           role: string
         }
         Insert: {
+          attachments?: Json | null
           content: string
           conversation_id: string
           created_at?: string
           id?: string
+          referenced_items?: Json | null
           role: string
         }
         Update: {
+          attachments?: Json | null
           content?: string
           conversation_id?: string
           created_at?: string
           id?: string
+          referenced_items?: Json | null
           role?: string
         }
         Relationships: [
