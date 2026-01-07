@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
 import { extractPdfTextFromFile } from "@/lib/pdfText";
+import { extractTextFromImage } from "@/lib/imageOcr";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { useEmailDrafts, useCreateEmailDraft } from "@/hooks/useEmailDrafts";
@@ -13,7 +14,9 @@ import {
   useCreateConversation, 
   useSaveMessage, 
   useUpdateConversation,
-  useAIConversations 
+  useAIConversations,
+  type AIMessageAttachment,
+  type AIMessageReferencedItem
 } from "@/hooks/useAIConversations";
 import { useConversationSearch } from "@/hooks/useConversationSearch";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +69,8 @@ import {
   Beaker,
   ExternalLink,
   Edit3,
-  Image
+  Image,
+  ArrowDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -222,6 +226,8 @@ const Workbench = () => {
   const [selectedText, setSelectedText] = useState("");
   const [showRefinePopup, setShowRefinePopup] = useState(false);
   const [refinePopupPosition, setRefinePopupPosition] = useState({ x: 0, y: 0 });
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isProcessingOcr, setIsProcessingOcr] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -305,13 +311,15 @@ const Workbench = () => {
 
   // When opening workbench, always start with a new chat (no auto-load of previous conversations)
 
-  // Load messages when switching conversations
+  // Load messages when switching conversations (including attachments & references)
   useEffect(() => {
     if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages.map(m => ({
         id: m.id,
         role: m.role as "user" | "assistant",
         content: m.content,
+        attachments: m.attachments as Attachment[] | undefined,
+        referencedItems: m.referenced_items as ReferencedItem[] | undefined,
         timestamp: new Date(m.created_at)
       })));
     }
@@ -529,6 +537,8 @@ const Workbench = () => {
     const onScroll = () => {
       const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
       shouldAutoScrollRef.current = distanceFromBottom < 120;
+      // Show scroll button if scrolled up more than 300px from bottom
+      setShowScrollButton(distanceFromBottom > 300);
     };
 
     viewport.addEventListener("scroll", onScroll, { passive: true });
@@ -543,6 +553,33 @@ const Workbench = () => {
       scrollToBottom(isStreaming ? "auto" : "smooth");
     }
   }, [messages, isStreaming, isThinking, scrollToBottom]);
+
+  // Handle text selection for refinement - MUST be before early return
+  const handleTextSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 10) {
+      const text = selection.toString().trim();
+      setSelectedText(text);
+      
+      // Get position for popup
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      setRefinePopupPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      });
+      setShowRefinePopup(true);
+    } else {
+      setShowRefinePopup(false);
+      setSelectedText("");
+    }
+  }, []);
+
+  // Add mouseup listener for text selection - MUST be before early return
+  useEffect(() => {
+    document.addEventListener('mouseup', handleTextSelection);
+    return () => document.removeEventListener('mouseup', handleTextSelection);
+  }, [handleTextSelection]);
 
   if (!user) {
     navigate("/auth");
@@ -601,8 +638,19 @@ const Workbench = () => {
         let content = "";
 
         if (file.type.startsWith("image/")) {
-          // We can't reliably do multimodal here; keep it explicit.
-          content = `[Image attached: ${file.name}]`;
+          // Try OCR extraction for images
+          setIsProcessingOcr(true);
+          toast.info(`Processing image with OCR: ${file.name}...`);
+          const ocrText = await extractTextFromImage(file, 12000);
+          setIsProcessingOcr(false);
+          
+          if (ocrText && ocrText.length > 20) {
+            content = `[Image: ${file.name}]\n\nExtracted text (OCR):\n${ocrText}`;
+            toast.success(`OCR completed for ${file.name}`);
+          } else {
+            content = `[Image: ${file.name}]\n\n(No readable text found in this image. The AI will not be able to analyze visual content.)`;
+            toast.info(`No text found in ${file.name}`);
+          }
         } else if (file.type === "application/json") {
           const text = await file.text();
           try {
@@ -797,11 +845,13 @@ const Workbench = () => {
         setIsNewChatMode(false); // Reset after creating conversation
       }
 
-      // Save user message to database
+      // Save user message to database with attachments and references
       await saveMessage.mutateAsync({
         conversationId,
         role: "user",
-        content: userMessageContent
+        content: userMessageContent,
+        attachments: userMessage.attachments as AIMessageAttachment[] | undefined,
+        referencedItems: userMessage.referencedItems as AIMessageReferencedItem[] | undefined,
       });
 
       // Build comprehensive user context for AI with FULL details
@@ -1053,28 +1103,7 @@ const Workbench = () => {
     }, 100);
   };
 
-  // Handle text selection for refinement
-  const handleTextSelection = useCallback(() => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim().length > 10) {
-      const text = selection.toString().trim();
-      setSelectedText(text);
-      
-      // Get position for popup
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      setRefinePopupPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
-      });
-      setShowRefinePopup(true);
-    } else {
-      setShowRefinePopup(false);
-      setSelectedText("");
-    }
-  }, []);
-
-  // Handle refine request
+  // Handle refine request (plain function - no hooks)
   const handleRefineText = () => {
     if (!selectedText) return;
     
@@ -1086,12 +1115,6 @@ const Workbench = () => {
     // Clear selection
     window.getSelection()?.removeAllRanges();
   };
-
-  // Add mouseup listener for text selection
-  useEffect(() => {
-    document.addEventListener('mouseup', handleTextSelection);
-    return () => document.removeEventListener('mouseup', handleTextSelection);
-  }, [handleTextSelection]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -1263,7 +1286,7 @@ const Workbench = () => {
       />
 
       {/* Chat Area */}
-      <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-4 relative" ref={scrollRef}>
         <div className="py-8 space-y-6">
           {/* Email Compose Form - shows when composing email */}
           {showEmailCompose && messages.length === 0 && (
@@ -1556,6 +1579,21 @@ const Workbench = () => {
             </>
           )}
         </div>
+        
+        {/* Scroll to Bottom Button */}
+        {showScrollButton && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2 shadow-lg border border-border/50 bg-card/95 backdrop-blur-sm hover:bg-accent"
+              onClick={() => scrollToBottom("smooth")}
+            >
+              <ArrowDown className="h-4 w-4" />
+              Scroll to bottom
+            </Button>
+          </div>
+        )}
       </ScrollArea>
 
       {/* Input Area - Fixed bottom with animated drop zone */}
