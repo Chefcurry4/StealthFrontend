@@ -296,7 +296,7 @@ const UserFlashcard = ({
           )}
           
           {/* Decorative sparkle */}
-          <Sparkles className="h-5 w-5 text-white/60 animate-pulse" style={{ animationDuration: '3s' }} />
+          <Sparkles className={`h-5 w-5 ${isEpicWhite ? 'text-amber-700/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '3s' }} />
         </div>
 
         {/* Avatar section */}
@@ -351,9 +351,9 @@ const UserFlashcard = ({
           </div>
 
           {/* Username */}
-          <h3 className="mt-4 text-xl font-bold text-white text-center truncate max-w-full px-2">
+          <h3 className={`mt-4 text-xl font-bold ${isEpicWhite ? 'text-amber-800' : 'text-white'} text-center truncate max-w-full px-2`}>
             {username || (
-              <span className="text-white/50 italic flex items-center gap-2">
+              <span className={`${isEpicWhite ? 'text-amber-700/50' : 'text-white/50'} italic flex items-center gap-2`}>
                 <User className="h-4 w-4" />
                 Username
               </span>
@@ -362,7 +362,7 @@ const UserFlashcard = ({
           
           {/* Review count for EPIC users */}
           {isEpic && reviewCount > 0 && (
-            <div className="flex items-center gap-1 mt-2 text-white/90">
+            <div className={`flex items-center gap-1 mt-2 ${isEpicWhite ? 'text-amber-800/90' : 'text-white/90'}`}>
               <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
               <span className="text-sm font-medium">{reviewCount} reviews</span>
             </div>
@@ -387,32 +387,32 @@ const UserFlashcard = ({
           } to-transparent`} />
           
           {/* University */}
-          <div className="flex items-center gap-2 text-white/90">
+          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-800/90' : 'text-white/90'}`}>
             {universityLogo ? (
               <img src={universityLogo} alt="" className="h-5 w-5 rounded object-cover" />
             ) : (
-              <Building className="h-4 w-4 text-white/70" />
+              <Building className={`h-4 w-4 ${isEpicWhite ? 'text-amber-700/70' : 'text-white/70'}`} />
             )}
             <span className="text-sm truncate flex-1">
               {universityName || (
-                <span className="text-white/50 italic">Select university</span>
+                <span className={`${isEpicWhite ? 'text-amber-700/50' : 'text-white/50'} italic`}>Select university</span>
               )}
             </span>
           </div>
 
           {/* Student level indicator (visual) */}
-          <div className="flex items-center gap-2 text-white/90">
-            <GraduationCap className="h-4 w-4 text-white/70" />
+          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-amber-800/90' : 'text-white/90'}`}>
+            <GraduationCap className={`h-4 w-4 ${isEpicWhite ? 'text-amber-700/70' : 'text-white/70'}`} />
             <span className="text-sm">
               {studentLevel ? `${studentLevel} Student` : (
-                <span className="text-white/50 italic">Select level</span>
+                <span className={`${isEpicWhite ? 'text-amber-700/50' : 'text-white/50'} italic`}>Select level</span>
               )}
             </span>
           </div>
 
           {/* Member since (only show when not preview) */}
           {memberSince && !isPreview && (
-            <p className="text-xs text-white/60 text-center mt-2">
+            <p className={`text-xs ${isEpicWhite ? 'text-amber-700/60' : 'text-white/60'} text-center mt-2`}>
               Member since {memberSince}
             </p>
           )}
