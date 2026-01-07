@@ -351,7 +351,6 @@ export const PreferencesSettings = () => {
                 { id: 'ocean' as FlashcardColorStyle, label: 'Ocean', colors: 'from-blue-600 via-cyan-500 to-teal-400', epicOnly: false },
                 { id: 'sunset' as FlashcardColorStyle, label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500', epicOnly: false },
                 { id: 'forest' as FlashcardColorStyle, label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500', epicOnly: false },
-                { id: 'epic-orange' as FlashcardColorStyle, label: 'Epic Orange', colors: 'from-orange-500 via-rose-500 to-fuchsia-600', epicOnly: true },
                 { id: 'epic-dark' as FlashcardColorStyle, label: 'Epic Black', colors: 'from-gray-950 via-black to-gray-900', epicOnly: true },
                 { id: 'epic-pink' as FlashcardColorStyle, label: 'Epic Pink', colors: 'from-pink-400 via-pink-500 to-rose-500', epicOnly: true },
                 { id: 'epic-white' as FlashcardColorStyle, label: 'Epic White', colors: 'from-gray-100 via-white to-gray-50', epicOnly: true },

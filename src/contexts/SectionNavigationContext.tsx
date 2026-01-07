@@ -8,7 +8,7 @@
  * indexedDB, or server. It resets when the tab/app is closed or hard refreshed.
  */
 
-import { createContext, useContext, useCallback, useRef, useEffect, ReactNode } from "react";
+import { createContext, useContext, useCallback, useRef, useEffect, ReactNode, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 // Define the top-level sections and their root routes
@@ -52,6 +52,18 @@ interface SectionNavigationContextType {
    * Returns the last visited route if available and valid, otherwise the section root.
    */
   getNavigationTarget: (sectionRoot: string) => string;
+  
+  /**
+   * Check if a section has a remembered nested route (different from its root).
+   * Returns true if the section will navigate to a subpage.
+   */
+  hasNestedRoute: (sectionRoot: string) => boolean;
+  
+  /**
+   * Set of section roots that have remembered nested routes.
+   * This is reactive and will trigger re-renders when it changes.
+   */
+  sectionsWithNestedRoutes: Set<string>;
 }
 
 const SectionNavigationContext = createContext<SectionNavigationContextType | null>(null);
@@ -74,6 +86,9 @@ export const SectionNavigationProvider = ({ children }: SectionNavigationProvide
   // In-memory only storage - resets on close/refresh
   // Using useRef to maintain state across renders without causing re-renders
   const lastRouteBySection = useRef<Record<string, string>>({});
+  
+  // Track which sections have nested routes (reactive state for UI indicators)
+  const [sectionsWithNestedRoutes, setSectionsWithNestedRoutes] = useState<Set<string>>(new Set());
 
   // Track route changes and update the section map
   useEffect(() => {
@@ -83,6 +98,24 @@ export const SectionNavigationProvider = ({ children }: SectionNavigationProvide
     if (section) {
       // Store the full path (with query params and hash) for this section
       lastRouteBySection.current[section] = fullPath;
+      
+      // Update the reactive set of sections with nested routes
+      // A nested route is when the pathname extends beyond the section root
+      // (e.g., /universities/epfl is nested, /universities is not, /universities?filter=x is not)
+      const isNestedRoute = location.pathname !== section && location.pathname.length > section.length;
+      setSectionsWithNestedRoutes(prev => {
+        const newSet = new Set(prev);
+        if (isNestedRoute) {
+          newSet.add(section);
+        } else {
+          newSet.delete(section);
+        }
+        // Only return new set if it changed to avoid unnecessary re-renders
+        if (newSet.size !== prev.size || ![...newSet].every(s => prev.has(s))) {
+          return newSet;
+        }
+        return prev;
+      });
     }
   }, [location.pathname, location.search, location.hash]);
 
@@ -103,12 +136,18 @@ export const SectionNavigationProvider = ({ children }: SectionNavigationProvide
     // Fall back to section root
     return sectionRoot;
   }, []);
+  
+  const hasNestedRoute = useCallback((sectionRoot: string): boolean => {
+    return sectionsWithNestedRoutes.has(sectionRoot);
+  }, [sectionsWithNestedRoutes]);
 
   return (
     <SectionNavigationContext.Provider
       value={{
         getLastRouteForSection,
         getNavigationTarget,
+        hasNestedRoute,
+        sectionsWithNestedRoutes,
       }}
     >
       {children}
