@@ -78,7 +78,7 @@ export const Header = () => {
           onClick={() => handleSectionNavClick("/")}
           className="flex items-center gap-2 cursor-pointer"
         >
-          <GraduationCap className="h-5 w-8" />
+          <GraduationCap className="h-4 w-8" />
           <span className="text-xl font-bold">Student Hub</span>
         </button>
 
