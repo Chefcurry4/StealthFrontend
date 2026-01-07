@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Building, Camera, User, Sparkles, Crown, Star } from "lucide-react";
+import { GraduationCap, Building, Camera, User, Sparkles, Crown, Star, Fingerprint } from "lucide-react";
 
 export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink' | 'epic-white' | 'epic-sunset';
 
@@ -296,7 +296,7 @@ const UserFlashcard = ({
           )}
           
           {/* Decorative sparkle */}
-          <Sparkles className={`h-5 w-5 ${isEpicWhite ? 'text-amber-700/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '3s' }} />
+          <Fingerprint className={`h-5 w-5 ${isEpicWhite ? 'text-amber-700/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '5s' }} />
         </div>
 
         {/* Avatar section */}
