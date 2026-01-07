@@ -148,7 +148,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              Students Hub
+              Student Hub
             </h1>
             <p className="text-lg md:text-xl opacity-80 mb-8">
               Plan your international study semester with AI-powered guidance
@@ -175,7 +175,7 @@ const Index = () => {
             {/* Beta notice */}
             <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-center max-w-2xl mx-auto">
               <p className="text-sm text-foreground">
-                <strong>Beta Version:</strong> This is the Beta version of Students Hub. For now only EPFL is covered, but more universities and features to come in next versions!
+                <strong>Beta Version:</strong> This is the Beta version of Student Hub. For now only EPFL is covered, but more universities and features to come in next versions!
               </p>
             </div>
 
