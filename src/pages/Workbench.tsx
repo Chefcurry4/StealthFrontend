@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { AIResultCards } from "@/components/AIResultCard";
@@ -1134,6 +1134,7 @@ const Workbench = () => {
                       </Avatar>
                     ) : (
                       <Avatar className="h-9 w-9 shrink-0 ring-2 ring-border shadow-sm">
+                        <AvatarImage src={userProfile?.profile_photo_url || undefined} />
                         <AvatarFallback className="bg-secondary text-secondary-foreground text-sm font-medium">
                           {user.email?.charAt(0).toUpperCase() || "U"}
                         </AvatarFallback>
