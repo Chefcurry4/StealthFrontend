@@ -1099,39 +1099,6 @@ export type Database = {
         }
         Relationships: []
       }
-      "Teachers(T)_duplicate": {
-        Row: {
-          citations: string | null
-          email: string | null
-          full_name: string | null
-          "h-index": string | null
-          id_teacher: string
-          name: string | null
-          topics: string[] | null
-          updated_at: string
-        }
-        Insert: {
-          citations?: string | null
-          email?: string | null
-          full_name?: string | null
-          "h-index"?: string | null
-          id_teacher?: string
-          name?: string | null
-          topics?: string[] | null
-          updated_at?: string
-        }
-        Update: {
-          citations?: string | null
-          email?: string | null
-          full_name?: string | null
-          "h-index"?: string | null
-          id_teacher?: string
-          name?: string | null
-          topics?: string[] | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       "Topics(TOP)": {
         Row: {
           descriptions: string | null
