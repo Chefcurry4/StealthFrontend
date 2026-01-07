@@ -54,13 +54,16 @@ export const streamAIStudyAdvisor = async ({
   onToolsUsed?: (tools: string[]) => void;
   signal?: AbortSignal;
 }) => {
-  const CHAT_URL = `https://zbgcvuocupxfugtfjids.supabase.co/functions/v1/ai-study-advisor`;
+  const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-study-advisor`;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiZ2N2dW9jdXB4ZnVndGZqaWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzE2NjgsImV4cCI6MjA3OTQwNzY2OH0.FbAlFRNtIKBapKuqp-f3CeHo3bbp_a2VThgHHqp1rwc`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ messages, userContext, stream: true, model }),
     signal,

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
+import { extractPdfTextFromFile } from "@/lib/pdfText";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { useEmailDrafts, useCreateEmailDraft } from "@/hooks/useEmailDrafts";
@@ -474,17 +475,38 @@ const Workbench = () => {
     }
   };
 
-  // Smooth auto-scroll to bottom when new messages arrive
+  const shouldAutoScrollRef = useRef(true);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior) => {
+    const root = scrollRef.current as unknown as HTMLElement | null;
+    const viewport = (root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null) || root;
+    if (!viewport) return;
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior });
+  }, []);
+
+  // Track whether user scrolled up (so we don't yank them to the bottom)
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollElement = scrollRef.current;
-      // Use smooth scroll for better UX
-      scrollElement.scrollTo({
-        top: scrollElement.scrollHeight,
-        behavior: 'smooth'
-      });
+    const root = scrollRef.current as unknown as HTMLElement | null;
+    const viewport = (root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null) || root;
+    if (!viewport) return;
+
+    const onScroll = () => {
+      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      shouldAutoScrollRef.current = distanceFromBottom < 120;
+    };
+
+    viewport.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => viewport.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Auto-scroll when new messages arrive (only if user is already near bottom)
+  useEffect(() => {
+    if (shouldAutoScrollRef.current) {
+      // during streaming, keep it snappy
+      scrollToBottom(isStreaming ? "auto" : "smooth");
     }
-  }, [messages, isStreaming, isThinking]);
+  }, [messages, isStreaming, isThinking, scrollToBottom]);
 
   if (!user) {
     navigate("/auth");
@@ -496,42 +518,56 @@ const Workbench = () => {
     if (!files) return;
 
     // Supported file types
-    const supportedExtensions = ['.txt', '.md', '.json', '.csv', '.pdf', '.docx', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    const supportedExtensions = [
+      ".txt",
+      ".md",
+      ".json",
+      ".csv",
+      ".pdf",
+      ".docx",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".webp",
+    ];
     const supportedMimeTypes = [
-      'text/', 'application/json', 'application/pdf', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/png', 'image/jpeg', 'image/gif', 'image/webp'
+      "text/",
+      "application/json",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/png",
+      "image/jpeg",
+      "image/gif",
+      "image/webp",
     ];
 
     for (const file of Array.from(files)) {
-      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-      const isSupported = supportedExtensions.includes(extension) || 
-        supportedMimeTypes.some(mime => file.type.startsWith(mime));
-      
+      const extension = "." + (file.name.split(".").pop()?.toLowerCase() || "");
+      const isSupported =
+        supportedExtensions.includes(extension) ||
+        supportedMimeTypes.some((mime) => file.type.startsWith(mime));
+
       if (!isSupported) {
-        toast.error(`${file.name}: Unsupported file type. Supported: txt, md, json, csv, pdf, docx, png, jpg, gif, webp`);
+        toast.error(
+          `${file.name}: Unsupported file type. Supported: txt, md, json, csv, pdf, docx, png, jpg, gif, webp`,
+        );
         continue;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name}: File too large (max 5MB)`);
+      // Align with platform limit (20MB)
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name}: File too large (max 20MB)`);
         continue;
       }
 
       try {
         let content = "";
-        
-        // Handle images - convert to base64 data URL
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          content = await new Promise((resolve, reject) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          content = `[Image: ${file.name}]\n${content.substring(0, 500)}...`; // Truncate base64 for display
-        } else if (file.type === 'application/json') {
-          // Parse JSON for better display
+
+        if (file.type.startsWith("image/")) {
+          // We can't reliably do multimodal here; keep it explicit.
+          content = `[Image attached: ${file.name}]`;
+        } else if (file.type === "application/json") {
           const text = await file.text();
           try {
             const parsed = JSON.parse(text);
@@ -539,18 +575,27 @@ const Workbench = () => {
           } catch {
             content = text.substring(0, 10000);
           }
-        } else if (file.name.endsWith('.pdf')) {
-          content = `[PDF Document: ${file.name}] - Content will be processed by AI`;
+        } else if (file.name.toLowerCase().endsWith(".pdf")) {
+          const extracted = await extractPdfTextFromFile(file, 12000);
+          content = extracted
+            ? `[PDF: ${file.name}]\n\n${extracted}`
+            : `[PDF: ${file.name}]\n\n(No text could be extracted from this PDF. If it's scanned, please upload a text-based version.)`;
+        } else if (file.name.toLowerCase().endsWith(".docx")) {
+          // DOCX parsing not supported client-side yet
+          content = `[DOCX: ${file.name}] (DOCX parsing not supported yet. Please export to PDF or TXT for best results.)`;
         } else {
           content = (await file.text()).substring(0, 10000);
         }
-        
-        setAttachments(prev => [...prev, {
-          id: generateId(),
-          name: file.name,
-          type: file.type,
-          content
-        }]);
+
+        setAttachments((prev) => [
+          ...prev,
+          {
+            id: generateId(),
+            name: file.name,
+            type: file.type || extension,
+            content,
+          },
+        ]);
       } catch {
         toast.error(`Failed to read ${file.name}`);
       }
@@ -846,35 +891,14 @@ const Workbench = () => {
       prompt += `**Additional context:** ${data.context}\n`;
     }
     
-    // Fetch document content using signed URLs for private bucket
+    // Documents: don't try to fetch PDFs on the client (binary). Instead, instruct the AI to use its
+    // get_document_content tool (implemented in the ai-study-advisor function).
     if (data.selectedDocs.length > 0) {
-      prompt += `\n**My documents (extract my name, background, interests, skills from these):**\n`;
-      for (const doc of data.selectedDocs) {
-        try {
-          // Extract file path from URL for private bucket access
-          const urlParts = doc.file_url.split("/user-documents/");
-          if (urlParts.length > 1) {
-            const filePath = urlParts[1];
-            // Create a signed URL for private bucket access
-            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-              .from("user-documents")
-              .createSignedUrl(filePath, 60); // 60 seconds validity
-            
-            if (!signedUrlError && signedUrlData?.signedUrl) {
-              const response = await fetch(signedUrlData.signedUrl);
-              const text = await response.text();
-              const truncatedContent = text.substring(0, 5000);
-              prompt += `\n--- ${doc.name} ---\n${truncatedContent}\n`;
-            } else {
-              prompt += `- ${doc.name} (Please use the get_document_content tool to access this document)\n`;
-            }
-          } else {
-            prompt += `- ${doc.name} (document path issue)\n`;
-          }
-        } catch {
-          prompt += `- ${doc.name} (Please use the get_document_content tool to access this document)\n`;
-        }
-      }
+      prompt += `\n**My documents (IMPORTANT):**\n`;
+      prompt += `Use the tool get_document_content for EACH document below (by name) and extract my name, background, interests, and skills.\n`;
+      data.selectedDocs.forEach((doc) => {
+        prompt += `- ${doc.name}\n`;
+      });
     }
     
     if (data.selectedCourses.length > 0) {
@@ -1217,15 +1241,23 @@ const Workbench = () => {
                       >
                         {/* Attachments indicator */}
                         {message.attachments && message.attachments.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-2">
-                            {message.attachments.map(a => (
-                              <span 
-                                key={a.id} 
-                                className="inline-flex items-center gap-1 text-xs bg-primary-foreground/20 rounded-md px-2 py-1"
+                          <div className="space-y-2 mb-3">
+                            {message.attachments.map((a) => (
+                              <div
+                                key={a.id}
+                                className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2"
                               >
-                                <Paperclip className="h-3 w-3" />
-                                {a.name}
-                              </span>
+                                <div className="h-9 w-9 rounded-lg bg-accent/40 flex items-center justify-center">
+                                  <FileText className="h-4 w-4 text-foreground" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium truncate">{a.name}</div>
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {(a.type || "file").toString().toUpperCase()}
+                                  </div>
+                                </div>
+                                <Paperclip className="h-4 w-4 text-muted-foreground" />
+                              </div>
                             ))}
                           </div>
                         )}
@@ -1342,13 +1374,8 @@ const Workbench = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
-                    <Brain className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-sm text-muted-foreground">Thinking...</span>
-                    <div className="flex gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">Thinking…</span>
                   </div>
                 </div>
               )}
