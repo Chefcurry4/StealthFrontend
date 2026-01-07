@@ -78,11 +78,26 @@ interface Attachment {
   content: string;
 }
 
+interface ReferencedItem {
+  type: 'course' | 'lab';
+  data: {
+    id: string;
+    name: string;
+    code?: string;
+    ects?: number;
+    description?: string;
+    professor?: string;
+    topics?: string;
+    link?: string;
+  };
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   attachments?: Attachment[];
+  referencedItems?: ReferencedItem[];
   timestamp: Date;
 }
 
@@ -391,27 +406,48 @@ const Workbench = () => {
     setShowMentionPopup(false);
   };
 
-  // Handle mention selection
+  // Handle mention selection - look up full metadata from saved data
   const handleMentionSelect = (item: { id: string; type: 'course' | 'lab'; name: string; code?: string }) => {
     // Remove the @ and search query from input
     const beforeAt = input.slice(0, mentionCursorPosition);
     const afterCursor = input.slice(mentionCursorPosition + 1 + mentionSearchQuery.length);
     setInput(beforeAt + afterCursor);
     
-    // Add item to referenced items
+    // Add item to referenced items with full metadata
     const exists = referencedItems.some(
       r => r.type === item.type && r.data.id === item.id
     );
     
     if (!exists) {
-      setReferencedItems(prev => [...prev, { 
-        type: item.type, 
-        data: { 
-          id: item.id, 
-          name: item.name, 
-          code: item.code 
-        } 
-      }]);
+      // Look up full metadata from saved items
+      if (item.type === 'course') {
+        const savedCourse = savedCourses?.find(c => c.Courses?.id_course === item.id);
+        const courseData = savedCourse?.Courses;
+        setReferencedItems(prev => [...prev, { 
+          type: 'course', 
+          data: { 
+            id: item.id, 
+            name: courseData?.name_course || item.name,
+            code: courseData?.code || item.code,
+            ects: courseData?.ects || undefined,
+            description: courseData?.description || undefined,
+            professor: courseData?.professor_name || undefined,
+          } 
+        }]);
+      } else {
+        const savedLab = savedLabs?.find(l => l.Labs?.id_lab === item.id);
+        const labData = savedLab?.Labs;
+        setReferencedItems(prev => [...prev, { 
+          type: 'lab', 
+          data: { 
+            id: item.id, 
+            name: labData?.name || item.name,
+            topics: labData?.topics || undefined,
+            description: labData?.description || undefined,
+            link: labData?.link || undefined,
+          } 
+        }]);
+      }
       toast.success(`${item.type === 'course' ? 'Course' : 'Lab'} added to context`);
     }
     
@@ -419,7 +455,7 @@ const Workbench = () => {
     inputRef.current?.focus();
   };
 
-  // Build mention items from saved data
+  // Build mention items from saved data (basic info for popup, full info added on select)
   const mentionCourses = savedCourses?.map(c => ({
     id: c.Courses?.id_course || '',
     type: 'course' as const,
@@ -680,12 +716,37 @@ const Workbench = () => {
         messages: messagesToSend.map(m => ({ role: m.role, content: m.content })),
         userContext,
         model: selectedModel,
-        onDelta: (delta) => {
-          assistantContent += delta;
-          setMessages(prev => prev.map(m => 
-            m.id === assistantMessageId ? { ...m, content: assistantContent } : m
-          ));
-        },
+        onDelta: (() => {
+          // Token buffer for word-by-word streaming
+          let tokenBuffer = "";
+          let displayedContent = "";
+          let flushTimeout: ReturnType<typeof setTimeout> | null = null;
+          
+          const flushBuffer = () => {
+            if (tokenBuffer.length > 0) {
+              displayedContent += tokenBuffer;
+              tokenBuffer = "";
+              setMessages(prev => prev.map(m => 
+                m.id === assistantMessageId ? { ...m, content: displayedContent } : m
+              ));
+            }
+            flushTimeout = null;
+          };
+          
+          return (delta: string) => {
+            assistantContent += delta;
+            tokenBuffer += delta;
+            
+            const shouldFlush = /[\s.,!?;:\n]$/.test(tokenBuffer) || tokenBuffer.length > 8;
+            
+            if (shouldFlush) {
+              if (flushTimeout) clearTimeout(flushTimeout);
+              flushBuffer();
+            } else if (!flushTimeout) {
+              flushTimeout = setTimeout(flushBuffer, 50);
+            }
+          };
+        })(),
         onDone: () => {
           setIsStreaming(false);
           setIsSearchingDatabase(false);
@@ -709,6 +770,7 @@ const Workbench = () => {
       role: "user", 
       content: userMessageContent, 
       attachments: attachments.length > 0 ? [...attachments] : undefined,
+      referencedItems: referencedItems.length > 0 ? [...referencedItems] : undefined,
       timestamp: new Date()
     };
     
@@ -797,15 +859,40 @@ const Workbench = () => {
       };
 
       const messagesForAI = newMessages.map(m => {
+        let content = m.content;
+        
+        // Add referenced courses/labs metadata to the prompt
+        if (m.referencedItems && m.referencedItems.length > 0) {
+          content += "\n\n--- Referenced Items (User Context) ---\n";
+          m.referencedItems.forEach(item => {
+            if (item.type === 'course') {
+              content += `\n[Course: ${item.data.code || item.data.name}]`;
+              content += `\nName: ${item.data.name}`;
+              if (item.data.code) content += `\nCode: ${item.data.code}`;
+              if (item.data.ects) content += `\nECTS: ${item.data.ects}`;
+              if (item.data.professor) content += `\nProfessor: ${item.data.professor}`;
+              if (item.data.description) content += `\nDescription: ${item.data.description}`;
+              content += '\n';
+            } else {
+              content += `\n[Lab: ${item.data.name}]`;
+              content += `\nName: ${item.data.name}`;
+              if (item.data.topics) content += `\nTopics: ${item.data.topics}`;
+              if (item.data.description) content += `\nDescription: ${item.data.description}`;
+              if (item.data.link) content += `\nWebsite: ${item.data.link}`;
+              content += '\n';
+            }
+          });
+        }
+        
+        // Add file attachments
         if (m.attachments && m.attachments.length > 0) {
-          let content = m.content;
           content += "\n\n--- Attached Files ---\n";
           m.attachments.forEach(a => {
             content += `\n[${a.name}]\n${a.content}\n`;
           });
-          return { role: m.role, content };
         }
-        return { role: m.role, content: m.content };
+        
+        return { role: m.role, content };
       });
 
       const assistantMessageId = generateId();
@@ -824,13 +911,40 @@ const Workbench = () => {
         userContext,
         model: selectedModel,
         signal: abortControllerRef.current?.signal,
-        onDelta: (delta) => {
-          setIsThinking(false);
-          assistantContent += delta;
-          setMessages(prev => prev.map(m => 
-            m.id === assistantMessageId ? { ...m, content: assistantContent } : m
-          ));
-        },
+        onDelta: (() => {
+          // Token buffer for word-by-word streaming
+          let tokenBuffer = "";
+          let displayedContent = "";
+          let flushTimeout: ReturnType<typeof setTimeout> | null = null;
+          
+          const flushBuffer = () => {
+            if (tokenBuffer.length > 0) {
+              displayedContent += tokenBuffer;
+              tokenBuffer = "";
+              setMessages(prev => prev.map(m => 
+                m.id === assistantMessageId ? { ...m, content: displayedContent } : m
+              ));
+            }
+            flushTimeout = null;
+          };
+          
+          return (delta: string) => {
+            setIsThinking(false);
+            assistantContent += delta;
+            tokenBuffer += delta;
+            
+            // Flush on word boundaries (space, newline, punctuation) or buffer limit
+            const shouldFlush = /[\s.,!?;:\n]$/.test(tokenBuffer) || tokenBuffer.length > 8;
+            
+            if (shouldFlush) {
+              if (flushTimeout) clearTimeout(flushTimeout);
+              flushBuffer();
+            } else if (!flushTimeout) {
+              // Ensure we flush within 50ms even without word boundary
+              flushTimeout = setTimeout(flushBuffer, 50);
+            }
+          };
+        })(),
         onDone: async () => {
           setIsStreaming(false);
           setIsThinking(false);
@@ -1257,6 +1371,46 @@ const Workbench = () => {
                                   </div>
                                 </div>
                                 <Paperclip className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Referenced Courses & Labs indicator */}
+                        {message.referencedItems && message.referencedItems.length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {message.referencedItems.map((item, itemIdx) => (
+                              <div
+                                key={`${item.type}-${item.data.id || itemIdx}`}
+                                className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2"
+                              >
+                                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                  item.type === 'course' 
+                                    ? 'bg-blue-500/20' 
+                                    : 'bg-emerald-500/20'
+                                }`}>
+                                  {item.type === 'course' ? (
+                                    <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                  ) : (
+                                    <Beaker className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium truncate">
+                                    {item.data.code ? `${item.data.code} - ` : ''}{item.data.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {item.type === 'course' 
+                                      ? `${item.data.ects ? `${item.data.ects} ECTS` : 'Course'}${item.data.professor ? ` • ${item.data.professor}` : ''}`
+                                      : `Research Lab${item.data.topics ? ` • ${item.data.topics.slice(0, 50)}...` : ''}`
+                                    }
+                                  </div>
+                                </div>
+                                {item.type === 'course' ? (
+                                  <BookOpen className="h-4 w-4 text-primary/50" />
+                                ) : (
+                                  <Beaker className="h-4 w-4 text-primary/50" />
+                                )}
                               </div>
                             ))}
                           </div>
