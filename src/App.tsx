@@ -41,7 +41,6 @@ import CookiePolicy from "./pages/CookiePolicy";
 import HelpCenter from "./pages/HelpCenter";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
-import AdminSeedPrograms from "./pages/AdminSeedPrograms";
 
 const queryClient = new QueryClient();
 
@@ -80,7 +79,6 @@ const AppContent = () => {
                 <Route path="/cookie-policy" element={<CookiePolicy />} />
                 <Route path="/help-center" element={<HelpCenter />} />
                 <Route path="/user/:userId" element={<UserProfile />} />
-                <Route path="/admin/seed-programs" element={<AdminSeedPrograms />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
