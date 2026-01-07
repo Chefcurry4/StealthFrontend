@@ -4,19 +4,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useProgram, useProgramCourses } from "@/hooks/usePrograms";
-import { useProgramStructure } from "@/hooks/useProgramStructure";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useMasterProgramData } from "@/hooks/useMasterProgramData";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ProgramHeader,
   ProgramDescription,
-  ProgramSpecializations,
-  ProgramCreditsChart,
-  ProgramCoursesTabs,
-  ProgramAdditionalInfo,
   ProgramCoursesFilter,
+  MasterCoursesView,
+  MasterCreditsChart,
+  MasterSpecializations,
+  MasterAdditionalInfo,
 } from "@/components/program-detail";
 
 const ProgramDetail = () => {
@@ -24,8 +24,10 @@ const ProgramDetail = () => {
   const navigate = useNavigate();
   const { data: program, isLoading, error } = useProgram(programSlug!);
   const { data: courses, isLoading: coursesLoading } = useProgramCourses(program?.id || "");
-  const { data: structure, isLoading: structureLoading } = useProgramStructure(program?.id);
   const { addItem } = useRecentlyViewed();
+  
+  // Load master program data from JSON
+  const { data: masterData, isLoading: masterDataLoading } = useMasterProgramData(programSlug);
   
   // State for Bachelor/Master tab selection
   const [selectedLevel, setSelectedLevel] = useState<'bachelor' | 'master' | null>(null);
@@ -42,7 +44,7 @@ const ProgramDetail = () => {
     }
   }, [program, addItem]);
 
-  // Fetch course details with bridge table info - directly from bridge + courses
+  // Fetch course details with bridge table info - for Bachelor
   const { data: coursesWithInfo, isLoading: coursesWithInfoLoading } = useQuery({
     queryKey: ["programCoursesDetail", program?.id],
     queryFn: async () => {
@@ -122,35 +124,57 @@ const ProgramDetail = () => {
   // Determine available levels
   const hasBachelor = programInfo?.hasBachelor ?? false;
   const hasMaster = programInfo?.hasMaster ?? false;
-  const hasMasterStructure = !!structure && structure.courses.length > 0;
+  
+  // Check if we have JSON data for master
+  const hasMasterJsonData = !!masterData && masterData.courses.length > 0;
 
   // Set default selected level based on available data
   useEffect(() => {
     if (selectedLevel === null && (hasBachelor || hasMaster)) {
-      // Default to bachelor if available, otherwise master
-      setSelectedLevel(hasBachelor ? 'bachelor' : 'master');
+      // Default to master if we have JSON data for it, otherwise bachelor
+      if (hasMaster && hasMasterJsonData) {
+        setSelectedLevel('master');
+      } else if (hasBachelor) {
+        setSelectedLevel('bachelor');
+      } else {
+        setSelectedLevel('master');
+      }
     }
-  }, [hasBachelor, hasMaster, selectedLevel]);
+  }, [hasBachelor, hasMaster, selectedLevel, hasMasterJsonData]);
 
   // Calculate stats based on selected level
   const levelStats = useMemo(() => {
-    if (!coursesWithInfo || !selectedLevel) {
+    if (!selectedLevel) {
       return { duration: '', courseCount: 0, ects: 0, courses: [] };
     }
 
-    // The database uses "Bachelor" and "Master" as values
-    const levelFilter = selectedLevel === 'bachelor' ? 'Bachelor' : 'Master';
-    const filteredCourses = coursesWithInfo.filter((c: any) => c.level === levelFilter);
+    // For Master with JSON data
+    if (selectedLevel === 'master' && masterData) {
+      return {
+        duration: '2 years',
+        ects: masterData.totalCredits || 120,
+        courseCount: masterData.courses.length,
+        courses: [],
+      };
+    }
 
-    return {
-      duration: selectedLevel === 'bachelor' ? '3 years' : '2 years',
-      ects: selectedLevel === 'bachelor' ? 180 : 120,
-      courseCount: filteredCourses.length,
-      courses: filteredCourses,
-    };
-  }, [selectedLevel, coursesWithInfo]);
+    // For Bachelor (use Supabase data)
+    if (coursesWithInfo) {
+      const levelFilter = selectedLevel === 'bachelor' ? 'Bachelor' : 'Master';
+      const filteredCourses = coursesWithInfo.filter((c: any) => c.level === levelFilter);
 
-  if (isLoading || structureLoading || coursesWithInfoLoading) {
+      return {
+        duration: selectedLevel === 'bachelor' ? '3 years' : '2 years',
+        ects: selectedLevel === 'bachelor' ? 180 : 120,
+        courseCount: filteredCourses.length,
+        courses: filteredCourses,
+      };
+    }
+
+    return { duration: '', courseCount: 0, ects: 0, courses: [] };
+  }, [selectedLevel, coursesWithInfo, masterData]);
+
+  if (isLoading || coursesWithInfoLoading || masterDataLoading) {
     return (
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
@@ -188,7 +212,7 @@ const ProgramDetail = () => {
         <ProgramHeader
           program={program}
           programInfo={programInfo}
-          structure={structure}
+          structure={null}
           hasBachelor={hasBachelor}
           hasMaster={hasMaster}
           selectedLevel={selectedLevel}
@@ -202,7 +226,7 @@ const ProgramDetail = () => {
 
         {/* Animated content based on level selection */}
         <AnimatePresence mode="wait">
-          {/* Bachelor view - Simple course list */}
+          {/* Bachelor view - Simple course list from Supabase */}
           {selectedLevel === 'bachelor' && (
             <motion.div
               key="bachelor"
@@ -219,30 +243,30 @@ const ProgramDetail = () => {
             </motion.div>
           )}
 
-          {/* Master view with structure data */}
-          {selectedLevel === 'master' && hasMasterStructure && (
+          {/* Master view with JSON data */}
+          {selectedLevel === 'master' && hasMasterJsonData && (
             <motion.div
-              key="master-structure"
+              key="master-json"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <ProgramSpecializations specializations={structure.specializations} />
-              <ProgramCreditsChart components={structure.components} />
-              <ProgramCoursesTabs
-                courses={structure.courses}
-                specializations={structure.specializations}
+              <MasterSpecializations specializations={masterData.specializations} />
+              <MasterCreditsChart categories={masterData.creditDistribution} />
+              <MasterCoursesView
+                courses={masterData.courses}
+                specializations={masterData.specializations}
               />
-              <ProgramAdditionalInfo
-                internshipNote={structure.structure.internship_note}
-                minors={structure.minors}
+              <MasterAdditionalInfo
+                suggestedMinors={masterData.suggestedMinors}
+                creditDistribution={masterData.creditDistribution}
               />
             </motion.div>
           )}
 
-          {/* Master view without structure data - fallback to simple course list */}
-          {selectedLevel === 'master' && !hasMasterStructure && (
+          {/* Master view without JSON data - fallback to Supabase course list */}
+          {selectedLevel === 'master' && !hasMasterJsonData && (
             <motion.div
               key="master-fallback"
               initial={{ opacity: 0, y: 20 }}
