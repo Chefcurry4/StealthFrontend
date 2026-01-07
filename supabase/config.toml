@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.seed-program-structures]
 verify_jwt = false
+
+[functions.seed-program-data-from-json]
+verify_jwt = false
