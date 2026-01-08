@@ -1360,7 +1360,7 @@ const Workbench = () => {
             >
               <Button
                 size="sm"
-                className="gap-1.5 shadow-lg border border-border/50 bg-card/95 backdrop-blur-md hover:bg-accent"
+                className="gap-1.5 shadow-lg"
                 onClick={handleRefineText}
               >
                 <Sparkles className="h-3.5 w-3.5" />

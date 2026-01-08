@@ -220,17 +220,25 @@ export const WorkbenchSemesterPlanner = ({
   };
 
   const handleExportCSV = (plan: SemesterPlan) => {
-    const headers = ["Name", "Code", "ECTS", "Exam Type", "Level", "Professor"];
-    const rows = plan.courses.map(c => [
+    const totalEcts = plan.courses.reduce((sum, c) => sum + (c.ects || 0), 0);
+    const headers = ["Name", "Code", "ECTS", "Exam Type", "Level", "Professor", "Topics", "", "Total Ects"];
+    const rows = plan.courses.map((c, idx) => [
       c.name_course,
       c.code || "",
       c.ects?.toString() || "",
       c.type_exam || "",
       c.ba_ma || "",
-      c.professor_name || ""
+      c.professor_name || "",
+      c.topics || "",
+      "",
+      idx === 0 ? totalEcts.toString() : ""
     ]);
     
-    const csv = [headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
+    // Add header row with plan info
+    const titleRow = [`created by  Student Hub`, "", "", "", "", "", "", "", ""];
+    const emptyRow = ["", "", "", "", "", "", "", "", ""];
+    
+    const csv = [titleRow.map(cell => `"${cell}"`).join(","), emptyRow.map(cell => `"${cell}"`).join(","), headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -246,11 +254,43 @@ export const WorkbenchSemesterPlanner = ({
     if (!element) return;
     
     try {
+      // Get computed background color from the theme
+      const computedStyle = getComputedStyle(document.documentElement);
+      const bgColor = computedStyle.getPropertyValue('--background').trim();
+      const backgroundColor = bgColor ? `hsl(${bgColor})` : '#ffffff';
+      
       const canvas = await html2canvas(element, { 
-        backgroundColor: null,
-        scale: 2 
+        backgroundColor: backgroundColor,
+        scale: 2,
+        useCORS: true
       });
-      const url = canvas.toDataURL("image/png");
+      
+      // Create final canvas with favicon watermark
+      const finalCanvas = document.createElement('canvas');
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Add padding for watermark
+      const padding = 40;
+      finalCanvas.width = canvas.width;
+      finalCanvas.height = canvas.height + padding;
+      
+      // Fill background
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+      
+      // Draw original content
+      ctx.drawImage(canvas, 0, 0);
+      
+      // Draw watermark at bottom right
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground').trim() 
+        ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground').trim()})` 
+        : '#888888';
+      ctx.font = '20px system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('📚 Student Hub', finalCanvas.width - 20, finalCanvas.height - 12);
+      
+      const url = finalCanvas.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = url;
       a.download = `${plan.name.replace(/\s+/g, "_")}.png`;
@@ -262,17 +302,24 @@ export const WorkbenchSemesterPlanner = ({
   };
 
   const handleExportTempCSV = (courses: SemesterPlanCourse[], semesterType: string) => {
-    const headers = ["Name", "Code", "ECTS", "Exam Type", "Level", "Professor"];
-    const rows = courses.map(c => [
+    const totalEcts = courses.reduce((sum, c) => sum + (c.ects || 0), 0);
+    const headers = ["Name", "Code", "ECTS", "Exam Type", "Level", "Professor", "Topics", "", "Total Ects"];
+    const rows = courses.map((c, idx) => [
       c.name_course,
       c.code || "",
       c.ects?.toString() || "",
       c.type_exam || "",
       c.ba_ma || "",
-      c.professor_name || ""
+      c.professor_name || "",
+      c.topics || "",
+      "",
+      idx === 0 ? totalEcts.toString() : ""
     ]);
     
-    const csv = [headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
+    const titleRow = [`created by  Student Hub`, "", "", "", "", "", "", "", ""];
+    const emptyRow = ["", "", "", "", "", "", "", "", ""];
+    
+    const csv = [titleRow.map(cell => `"${cell}"`).join(","), emptyRow.map(cell => `"${cell}"`).join(","), headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
