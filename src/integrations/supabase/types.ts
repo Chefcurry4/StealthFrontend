@@ -1346,6 +1346,39 @@ export type Database = {
           },
         ]
       }
+      user_semester_plans: {
+        Row: {
+          courses: Json
+          created_at: string
+          id: string
+          name: string
+          semester_type: string
+          total_ects: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          courses?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          semester_type: string
+          total_ects?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          courses?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          semester_type?: string
+          total_ects?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       "Users(US)": {
         Row: {
           background_theme: string | null

@@ -1,21 +1,21 @@
 import { useState, useCallback } from "react";
-import { SemesterPlan, SemesterPlanCourse } from "@/components/workbench/WorkbenchSemesterPlanner";
+import { TempSemesterPlan, SemesterPlanCourse } from "@/components/workbench/WorkbenchSemesterPlanner";
 
 export const useWorkbenchSemesterPlan = () => {
-  const [plan, setPlan] = useState<SemesterPlan | null>(null);
+  const [tempPlan, setTempPlan] = useState<TempSemesterPlan | null>(null);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
-  const setSemesterPlan = useCallback((newPlan: SemesterPlan) => {
-    setPlan(newPlan);
+  const setTempSemesterPlan = useCallback((newPlan: TempSemesterPlan) => {
+    setTempPlan(newPlan);
     setIsPlannerOpen(true); // Auto-open when plan is set
   }, []);
 
-  const clearPlan = useCallback(() => {
-    setPlan(null);
+  const clearTempPlan = useCallback(() => {
+    setTempPlan(null);
   }, []);
 
-  const removeCourse = useCallback((semester: "winter" | "summer", courseId: string) => {
-    setPlan(prev => {
+  const removeCourseFromTempPlan = useCallback((semester: "winter" | "summer", courseId: string) => {
+    setTempPlan(prev => {
       if (!prev) return null;
       return {
         ...prev,
@@ -24,8 +24,8 @@ export const useWorkbenchSemesterPlan = () => {
     });
   }, []);
 
-  const addCourse = useCallback((semester: "winter" | "summer", course: SemesterPlanCourse) => {
-    setPlan(prev => {
+  const addCourseToTempPlan = useCallback((semester: "winter" | "summer", course: SemesterPlanCourse) => {
+    setTempPlan(prev => {
       const current = prev || { winter: [], summer: [] };
       // Don't add duplicates
       if (current[semester].some(c => c.id_course === course.id_course)) {
@@ -43,7 +43,7 @@ export const useWorkbenchSemesterPlan = () => {
   }, []);
 
   // Parse semester plan from AI response
-  const parseSemesterPlanFromResponse = useCallback((content: string): SemesterPlan | null => {
+  const parseSemesterPlanFromResponse = useCallback((content: string): TempSemesterPlan | null => {
     // Look for the special SEMESTER_PLAN marker in the response
     const planMatch = content.match(/<!--SEMESTER_PLAN:([\s\S]*?)-->/);
     if (planMatch) {
@@ -63,13 +63,13 @@ export const useWorkbenchSemesterPlan = () => {
   }, []);
 
   return {
-    plan,
+    tempPlan,
     isPlannerOpen,
     setIsPlannerOpen,
-    setSemesterPlan,
-    clearPlan,
-    removeCourse,
-    addCourse,
+    setTempSemesterPlan,
+    clearTempPlan,
+    removeCourseFromTempPlan,
+    addCourseToTempPlan,
     togglePlanner,
     parseSemesterPlanFromResponse
   };

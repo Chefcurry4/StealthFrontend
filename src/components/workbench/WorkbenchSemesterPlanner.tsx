@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { 
   X, 
   GraduationCap, 
@@ -11,27 +11,43 @@ import {
   Save,
   ChevronRight,
   ChevronLeft,
-  Trash2
+  Trash2,
+  Plus,
+  Edit2,
+  Check,
+  Image,
+  FileJson,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
+import { SemesterPlan, SemesterPlanCourse } from "@/hooks/useSemesterPlans";
 
-export interface SemesterPlanCourse {
-  id_course: string;
-  name_course: string;
-  code?: string;
-  ects?: number;
-  type_exam?: string;
-  ba_ma?: string;
-  professor_name?: string;
-  topics?: string;
-  term?: string;
-}
+export type { SemesterPlanCourse, SemesterPlan };
 
-export interface SemesterPlan {
+// Temporary plan from AI (before saving)
+export interface TempSemesterPlan {
   winter: SemesterPlanCourse[];
   summer: SemesterPlanCourse[];
   generated_at?: string;
@@ -41,10 +57,27 @@ export interface SemesterPlan {
 interface WorkbenchSemesterPlannerProps {
   isOpen: boolean;
   onToggle: () => void;
-  plan: SemesterPlan | null;
-  onClearPlan: () => void;
-  onSaveToDiary?: (plan: SemesterPlan) => void;
-  onRemoveCourse: (semester: "winter" | "summer", courseId: string) => void;
+  // Saved plans from DB
+  savedPlans: SemesterPlan[];
+  // Temp plan from AI
+  tempPlan: TempSemesterPlan | null;
+  // Actions
+  onSaveTempPlan: (name: string, winterCourses: SemesterPlanCourse[], summerCourses: SemesterPlanCourse[]) => Promise<void>;
+  onClearTempPlan: () => void;
+  onDeletePlan: (planId: string) => void;
+  onUpdatePlanName: (planId: string, newName: string) => void;
+  onRemoveCourseFromPlan: (planId: string, courseId: string) => void;
+  // Saved courses for adding
+  savedCourses?: Array<{
+    id_course: string;
+    name_course: string;
+    code?: string;
+    ects?: number;
+    type_exam?: string;
+    ba_ma?: string;
+    professor_name?: string;
+    term?: string;
+  }>;
 }
 
 // Helper function to count exam types
@@ -90,12 +123,27 @@ const countLevels = (courses: SemesterPlanCourse[]) => {
 export const WorkbenchSemesterPlanner = ({ 
   isOpen, 
   onToggle, 
-  plan, 
-  onClearPlan,
-  onSaveToDiary,
-  onRemoveCourse 
+  savedPlans,
+  tempPlan,
+  onSaveTempPlan,
+  onClearTempPlan,
+  onDeletePlan,
+  onUpdatePlanName,
+  onRemoveCourseFromPlan,
+  savedCourses
 }: WorkbenchSemesterPlannerProps) => {
-  const [selectedSemester, setSelectedSemester] = useState<"winter" | "summer">("winter");
+  const [selectedTab, setSelectedTab] = useState<"saved" | "new">(tempPlan ? "new" : "saved");
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [savePlanName, setSavePlanName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const planCardRef = useRef<HTMLDivElement>(null);
+
+  // Switch to new tab when temp plan arrives
+  if (tempPlan && selectedTab !== "new") {
+    setSelectedTab("new");
+  }
 
   if (!isOpen) {
     return (
@@ -111,25 +159,245 @@ export const WorkbenchSemesterPlanner = ({
     );
   }
 
-  const currentCourses = plan?.[selectedSemester] || [];
-  const allCourses = [...(plan?.winter || []), ...(plan?.summer || [])];
-  
-  const totalEcts = allCourses.reduce((sum, c) => sum + (c.ects || 0), 0);
-  const semesterEcts = currentCourses.reduce((sum, c) => sum + (c.ects || 0), 0);
-  const examCounts = countExamTypes(allCourses);
-  const levelCounts = countLevels(allCourses);
+  const winterPlans = savedPlans.filter(p => p.semester_type === "winter");
+  const summerPlans = savedPlans.filter(p => p.semester_type === "summer");
 
-  const handleExportJson = () => {
-    if (!plan) return;
-    const dataStr = JSON.stringify(plan, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
+  const handleStartEdit = (plan: SemesterPlan) => {
+    setEditingPlanId(plan.id);
+    setEditingName(plan.name);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingPlanId && editingName.trim()) {
+      onUpdatePlanName(editingPlanId, editingName.trim());
+    }
+    setEditingPlanId(null);
+    setEditingName("");
+  };
+
+  const handleSaveTempPlan = async () => {
+    if (!tempPlan || !savePlanName.trim()) {
+      toast.error("Please enter a name for your plan");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      await onSaveTempPlan(savePlanName.trim(), tempPlan.winter, tempPlan.summer);
+      setSavePlanName("");
+      setSelectedTab("saved");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportCSV = (plan: SemesterPlan) => {
+    const headers = ["Name", "Code", "ECTS", "Exam Type", "Level", "Professor"];
+    const rows = plan.courses.map(c => [
+      c.name_course,
+      c.code || "",
+      c.ects?.toString() || "",
+      c.type_exam || "",
+      c.ba_ma || "",
+      c.professor_name || ""
+    ]);
+    
+    const csv = [headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `semester-plan-${new Date().toISOString().split("T")[0]}.json`;
+    a.download = `${plan.name.replace(/\s+/g, "_")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Semester plan exported as JSON");
+    toast.success("Exported as CSV");
+  };
+
+  const handleExportPNG = async (plan: SemesterPlan, elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    try {
+      const canvas = await html2canvas(element, { 
+        backgroundColor: null,
+        scale: 2 
+      });
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${plan.name.replace(/\s+/g, "_")}.png`;
+      a.click();
+      toast.success("Exported as PNG");
+    } catch {
+      toast.error("Failed to export as PNG");
+    }
+  };
+
+  const handleExportTempCSV = (courses: SemesterPlanCourse[], semesterType: string) => {
+    const headers = ["Name", "Code", "ECTS", "Exam Type", "Level", "Professor"];
+    const rows = courses.map(c => [
+      c.name_course,
+      c.code || "",
+      c.ects?.toString() || "",
+      c.type_exam || "",
+      c.ba_ma || "",
+      c.professor_name || ""
+    ]);
+    
+    const csv = [headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${semesterType}_semester_plan.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported as CSV");
+  };
+
+  const renderCourseCard = (course: SemesterPlanCourse, planId?: string) => {
+    const examType = course.type_exam?.toLowerCase() || "";
+    let examIcon = <CalendarClock className="h-2.5 w-2.5 text-orange-500" />;
+    if (examType.includes("written") || examType.includes("écrit")) {
+      examIcon = <FileText className="h-2.5 w-2.5 text-blue-500" />;
+    } else if (examType.includes("oral")) {
+      examIcon = <Mic className="h-2.5 w-2.5 text-green-500" />;
+    }
+
+    const levelLabel = course.ba_ma?.toLowerCase()?.includes("ba") ? "Ba" : 
+                      course.ba_ma?.toLowerCase()?.includes("ma") ? "Ma" : null;
+
+    return (
+      <div
+        key={course.id_course}
+        className="p-2 rounded bg-background border text-xs relative group shadow-sm hover:shadow-md transition-all"
+      >
+        {planId && (
+          <button
+            onClick={() => onRemoveCourseFromPlan(planId, course.id_course)}
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
+        )}
+        <div className="font-medium text-foreground line-clamp-1 text-[10px]">
+          {course.name_course}
+        </div>
+        {course.code && (
+          <div className="text-[9px] text-muted-foreground">{course.code}</div>
+        )}
+        <div className="flex items-center gap-1.5 mt-1 text-muted-foreground flex-wrap">
+          {course.ects && (
+            <span className="font-medium text-[9px]">{course.ects} ECTS</span>
+          )}
+          {examIcon}
+          {levelLabel && (
+            <span className={cn(
+              "px-1 rounded text-[8px] font-medium",
+              levelLabel === "Ba" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300" : "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300"
+            )}>
+              {levelLabel}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPlanCard = (plan: SemesterPlan) => {
+    const examCounts = countExamTypes(plan.courses);
+    const levelCounts = countLevels(plan.courses);
+    const elementId = `plan-${plan.id}`;
+    
+    return (
+      <div 
+        key={plan.id} 
+        id={elementId}
+        className={cn(
+          "rounded-lg border p-3 space-y-2",
+          plan.semester_type === "winter" 
+            ? "bg-sky-50/50 border-sky-200 dark:bg-sky-950/20 dark:border-sky-800" 
+            : "bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800"
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {plan.semester_type === "winter" ? (
+              <Snowflake className="h-4 w-4 text-sky-600" />
+            ) : (
+              <Sun className="h-4 w-4 text-amber-600" />
+            )}
+            {editingPlanId === plan.id ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  className="h-6 text-xs w-32"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
+                />
+                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={handleSaveEdit}>
+                  <Check className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <span className="text-xs font-medium truncate max-w-[120px]">{plan.name}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              className="h-5 w-5" 
+              onClick={() => handleStartEdit(plan)}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-5 w-5">
+                  <Download className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExportCSV(plan)}>
+                  <FileJson className="h-3 w-3 mr-2" />
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportPNG(plan, elementId)}>
+                  <Image className="h-3 w-3 mr-2" />
+                  Export PNG
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              className="h-5 w-5 text-destructive hover:text-destructive" 
+              onClick={() => setDeleteConfirmId(plan.id)}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Stats */}
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+            {plan.total_ects} ECTS
+          </Badge>
+          <span>{plan.courses.length} courses</span>
+          <span className="text-blue-500">{examCounts.written}W</span>
+          <span className="text-green-500">{examCounts.oral}O</span>
+          <span className="text-orange-500">{examCounts.projectMidterm}P</span>
+        </div>
+        
+        {/* Courses */}
+        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+          {plan.courses.map((course) => renderCourseCard(course, plan.id))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -141,206 +409,224 @@ export const WorkbenchSemesterPlanner = ({
           <h3 className="font-semibold text-sm">Semester Planner</h3>
         </div>
         <div className="flex items-center gap-1">
+          <Badge variant="outline" className="text-[9px]">
+            {savedPlans.length}/10
+          </Badge>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggle}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
+      
+      {/* Tabs */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setSelectedTab("saved")}
+          className={cn(
+            "flex-1 py-2 text-xs font-medium transition-colors",
+            selectedTab === "saved" 
+              ? "border-b-2 border-primary text-primary" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <BookOpen className="h-3 w-3 inline mr-1" />
+          Saved ({savedPlans.length})
+        </button>
+        <button
+          onClick={() => setSelectedTab("new")}
+          className={cn(
+            "flex-1 py-2 text-xs font-medium transition-colors relative",
+            selectedTab === "new" 
+              ? "border-b-2 border-primary text-primary" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Plus className="h-3 w-3 inline mr-1" />
+          New Plan
+          {tempPlan && (
+            <span className="absolute top-1 right-2 w-2 h-2 bg-primary rounded-full animate-pulse" />
+          )}
+        </button>
+      </div>
 
-      {!plan || (plan.winter.length === 0 && plan.summer.length === 0) ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
-          <GraduationCap className="h-12 w-12 mb-4 opacity-30" />
-          <p className="text-sm font-medium mb-2">No Semester Plan</p>
-          <p className="text-xs">
-            Ask hubAI to generate a semester plan, e.g., "Plan my winter semester with 30 ECTS including Machine Learning and Robotics"
-          </p>
-        </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <div className="p-3 space-y-3">
-            {/* Semester Toggle */}
-            <div className="flex justify-center gap-1">
-              <Button
-                variant={selectedSemester === "winter" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedSemester("winter")}
-                className={cn(
-                  "gap-1 h-7 text-xs px-3",
-                  selectedSemester === "winter" && "bg-sky-600 hover:bg-sky-700"
-                )}
-              >
-                <Snowflake className="h-3 w-3" />
-                Winter ({plan.winter.length})
-              </Button>
-              <Button
-                variant={selectedSemester === "summer" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedSemester("summer")}
-                className={cn(
-                  "gap-1 h-7 text-xs px-3",
-                  selectedSemester === "summer" && "bg-amber-600 hover:bg-amber-700"
-                )}
-              >
-                <Sun className="h-3 w-3" />
-                Summer ({plan.summer.length})
-              </Button>
-            </div>
-
-            {/* Analytics Summary */}
-            <div className="grid grid-cols-4 gap-1 p-2 rounded-lg bg-muted/50 border">
-              <div className="text-center p-1.5 rounded bg-background">
-                <div className="text-sm font-bold text-primary">{totalEcts}</div>
-                <div className="text-[8px] text-muted-foreground uppercase">Total ECTS</div>
-              </div>
-              <div className="text-center p-1.5 rounded bg-background">
-                <div className="text-sm font-bold">{allCourses.length}</div>
-                <div className="text-[8px] text-muted-foreground uppercase">Courses</div>
-              </div>
-              <div className="text-center p-1.5 rounded bg-background">
-                <div className="text-sm font-bold text-indigo-600">{levelCounts.bachelor}</div>
-                <div className="text-[8px] text-muted-foreground uppercase">Bachelor</div>
-              </div>
-              <div className="text-center p-1.5 rounded bg-background">
-                <div className="text-sm font-bold text-purple-600">{levelCounts.master}</div>
-                <div className="text-[8px] text-muted-foreground uppercase">Master</div>
-              </div>
-
-              {/* Exam Types */}
-              <div className="col-span-4 flex items-center justify-center gap-3 py-1.5 border-t mt-1">
-                <div className="flex items-center gap-1 text-[10px]">
-                  <FileText className="h-3 w-3 text-blue-500" />
-                  <span className="font-medium">{examCounts.written}</span>
-                  <span className="text-muted-foreground">Written</span>
+      <ScrollArea className="flex-1">
+        <div className="p-3 space-y-3">
+          {selectedTab === "saved" ? (
+            <>
+              {savedPlans.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                  <GraduationCap className="h-10 w-10 mb-3 opacity-30" />
+                  <p className="text-xs font-medium mb-1">No Saved Plans</p>
+                  <p className="text-[10px]">
+                    Ask hubAI to generate a semester plan, then save it here
+                  </p>
                 </div>
-                <div className="flex items-center gap-1 text-[10px]">
-                  <Mic className="h-3 w-3 text-green-500" />
-                  <span className="font-medium">{examCounts.oral}</span>
-                  <span className="text-muted-foreground">Oral</span>
-                </div>
-                <div className="flex items-center gap-1 text-[10px]">
-                  <CalendarClock className="h-3 w-3 text-orange-500" />
-                  <span className="font-medium">{examCounts.projectMidterm}</span>
-                  <span className="text-muted-foreground">Project</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Semester Courses */}
-            <div className={cn(
-              "rounded-lg border-2 border-dashed p-2 min-h-[200px]",
-              selectedSemester === "winter" ? "bg-sky-50/50 border-sky-200 dark:bg-sky-950/20" : "bg-amber-50/50 border-amber-200 dark:bg-amber-950/20"
-            )}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  {selectedSemester === "winter" ? (
-                    <Snowflake className="h-3 w-3 text-sky-600" />
-                  ) : (
-                    <Sun className="h-3 w-3 text-amber-600" />
-                  )}
-                  <h4 className="text-xs font-medium">
-                    {selectedSemester === "winter" ? "Winter" : "Summer"} Semester
-                  </h4>
-                </div>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {semesterEcts} ECTS
-                </Badge>
-              </div>
-
-              <div className="space-y-1.5">
-                {currentCourses.map((course) => {
-                  const examType = course.type_exam?.toLowerCase() || "";
-                  let examIcon = <CalendarClock className="h-2.5 w-2.5 text-orange-500" />;
-                  if (examType.includes("written") || examType.includes("écrit")) {
-                    examIcon = <FileText className="h-2.5 w-2.5 text-blue-500" />;
-                  } else if (examType.includes("oral")) {
-                    examIcon = <Mic className="h-2.5 w-2.5 text-green-500" />;
-                  }
-
-                  const levelLabel = course.ba_ma?.toLowerCase()?.includes("ba") ? "Ba" : 
-                                    course.ba_ma?.toLowerCase()?.includes("ma") ? "Ma" : null;
-
-                  return (
-                    <div
-                      key={course.id_course}
-                      className="p-2 rounded bg-background border text-xs relative group shadow-sm hover:shadow-md transition-all"
-                    >
-                      <button
-                        onClick={() => onRemoveCourse(selectedSemester, course.id_course)}
-                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                      <div className="font-medium text-foreground line-clamp-1 text-[10px]">
-                        {course.name_course}
+              ) : (
+                <>
+                  {/* Winter Plans */}
+                  {winterPlans.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1 text-[10px] font-medium text-sky-600 uppercase">
+                        <Snowflake className="h-3 w-3" />
+                        Winter Semesters ({winterPlans.length})
                       </div>
-                      {course.code && (
-                        <div className="text-[9px] text-muted-foreground">{course.code}</div>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-1 text-muted-foreground flex-wrap">
-                        {course.ects && (
-                          <span className="font-medium text-[9px]">{course.ects} ECTS</span>
-                        )}
-                        {examIcon}
-                        {levelLabel && (
-                          <span className={cn(
-                            "px-1 rounded text-[8px] font-medium",
-                            levelLabel === "Ba" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300" : "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300"
-                          )}>
-                            {levelLabel}
-                          </span>
-                        )}
+                      {winterPlans.map(renderPlanCard)}
+                    </div>
+                  )}
+                  
+                  {/* Summer Plans */}
+                  {summerPlans.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1 text-[10px] font-medium text-amber-600 uppercase">
+                        <Sun className="h-3 w-3" />
+                        Summer Semesters ({summerPlans.length})
+                      </div>
+                      {summerPlans.map(renderPlanCard)}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {!tempPlan ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                  <GraduationCap className="h-10 w-10 mb-3 opacity-30" />
+                  <p className="text-xs font-medium mb-1">No New Plan</p>
+                  <p className="text-[10px]">
+                    Ask hubAI: "Plan my winter semester with 30 ECTS in robotics and AI"
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3" ref={planCardRef}>
+                  {/* Plan Title */}
+                  {tempPlan.title && (
+                    <div className="text-center">
+                      <Badge variant="outline" className="text-xs">
+                        {tempPlan.title}
+                      </Badge>
+                    </div>
+                  )}
+                  
+                  {/* Winter Semester */}
+                  {tempPlan.winter.length > 0 && (
+                    <div 
+                      id="temp-winter-plan"
+                      className="rounded-lg border-2 border-dashed p-2 bg-sky-50/50 border-sky-200 dark:bg-sky-950/20"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Snowflake className="h-3 w-3 text-sky-600" />
+                          <span className="text-xs font-medium">Winter ({tempPlan.winter.length})</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                            {tempPlan.winter.reduce((s, c) => s + (c.ects || 0), 0)} ECTS
+                          </Badge>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-5 w-5"
+                            onClick={() => handleExportTempCSV(tempPlan.winter, "winter")}
+                          >
+                            <Download className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        {tempPlan.winter.map((c) => renderCourseCard(c))}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-
-              {currentCourses.length === 0 && (
-                <div className="text-center py-6 text-muted-foreground text-xs">
-                  No courses in {selectedSemester} semester
+                  )}
+                  
+                  {/* Summer Semester */}
+                  {tempPlan.summer.length > 0 && (
+                    <div 
+                      id="temp-summer-plan"
+                      className="rounded-lg border-2 border-dashed p-2 bg-amber-50/50 border-amber-200 dark:bg-amber-950/20"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Sun className="h-3 w-3 text-amber-600" />
+                          <span className="text-xs font-medium">Summer ({tempPlan.summer.length})</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                            {tempPlan.summer.reduce((s, c) => s + (c.ects || 0), 0)} ECTS
+                          </Badge>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-5 w-5"
+                            onClick={() => handleExportTempCSV(tempPlan.summer, "summer")}
+                          >
+                            <Download className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        {tempPlan.summer.map((c) => renderCourseCard(c))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Save Section */}
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <Input
+                      placeholder="Name your plan (e.g., 'Year 1 - Robotics')"
+                      value={savePlanName}
+                      onChange={(e) => setSavePlanName(e.target.value)}
+                      className="text-xs h-8"
+                    />
+                    <div className="flex gap-2">
+                      <Button 
+                        className="flex-1 gap-1.5 h-8 text-xs"
+                        onClick={handleSaveTempPlan}
+                        disabled={isSaving || !savePlanName.trim()}
+                      >
+                        <Save className="h-3 w-3" />
+                        {isSaving ? "Saving..." : "Save Plan"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="gap-1.5 h-8 text-xs"
+                        onClick={onClearTempPlan}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
-        </ScrollArea>
-      )}
-
-      {/* Footer Actions */}
-      {plan && (plan.winter.length > 0 || plan.summer.length > 0) && (
-        <div className="p-3 border-t border-border space-y-2">
-          <div className="flex gap-2">
-            {onSaveToDiary && (
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="flex-1 gap-1.5 h-8 text-xs"
-                onClick={() => onSaveToDiary(plan)}
-              >
-                <Save className="h-3 w-3" />
-                Save to Diary
-              </Button>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1.5 h-8 text-xs"
-              onClick={handleExportJson}
-            >
-              <Download className="h-3 w-3" />
-              Export
-            </Button>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full gap-1.5 h-7 text-xs text-muted-foreground hover:text-destructive"
-            onClick={onClearPlan}
-          >
-            <Trash2 className="h-3 w-3" />
-            Clear Plan
-          </Button>
+            </>
+          )}
         </div>
-      )}
+      </ScrollArea>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Semester Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The plan will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (deleteConfirmId) onDeletePlan(deleteConfirmId);
+                setDeleteConfirmId(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

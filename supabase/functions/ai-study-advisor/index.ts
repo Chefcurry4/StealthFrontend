@@ -902,6 +902,25 @@ serve(async (req) => {
         });
       }
       
+      // User's semester plans - important for personalized advice
+      if (userContext.semesterPlans?.length) {
+        userSpecificContext += `\n\n**User's Saved Semester Plans (${userContext.semesterPlans.length} total) - FULL DETAILS:**\n`;
+        userContext.semesterPlans.forEach((plan: any) => {
+          const semesterLabel = plan.semester_type === 'winter' ? '❄️ Winter' : '☀️ Summer';
+          userSpecificContext += `\n**"${plan.name}"** (${semesterLabel} Semester, ${plan.total_ects || 0} ECTS):\n`;
+          if (plan.courses?.length) {
+            plan.courses.forEach((c: any) => {
+              userSpecificContext += `  - ${c.name_course}`;
+              if (c.code) userSpecificContext += ` (${c.code})`;
+              if (c.ects) userSpecificContext += ` - ${c.ects} ECTS`;
+              if (c.type_exam) userSpecificContext += ` - ${c.type_exam}`;
+              userSpecificContext += `\n`;
+            });
+          }
+        });
+        userSpecificContext += `\nWhen the user asks about their semester plans, refer to these details.\n`;
+      }
+      
       if (userContext.profile) {
         userSpecificContext += `\n\n**User Profile:**\n`;
         if (userContext.profile.country) userSpecificContext += `- Country: ${userContext.profile.country}\n`;
@@ -978,6 +997,7 @@ ${userSpecificContext || "No user-specific data available"}
 - When showing course information, include relevant details like description, ECTS, professor, language, exam type, required software
 - When showing lab information, include ALL details: name, description, topics, professors, faculty, website link
 - Reference the user's saved courses, labs, email drafts, and documents when they ask about "my" content
+- **SEMESTER PLANS**: The user may have saved semester plans. When they ask about "my winter semester", "my semester plan called X", or similar, refer to the User-Specific Context section. You can provide feedback on their plans like workload balance, exam distribution, or course suggestions.
 - **IMPORTANT**: When generating emails and the user has documents listed (like CV, resume), use the get_document_content tool to fetch their content and extract relevant personal information (name, background, skills)
 - **SEMESTER PLANNING**: When users ask to plan their semester, use the generate_semester_plan tool. Specify courses for winter and/or summer semesters.
 - Be encouraging and supportive

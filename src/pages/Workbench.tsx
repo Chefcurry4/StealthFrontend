@@ -20,6 +20,13 @@ import {
 } from "@/hooks/useAIConversations";
 import { useConversationSearch } from "@/hooks/useConversationSearch";
 import { useWorkbenchSemesterPlan } from "@/hooks/useWorkbenchSemesterPlan";
+import { 
+  useSemesterPlans, 
+  useCreateSemesterPlan, 
+  useDeleteSemesterPlan, 
+  useUpdateSemesterPlan,
+  useSaveAIPlan 
+} from "@/hooks/useSemesterPlans";
 import { supabase } from "@/integrations/supabase/client";
 import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
@@ -238,16 +245,22 @@ const Workbench = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
-  // Semester planner hook
+  // Semester planner hooks
   const {
-    plan: semesterPlan,
+    tempPlan,
     isPlannerOpen,
     togglePlanner,
-    clearPlan,
-    removeCourse,
+    clearTempPlan,
     parseSemesterPlanFromResponse,
-    setSemesterPlan
+    setTempSemesterPlan
   } = useWorkbenchSemesterPlan();
+  
+  // Persistent semester plans
+  const { data: savedSemesterPlans = [] } = useSemesterPlans();
+  const createSemesterPlan = useCreateSemesterPlan();
+  const deleteSemesterPlan = useDeleteSemesterPlan();
+  const updateSemesterPlan = useUpdateSemesterPlan();
+  const saveAIPlan = useSaveAIPlan();
   
   // Conversation search hook
   const {
@@ -915,6 +928,12 @@ const Workbench = () => {
         recentConversations: recentConversations?.slice(0, 5).map(c => ({
           title: c.title
         })) || [],
+        semesterPlans: savedSemesterPlans.map(plan => ({
+          name: plan.name,
+          semester_type: plan.semester_type,
+          total_ects: plan.total_ects,
+          courses: plan.courses
+        })),
         profile: userProfile ? {
           country: userProfile.country,
           language: userProfile.language_preference,
@@ -1019,7 +1038,7 @@ const Workbench = () => {
           // Check for semester plan in response
           const parsedPlan = parseSemesterPlanFromResponse(assistantContent);
           if (parsedPlan) {
-            setSemesterPlan(parsedPlan);
+            setTempSemesterPlan(parsedPlan);
             toast.success("Semester plan generated! View it in the panel on the right.");
           }
           
@@ -1855,11 +1874,34 @@ const Workbench = () => {
       
       {/* Semester Planner Panel */}
       <WorkbenchSemesterPlanner
-        plan={semesterPlan}
         isOpen={isPlannerOpen}
         onToggle={togglePlanner}
-        onClearPlan={clearPlan}
-        onRemoveCourse={removeCourse}
+        savedPlans={savedSemesterPlans}
+        tempPlan={tempPlan}
+        onSaveTempPlan={async (name, winterCourses, summerCourses) => {
+          await saveAIPlan.mutateAsync({ name, winterCourses, summerCourses });
+          clearTempPlan();
+        }}
+        onClearTempPlan={clearTempPlan}
+        onDeletePlan={(planId) => deleteSemesterPlan.mutate(planId)}
+        onUpdatePlanName={(planId, newName) => updateSemesterPlan.mutate({ id: planId, name: newName })}
+        onRemoveCourseFromPlan={(planId, courseId) => {
+          const plan = savedSemesterPlans.find(p => p.id === planId);
+          if (plan) {
+            const updatedCourses = plan.courses.filter(c => c.id_course !== courseId);
+            updateSemesterPlan.mutate({ id: planId, courses: updatedCourses });
+          }
+        }}
+        savedCourses={savedCourses?.map(c => ({
+          id_course: c.Courses?.id_course || '',
+          name_course: c.Courses?.name_course || '',
+          code: c.Courses?.code || undefined,
+          ects: c.Courses?.ects || undefined,
+          type_exam: c.Courses?.type_exam || undefined,
+          ba_ma: c.Courses?.ba_ma || undefined,
+          professor_name: c.Courses?.professor_name || undefined,
+          term: c.Courses?.term || undefined
+        })).filter(c => c.id_course) || []}
       />
       
       {/* Keyboard shortcuts help */}
