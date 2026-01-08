@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Building, Camera, User, Sparkles, Crown, Star, Fingerprint } from "lucide-react";
+import { GraduationCap, Building, Camera, User, Crown, Star, Fingerprint } from "lucide-react";
 
-export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink' | 'epic-white';
+export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink';
 
 interface UserFlashcardProps {
   username?: string;
@@ -53,13 +53,8 @@ const COLOR_STYLES: Record<FlashcardColorStyle, { from: string; via: string; to:
     { from: "from-neutral-950", via: "via-black", to: "to-gray-950" },
   ],
   'epic-pink': [
-    { from: "from-pink-400", via: "via-pink-500", to: "to-rose-500" },
-    { from: "from-rose-400", via: "via-pink-500", to: "to-fuchsia-500" },
-    { from: "from-fuchsia-400", via: "via-pink-500", to: "to-rose-400" },
-  ],
-  'epic-white': [
     { from: "from-white", via: "via-pink-100", to: "to-pink-200" },
-    { from: "from-white", via: "via-rose-50", to: "to-pink-150" },
+    { from: "from-white", via: "via-rose-50", to: "to-pink-100" },
     { from: "from-pink-50", via: "via-white", to: "to-pink-100" },
   ],
 };
@@ -82,16 +77,12 @@ const UserFlashcard = ({
   reviewCount = 0,
 }: UserFlashcardProps) => {
   // Determine if using epic color styles (only explicit epic-* styles)
-  const isEpicStyle = colorStyle === 'epic-dark' || colorStyle === 'epic-pink' || colorStyle === 'epic-white';
+  const isEpicStyle = colorStyle === 'epic-dark' || colorStyle === 'epic-pink';
   const isEpicDark = colorStyle === 'epic-dark';
   const isEpicPink = colorStyle === 'epic-pink';
-  const isEpicWhite = colorStyle === 'epic-white';
   
   // For non-epic styles (ocean, sunset, forest, gradient), don't show epic features even if user is epic
   const showEpicFeatures = isEpic && isEpicStyle;
-  
-  // Determine if particles should be hidden (pink, white don't have particles, dark has no shimmer)
-  const hideParticles = isEpicPink || isEpicWhite;
   
   // Generate unique gradient based on username within the selected color style
   const gradientColors = useMemo(() => {
@@ -102,8 +93,6 @@ const UserFlashcard = ({
     return colors[hash % colors.length];
   }, [username, colorStyle]);
 
-  const userInitial = username?.[0]?.toUpperCase() || "?";
-  
   const sizeClasses = size === 'large' 
     ? 'max-w-[320px]' 
     : 'max-w-[280px]';
@@ -114,7 +103,6 @@ const UserFlashcard = ({
   const getEpicRingClass = () => {
     if (isEpicDark) return 'ring-2 ring-black ring-offset-2 ring-offset-background';
     if (isEpicPink) return 'ring-2 ring-pink-400 ring-offset-2 ring-offset-background';
-    if (isEpicWhite) return 'ring-2 ring-pink-300 ring-offset-2 ring-offset-background';
     return '';
   };
 
@@ -164,9 +152,9 @@ const UserFlashcard = ({
       
       {/* Regular animated gradient blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className={`absolute -top-10 -right-10 w-32 h-32 ${isEpicWhite ? 'bg-pink-300/30' : isEpicStyle ? 'bg-white/15' : 'bg-white/20'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '4s' }} />
-        <div className={`absolute -bottom-10 -left-10 w-40 h-40 ${isEpicWhite ? 'bg-pink-200/25' : isEpicStyle ? 'bg-white/12' : 'bg-white/15'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '5s', animationDelay: '1s' }} />
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 ${isEpicWhite ? 'bg-pink-400/20' : isEpicStyle ? 'bg-white/8' : 'bg-white/10'} rounded-full blur-xl animate-pulse`} style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        <div className={`absolute -top-10 -right-10 w-32 h-32 ${isEpicPink ? 'bg-pink-300/30' : isEpicStyle ? 'bg-white/15' : 'bg-white/20'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '4s' }} />
+        <div className={`absolute -bottom-10 -left-10 w-40 h-40 ${isEpicPink ? 'bg-pink-200/25' : isEpicStyle ? 'bg-white/12' : 'bg-white/15'} rounded-full blur-2xl animate-pulse`} style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 ${isEpicPink ? 'bg-pink-400/20' : isEpicStyle ? 'bg-white/8' : 'bg-white/10'} rounded-full blur-xl animate-pulse`} style={{ animationDuration: '6s', animationDelay: '2s' }} />
       </div>
 
       {/* Noise texture overlay */}
@@ -187,14 +175,6 @@ const UserFlashcard = ({
           0%, 100% { opacity: 0.1; }
           50% { opacity: 0.25; }
         }
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        @keyframes sunPulse {
-          0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.03); filter: brightness(1.1); }
-        }
       `}</style>
 
       {/* Glass card content */}
@@ -206,11 +186,7 @@ const UserFlashcard = ({
               className={`font-bold px-3 py-1 gap-1 ${
                 isEpicDark 
                   ? 'bg-black border-black text-white' 
-                  : isEpicPink 
-                    ? 'bg-pink-400 border-pink-400 text-white'
-                    : isEpicWhite 
-                      ? 'bg-pink-500 border-pink-500 text-white'
-                      : 'bg-gradient-to-r from-pink-400 to-rose-500 border-pink-300 text-white'
+                  : 'bg-pink-500 border-pink-500 text-white'
               }`}
             >
               <Crown className="h-3 w-3" />
@@ -228,7 +204,7 @@ const UserFlashcard = ({
           )}
           
           {/* Decorative sparkle */}
-          <Fingerprint className={`h-5 w-5 ${isEpicWhite ? 'text-pink-500/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '5s' }} />
+          <Fingerprint className={`h-5 w-5 ${isEpicPink ? 'text-pink-500/60' : 'text-white/60'} animate-pulse`} style={{ animationDuration: '5s' }} />
         </div>
 
         {/* Avatar section */}
@@ -241,23 +217,19 @@ const UserFlashcard = ({
               isEpicDark 
                 ? 'bg-black/40' 
                 : isEpicPink 
-                  ? 'bg-pink-400/40'
-                  : isEpicWhite 
-                    ? 'bg-pink-300/40'
-                    : showEpicFeatures 
-                      ? 'bg-pink-400/40' 
-                      : 'bg-white/30'
+                  ? 'bg-pink-300/40'
+                  : showEpicFeatures 
+                    ? 'bg-pink-400/40' 
+                    : 'bg-white/30'
             }`} />
             <Avatar className={`${avatarSize} border-4 ${
               isEpicDark 
                 ? 'border-black/60' 
                 : isEpicPink 
                   ? 'border-pink-400/60'
-                  : isEpicWhite 
-                    ? 'border-pink-400/60'
-                    : showEpicFeatures 
-                      ? 'border-pink-400/60' 
-                      : 'border-white/40'
+                  : showEpicFeatures 
+                    ? 'border-pink-400/60' 
+                    : 'border-white/40'
             } shadow-2xl relative`}>
               <AvatarImage src={profilePhotoUrl || undefined} />
               <AvatarFallback className="bg-gray-300 text-gray-500">
@@ -279,9 +251,9 @@ const UserFlashcard = ({
           </div>
 
           {/* Username */}
-          <h3 className={`mt-4 text-xl font-bold ${isEpicWhite ? 'text-pink-700' : 'text-white'} text-center truncate max-w-full px-2`}>
+          <h3 className={`mt-4 text-xl font-bold ${isEpicPink ? 'text-pink-700' : 'text-white'} text-center truncate max-w-full px-2`}>
             {username || (
-              <span className={`${isEpicWhite ? 'text-pink-600/50' : 'text-white/50'} italic flex items-center gap-2`}>
+              <span className={`${isEpicPink ? 'text-pink-600/50' : 'text-white/50'} italic flex items-center gap-2`}>
                 <User className="h-4 w-4" />
                 Username
               </span>
@@ -290,7 +262,7 @@ const UserFlashcard = ({
           
           {/* Review count for EPIC users */}
           {showEpicFeatures && reviewCount > 0 && (
-            <div className={`flex items-center gap-1 mt-2 ${isEpicWhite ? 'text-pink-600/90' : 'text-white/90'}`}>
+            <div className={`flex items-center gap-1 mt-2 ${isEpicPink ? 'text-pink-600/90' : 'text-white/90'}`}>
               <Star className="h-4 w-4 fill-pink-300 text-pink-300" />
               <span className="text-sm font-medium">{reviewCount} reviews</span>
             </div>
@@ -305,40 +277,38 @@ const UserFlashcard = ({
               ? 'via-black/60' 
               : isEpicPink 
                 ? 'via-pink-400/60'
-                : isEpicWhite 
-                  ? 'via-pink-400/60'
-                  : showEpicFeatures 
-                    ? 'via-pink-400/60' 
-                    : 'via-white/40'
+                : showEpicFeatures 
+                  ? 'via-pink-400/60' 
+                  : 'via-white/40'
           } to-transparent`} />
           
           {/* University */}
-          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-pink-700/90' : 'text-white/90'}`}>
+          <div className={`flex items-center gap-2 ${isEpicPink ? 'text-pink-700/90' : 'text-white/90'}`}>
             {universityLogo ? (
               <img src={universityLogo} alt="" className="h-5 w-5 rounded object-cover" />
             ) : (
-              <Building className={`h-4 w-4 ${isEpicWhite ? 'text-pink-600/70' : 'text-white/70'}`} />
+              <Building className={`h-4 w-4 ${isEpicPink ? 'text-pink-600/70' : 'text-white/70'}`} />
             )}
             <span className="text-sm truncate flex-1">
               {universityName || (
-                <span className={`${isEpicWhite ? 'text-pink-600/50' : 'text-white/50'} italic`}>Select university</span>
+                <span className={`${isEpicPink ? 'text-pink-600/50' : 'text-white/50'} italic`}>Select university</span>
               )}
             </span>
           </div>
 
           {/* Student level indicator (visual) */}
-          <div className={`flex items-center gap-2 ${isEpicWhite ? 'text-pink-700/90' : 'text-white/90'}`}>
-            <GraduationCap className={`h-4 w-4 ${isEpicWhite ? 'text-pink-600/70' : 'text-white/70'}`} />
+          <div className={`flex items-center gap-2 ${isEpicPink ? 'text-pink-700/90' : 'text-white/90'}`}>
+            <GraduationCap className={`h-4 w-4 ${isEpicPink ? 'text-pink-600/70' : 'text-white/70'}`} />
             <span className="text-sm">
               {studentLevel ? `${studentLevel} Student` : (
-                <span className={`${isEpicWhite ? 'text-pink-600/50' : 'text-white/50'} italic`}>Select level</span>
+                <span className={`${isEpicPink ? 'text-pink-600/50' : 'text-white/50'} italic`}>Select level</span>
               )}
             </span>
           </div>
 
           {/* Member since (only show when not preview) */}
           {memberSince && !isPreview && (
-            <p className={`text-xs ${isEpicWhite ? 'text-pink-600/60' : 'text-white/60'} text-center mt-2`}>
+            <p className={`text-xs ${isEpicPink ? 'text-pink-600/60' : 'text-white/60'} text-center mt-2`}>
               Member since {memberSince}
             </p>
           )}
@@ -351,11 +321,9 @@ const UserFlashcard = ({
           ? 'border-black/40' 
           : isEpicPink 
             ? 'border-pink-400/40'
-            : isEpicWhite 
-              ? 'border-pink-400/40'
-              : showEpicFeatures 
-                ? 'border-pink-400/40' 
-                : 'border-white/20'
+            : showEpicFeatures 
+              ? 'border-pink-400/40' 
+              : 'border-white/20'
       } pointer-events-none`} />
       
       {/* Hover glow */}
@@ -364,12 +332,10 @@ const UserFlashcard = ({
           boxShadow: isEpicDark
             ? 'inset 0 0 30px rgba(0,0,0,0.3), 0 0 60px rgba(0,0,0,0.3)'
             : isEpicPink
-              ? 'inset 0 0 30px rgba(244,114,182,0.3), 0 0 60px rgba(244,114,182,0.3)'
-              : isEpicWhite
-                ? 'inset 0 0 30px rgba(236,72,153,0.2), 0 0 60px rgba(236,72,153,0.2)'
-                : showEpicFeatures
-                  ? 'inset 0 0 30px rgba(244,114,182,0.2), 0 0 60px rgba(244,114,182,0.2)'
-                  : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
+              ? 'inset 0 0 30px rgba(236,72,153,0.2), 0 0 60px rgba(236,72,153,0.2)'
+              : showEpicFeatures
+                ? 'inset 0 0 30px rgba(244,114,182,0.2), 0 0 60px rgba(244,114,182,0.2)'
+                : 'inset 0 0 30px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.15)',
         }}
       />
     </div>

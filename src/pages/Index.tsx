@@ -36,12 +36,12 @@ const Index = () => {
     openGuide,
   } = useGuide();
 
-  // Fetch platform stats
+  // Fetch platform stats using RPC function
   const { data: platformStats } = useQuery({
     queryKey: ["platform-stats-home"],
     queryFn: async () => {
-      const [usersRes, courseReviewsRes, labReviewsRes, savedCoursesRes, savedLabsRes] = await Promise.all([
-        supabase.from("Users(US)").select("*", { count: "exact" }),
+      const [usersCountRes, courseReviewsRes, labReviewsRes, savedCoursesRes, savedLabsRes] = await Promise.all([
+        supabase.rpc("get_public_user_count"),
         supabase.from("course_reviews").select("id", { count: "exact", head: true }),
         supabase.from("lab_reviews").select("id", { count: "exact", head: true }),
         supabase.from("user_saved_courses(US-C)").select("id", { count: "exact", head: true }),
@@ -49,7 +49,7 @@ const Index = () => {
       ]);
 
       return {
-        users: usersRes.data?.length || usersRes.count || 0,
+        users: usersCountRes.data || 0,
         reviews: (courseReviewsRes.count || 0) + (labReviewsRes.count || 0),
         savedItems: (savedCoursesRes.count || 0) + (savedLabsRes.count || 0),
       };

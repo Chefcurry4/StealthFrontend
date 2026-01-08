@@ -62,6 +62,15 @@ export const PreferencesSettings = () => {
     if (mode !== currentMode) {
       await toggleMode();
     }
+    // Scroll to top to see the background change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle flashcard style change with scroll to top
+  const handleFlashcardStyleChange = async (style: FlashcardColorStyle) => {
+    await updateProfile.mutateAsync({ flashcard_color_style: style });
+    // Scroll to top of page to see the card's new look
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -352,14 +361,12 @@ export const PreferencesSettings = () => {
                 { id: 'sunset' as FlashcardColorStyle, label: 'Sunset', colors: 'from-orange-500 via-rose-500 to-pink-500', epicOnly: false },
                 { id: 'forest' as FlashcardColorStyle, label: 'Forest', colors: 'from-emerald-600 via-green-500 to-teal-500', epicOnly: false },
                 { id: 'epic-dark' as FlashcardColorStyle, label: 'Epic Black', colors: 'from-gray-950 via-black to-gray-900', epicOnly: true },
-                { id: 'epic-pink' as FlashcardColorStyle, label: 'Epic Pink', colors: 'from-pink-400 via-pink-500 to-rose-500', epicOnly: true },
-                { id: 'epic-white' as FlashcardColorStyle, label: 'Epic White', colors: 'from-gray-100 via-white to-gray-50', epicOnly: true },
-                { id: 'epic-sunset' as FlashcardColorStyle, label: 'Epic Sunset', colors: 'from-orange-400 via-rose-400 to-purple-500', epicOnly: true },
+                { id: 'epic-pink' as FlashcardColorStyle, label: 'Epic Pink', colors: 'from-white via-pink-100 to-pink-200', epicOnly: true },
               ]).map((style) => (
                 <button
                   key={style.id}
                   type="button"
-                  onClick={() => updateProfile.mutate({ flashcard_color_style: style.id as FlashcardColorStyle })}
+                  onClick={() => handleFlashcardStyleChange(style.id as FlashcardColorStyle)}
                   disabled={style.epicOnly && !reviewStats?.isEpic}
                   className={cn(
                     "relative p-3 rounded-xl border-2 transition-all",
