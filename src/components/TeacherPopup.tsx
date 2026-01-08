@@ -43,9 +43,9 @@ export const TeacherPopup = ({ teacherId, open, onOpenChange }: TeacherPopupProp
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-lg max-h-[85vh] overflow-hidden"
+        className="max-w-lg max-h-[85vh] overflow-hidden shadow-xl backdrop-blur-md"
         style={{
-          background: modeConfig.ui.cardBackground,
+          background: `${modeConfig.ui.cardBackground}f5`,
           borderColor: modeConfig.ui.cardBorder,
           color: modeConfig.textColor,
         }}
