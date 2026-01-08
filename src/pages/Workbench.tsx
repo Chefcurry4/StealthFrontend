@@ -243,7 +243,7 @@ const Workbench = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Semester planner hooks
@@ -461,7 +461,7 @@ const Workbench = () => {
   };
 
   // Handle @ mentions in input
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart || 0;
     setInput(value);
@@ -1684,39 +1684,17 @@ const Workbench = () => {
                 </div>
               )}
               
-              {/* Deep Planning Indicator (like ChatGPT deep think) */}
+              {/* Deep Planning Indicator - minimalist style */}
               {isPlanningDeep && (
-                <div className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-amber-400/30 shadow-sm">
-                    <AvatarFallback className="bg-gradient-to-br from-amber-400/20 to-orange-500/20 text-amber-600 dark:text-amber-400">
-                      <Brain className="h-4 w-4" />
+                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <CalendarDays className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col gap-2 rounded-2xl px-4 py-3 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200/50 dark:border-amber-700/30 shadow-sm min-w-[280px]">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                      </div>
-                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Creating Semester Plan</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span>Analyzing your requirements...</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" style={{ animationDelay: '0.3s' }} />
-                        <span>Searching matching courses...</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" style={{ animationDelay: '0.6s' }} />
-                        <span>Optimizing ECTS balance...</span>
-                      </div>
-                    </div>
-                    <div className="h-1 bg-amber-200/30 dark:bg-amber-800/30 rounded-full overflow-hidden mt-1">
-                      <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse" style={{ width: '60%' }} />
-                    </div>
+                  <div className="flex items-center gap-3 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">Creating semester plan...</span>
                   </div>
                 </div>
               )}
@@ -1897,13 +1875,19 @@ const Workbench = () => {
               searchQuery={mentionSearchQuery}
             />
             
-            <Input
+            <textarea
               ref={inputRef}
               placeholder="Message hubAI... (type @ to mention courses/labs)"
               value={input}
               onChange={handleInputChange}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !showMentionPopup) {
+                // Alt+Enter or Shift+Enter for new line
+                if (e.key === "Enter" && (e.altKey || e.shiftKey)) {
+                  // Allow default behavior for new line
+                  return;
+                }
+                // Enter alone to send
+                if (e.key === "Enter" && !showMentionPopup) {
                   e.preventDefault();
                   handleSend();
                 }
@@ -1912,7 +1896,17 @@ const Workbench = () => {
                 }
               }}
               disabled={isStreaming}
-              className="pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border"
+              rows={1}
+              className="flex-1 min-h-[48px] max-h-32 resize-none pr-14 py-3 px-4 rounded-xl border bg-transparent focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border text-sm leading-relaxed"
+              style={{
+                height: 'auto',
+                minHeight: '48px',
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+              }}
             />
             {isStreaming ? (
               <Button
