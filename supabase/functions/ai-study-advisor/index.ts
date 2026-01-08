@@ -131,7 +131,7 @@ const databaseTools = [
     type: "function",
     function: {
       name: "get_document_content",
-      description: "Fetch the content of a user's uploaded document (CV, resume, transcript, etc.) from storage. Use this when the user mentions their CV, resume, or other uploaded documents and you need to extract information like their name, background, skills, or experiences.",
+      description: "Fetch the content of a user's uploaded document (CV, resume, transcript, etc.) from storage. Use this when the user mentions their CV, resume, or other uploaded documents and you need to extract information like their name, background, skills, or experiences. This tool uses advanced OCR to extract text from scanned PDFs.",
       parameters: {
         type: "object",
         properties: {
@@ -139,6 +139,31 @@ const databaseTools = [
           document_url: { type: "string", description: "The URL of the document if available" }
         },
         required: ["document_name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_semester_plan",
+      description: "Generate a semester plan with courses organized by winter and summer semesters. Use this when the user asks to plan their semester, organize courses, or create a study plan. Returns structured data that will be displayed in the semester planner panel.",
+      parameters: {
+        type: "object",
+        properties: {
+          winter_courses: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "Array of course names or codes to include in winter semester" 
+          },
+          summer_courses: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "Array of course names or codes to include in summer semester" 
+          },
+          target_ects: { type: "number", description: "Target total ECTS credits (optional)" },
+          level: { type: "string", description: "Ba for Bachelor, Ma for Master (optional)" },
+          preferences: { type: "string", description: "Additional preferences like exam types, topics (optional)" }
+        }
       }
     }
   }
@@ -531,16 +556,59 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       const doc = docs[0];
       console.log("Found document:", doc.name, "URL:", doc.file_url);
       
-      // Extract the file path from the URL
-      // URL format: https://xxx.supabase.co/storage/v1/object/public/user-documents/userId/timestamp-filename
-      // For private buckets it might not have /public/ in the path
+      // Try using Firecrawl for better PDF parsing (especially scanned PDFs)
+      const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
+      
+      if (firecrawlApiKey && doc.file_url) {
+        try {
+          console.log("Attempting to parse document with Firecrawl...");
+          const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${firecrawlApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              url: doc.file_url,
+              formats: ["markdown"],
+              onlyMainContent: false,
+              waitFor: 3000,
+            }),
+          });
+          
+          if (firecrawlResponse.ok) {
+            const firecrawlData = await firecrawlResponse.json();
+            const markdown = firecrawlData.data?.markdown || firecrawlData.markdown || "";
+            
+            if (markdown && markdown.trim().length > 100) {
+              console.log("Firecrawl successfully extracted content, length:", markdown.length);
+              let content = markdown;
+              if (content.length > 8000) {
+                content = content.substring(0, 8000) + "\n\n[Content truncated]";
+              }
+              
+              return { 
+                document_name: doc.name,
+                document_type: doc.file_type,
+                file_size: doc.file_size,
+                content: `[Document: ${doc.name}]\n\n${content}`,
+                message: "Document content retrieved successfully via Firecrawl OCR"
+              };
+            }
+          }
+          console.log("Firecrawl extraction returned limited content, falling back to basic extraction");
+        } catch (firecrawlError) {
+          console.error("Firecrawl error, falling back to basic extraction:", firecrawlError);
+        }
+      }
+      
+      // Fallback: Extract file path and download directly
       let filePath = "";
       
       if (doc.file_url.includes("/user-documents/")) {
         const urlParts = doc.file_url.split("/user-documents/");
         filePath = urlParts[1];
       } else {
-        // Try to extract from the end of the URL
         const pathMatch = doc.file_url.match(/\/([^\/]+\/[^\/]+)$/);
         if (pathMatch) {
           filePath = pathMatch[1];
@@ -554,7 +622,6 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       
       console.log("Downloading file from path:", filePath);
       
-      // Download the file using Supabase storage with service role (handles private buckets)
       const { data: fileData, error: downloadError } = await supabase.storage
         .from("user-documents")
         .download(filePath);
@@ -564,22 +631,17 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         return { error: `Failed to download document: ${downloadError.message}` };
       }
       
-      // Convert blob to text
       let content = "";
       const fileName = doc.name.toLowerCase();
       
       if (fileName.endsWith(".pdf")) {
-        // For PDFs, extract any text we can from the binary data
         try {
           const arrayBuffer = await fileData.arrayBuffer();
           const bytes = new Uint8Array(arrayBuffer);
           
-          // Simple PDF text extraction - look for text streams
-          let pdfText = "";
           const decoder = new TextDecoder('utf-8', { fatal: false });
           const rawText = decoder.decode(bytes);
           
-          // Extract text between parentheses (common PDF text format) and /TX tags
           const textMatches = rawText.match(/\(([^)]{2,})\)/g) || [];
           const cleanedTexts = textMatches
             .map(t => t.slice(1, -1))
@@ -587,37 +649,32 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
             .join(" ");
           
           if (cleanedTexts.length > 100) {
-            pdfText = cleanedTexts.substring(0, 5000);
+            content = cleanedTexts.substring(0, 5000);
           }
           
-          // Try to extract name from filename
           const nameFromFile = doc.name.replace(/\.pdf$/i, "").replace(/[-_]/g, " ");
           const nameParts = nameFromFile.split(/resume|cv/i);
           const extractedName = nameParts[0]?.trim() || nameFromFile;
           
-          if (pdfText.length > 100) {
-            content = `[PDF Document: ${doc.name}]\n\nExtracted text content:\n${pdfText}`;
+          if (content.length > 100) {
+            content = `[PDF Document: ${doc.name}]\n\nExtracted text content:\n${content}`;
           } else {
-            content = `[PDF Document: ${doc.name}]\n\nNote: This is a PDF file. Limited text was extracted. Based on the filename, the user's name appears to be "${extractedName}".`;
+            content = `[PDF Document: ${doc.name}]\n\nNote: This appears to be a scanned PDF. Limited text was extracted. Based on the filename, the user's name appears to be "${extractedName}".`;
           }
           
-          // Always add the name extraction
           if (extractedName && !extractedName.toLowerCase().includes("resume") && !extractedName.toLowerCase().includes("cv")) {
             content += `\n\n**Extracted from filename:** The user's name appears to be "${extractedName}".`;
           }
         } catch (e) {
           console.error("Error extracting PDF text:", e);
-          // Fallback to filename-based extraction
           const nameFromFile = doc.name.replace(/\.pdf$/i, "").replace(/[-_]/g, " ");
           const nameParts = nameFromFile.split(/resume|cv/i);
           const extractedName = nameParts[0]?.trim() || nameFromFile;
           content = `[PDF Document: ${doc.name}]\n\nNote: Could not extract text from PDF. Based on the filename, the user's name appears to be "${extractedName}".`;
         }
       } else {
-        // For text files, read the content
         try {
           content = await fileData.text();
-          // Truncate if too long
           if (content.length > 5000) {
             content = content.substring(0, 5000) + "\n\n[Content truncated - document is very long]";
           }
@@ -632,6 +689,81 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         file_size: doc.file_size,
         content: content,
         message: "Document content retrieved successfully"
+      };
+    }
+    
+    case "generate_semester_plan": {
+      console.log("Generating semester plan with args:", args);
+      
+      const winterCourses: any[] = [];
+      const summerCourses: any[] = [];
+      
+      // Search for winter courses
+      if (args.winter_courses && args.winter_courses.length > 0) {
+        for (const courseQuery of args.winter_courses) {
+          const { data: courses } = await supabase
+            .from("Courses(C)")
+            .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term")
+            .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
+            .limit(1);
+          
+          if (courses && courses.length > 0) {
+            winterCourses.push(courses[0]);
+          }
+        }
+      }
+      
+      // Search for summer courses
+      if (args.summer_courses && args.summer_courses.length > 0) {
+        for (const courseQuery of args.summer_courses) {
+          const { data: courses } = await supabase
+            .from("Courses(C)")
+            .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term")
+            .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
+            .limit(1);
+          
+          if (courses && courses.length > 0) {
+            summerCourses.push(courses[0]);
+          }
+        }
+      }
+      
+      // If no specific semesters given but preferences exist, search and auto-assign
+      if (args.preferences && winterCourses.length === 0 && summerCourses.length === 0) {
+        const { data: allCourses } = await supabase
+          .from("Courses(C)")
+          .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term")
+          .or(`topics.ilike.%${args.preferences}%,description.ilike.%${args.preferences}%,name_course.ilike.%${args.preferences}%`)
+          .limit(10);
+        
+        if (allCourses) {
+          allCourses.forEach((course: any, i: number) => {
+            const term = course.term?.toLowerCase() || "";
+            if (term.includes("spring") || term.includes("summer")) {
+              summerCourses.push(course);
+            } else if (term.includes("fall") || term.includes("winter") || term.includes("autumn")) {
+              winterCourses.push(course);
+            } else {
+              // Distribute evenly if no term info
+              if (i % 2 === 0) winterCourses.push(course);
+              else summerCourses.push(course);
+            }
+          });
+        }
+      }
+      
+      const plan = {
+        winter: winterCourses,
+        summer: summerCourses,
+        title: args.preferences ? `Plan: ${args.preferences}` : "Semester Plan",
+        total_ects: [...winterCourses, ...summerCourses].reduce((sum, c) => sum + (c.ects || 0), 0),
+        winter_ects: winterCourses.reduce((sum, c) => sum + (c.ects || 0), 0),
+        summer_ects: summerCourses.reduce((sum, c) => sum + (c.ects || 0), 0),
+      };
+      
+      return {
+        semester_plan: plan,
+        message: `Generated semester plan with ${winterCourses.length} winter courses (${plan.winter_ects} ECTS) and ${summerCourses.length} summer courses (${plan.summer_ects} ECTS). Total: ${plan.total_ects} ECTS.`
       };
     }
     
@@ -833,7 +965,8 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - get_labs_by_university: Get all labs at a specific university
 - get_programs_by_university: Get all programs offered by a university
 - search_universities: Find universities by name or country
-- get_document_content: **IMPORTANT** Fetch the content of a user's uploaded document (CV, resume, transcript). Use this when you need to extract the user's name, background, skills, or experiences from their uploaded documents. Call this tool when the user mentions "my CV", "my resume", or when generating personalized emails that reference their documents.
+- get_document_content: **IMPORTANT** Fetch the content of a user's uploaded document (CV, resume, transcript). Use this when you need to extract the user's name, background, skills, or experiences from their uploaded documents. Call this tool when the user mentions "my CV", "my resume", or when generating personalized emails that reference their documents. Uses OCR for scanned PDFs.
+- generate_semester_plan: **USE THIS** when users ask to plan their semester or organize courses. This generates a structured semester plan that appears in the Semester Planner panel. Specify winter_courses and/or summer_courses arrays.
 
 **University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
@@ -846,6 +979,7 @@ ${userSpecificContext || "No user-specific data available"}
 - When showing lab information, include ALL details: name, description, topics, professors, faculty, website link
 - Reference the user's saved courses, labs, email drafts, and documents when they ask about "my" content
 - **IMPORTANT**: When generating emails and the user has documents listed (like CV, resume), use the get_document_content tool to fetch their content and extract relevant personal information (name, background, skills)
+- **SEMESTER PLANNING**: When users ask to plan their semester, use the generate_semester_plan tool. Specify courses for winter and/or summer semesters.
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
 - If a query returns no results, try a broader search or suggest alternative search terms
@@ -857,6 +991,7 @@ When generating emails for the user, format them clearly with Subject, To, and B
 When you return courses or labs from database queries, you MUST append the raw data at the END of your response using these exact HTML comment formats (the user won't see these, but the app will parse them to show interactive cards):
 - For courses: <!--COURSES:[{"id_course":"...","name_course":"...","code":"...","ects":...,"ba_ma":"...","professor_name":"...","language":"...","topics":"...","description":"...","software_equipment":"...","type_exam":"..."}]-->
 - For labs: <!--LABS:[{"id_lab":"...","name":"...","slug":"...","topics":"...","description":"...","professors":"...","faculty_match":"...","link":"..."}]-->
+- For semester plans: <!--SEMESTER_PLAN:{"winter":[...],"summer":[...],"title":"..."}-->
 Include ALL fields that are available. Place these at the very end of your response after all text content.`;
 
     console.log("Making initial AI call with tools...");

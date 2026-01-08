@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.seed-program-data-from-json]
 verify_jwt = false
+
+[functions.firecrawl-parse-document]
+verify_jwt = false

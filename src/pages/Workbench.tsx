@@ -19,6 +19,7 @@ import {
   type AIMessageReferencedItem
 } from "@/hooks/useAIConversations";
 import { useConversationSearch } from "@/hooks/useConversationSearch";
+import { useWorkbenchSemesterPlan } from "@/hooks/useWorkbenchSemesterPlan";
 import { supabase } from "@/integrations/supabase/client";
 import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/Keyboa
 import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
 import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
+import { WorkbenchSemesterPlanner } from "@/components/workbench/WorkbenchSemesterPlanner";
 import { 
   Send, 
   Loader2, 
@@ -70,7 +72,8 @@ import {
   ExternalLink,
   Edit3,
   Image,
-  ArrowDown
+  ArrowDown,
+  CalendarDays
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -234,6 +237,17 @@ const Workbench = () => {
   const inputAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
+  
+  // Semester planner hook
+  const {
+    plan: semesterPlan,
+    isPlannerOpen,
+    togglePlanner,
+    clearPlan,
+    removeCourse,
+    parseSemesterPlanFromResponse,
+    setSemesterPlan
+  } = useWorkbenchSemesterPlan();
   
   // Conversation search hook
   const {
