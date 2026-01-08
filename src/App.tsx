@@ -51,6 +51,9 @@ const AppContent = () => {
   // Enable swipe navigation on mobile
   useSwipeNavigation();
 
+  // Hide footer on workbench page
+  const hideFooter = location.pathname === '/workbench';
+
   return (
     <GrainyBackground palette={palette} modeConfig={modeConfig}>
       <div className="flex flex-col min-h-screen" style={{ color: modeConfig.textColor }}>
@@ -86,7 +89,7 @@ const AppContent = () => {
           </Suspense>
         </main>
         <SwipeIndicator />
-        <Footer />
+        {!hideFooter && <Footer />}
       </div>
     </GrainyBackground>
   );
