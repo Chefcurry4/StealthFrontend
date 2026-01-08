@@ -34,7 +34,9 @@ const sanitizeUrl = (rawUrl: string): string => {
 
 export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) => {
   const renderMarkdown = (text: string): React.ReactNode[] => {
-    const lines = text.split("\n");
+    // Remove hidden semester plan data (AI internal use only)
+    const cleanedText = text.replace(/<!--SEMESTERPLAN:.*?-->/gs, '').trim();
+    const lines = cleanedText.split("\n");
     const elements: React.ReactNode[] = [];
     let listItems: string[] = [];
     let listType: "ul" | "ol" | null = null;
