@@ -226,6 +226,7 @@ const Workbench = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
+  const [isPlanningDeep, setIsPlanningDeep] = useState(false);
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const [referencedItems, setReferencedItems] = useState<Array<{ type: 'course' | 'lab'; data: any }>>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -1099,11 +1100,19 @@ const Workbench = () => {
           setIsSearchingDatabase(searching);
           if (searching) setIsThinking(false);
         },
-        onToolsUsed: setActiveSearchTools
+        onToolsUsed: setActiveSearchTools,
+        onDeepPlanning: (planning) => {
+          setIsPlanningDeep(planning);
+          if (planning) {
+            setIsThinking(false);
+            setIsSearchingDatabase(false);
+          }
+        }
       });
     } catch (err) {
       setIsStreaming(false);
       setIsThinking(false);
+      setIsPlanningDeep(false);
       abortControllerRef.current = null;
       if (err instanceof Error && err.name === 'AbortError') {
         // User stopped the request, don't show error
@@ -1656,7 +1665,7 @@ const Workbench = () => {
               )}
 
               {/* Database Searching Indicator */}
-              {isSearchingDatabase && (
+              {isSearchingDatabase && !isPlanningDeep && (
                 <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                   <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
                     <AvatarFallback className="bg-primary/10 text-primary">
@@ -1671,6 +1680,43 @@ const Workbench = () => {
                         : 'Searching database...'}
                     </span>
                     <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                  </div>
+                </div>
+              )}
+              
+              {/* Deep Planning Indicator (like ChatGPT deep think) */}
+              {isPlanningDeep && (
+                <div className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-amber-400/30 shadow-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-amber-400/20 to-orange-500/20 text-amber-600 dark:text-amber-400">
+                      <Brain className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-2 rounded-2xl px-4 py-3 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200/50 dark:border-amber-700/30 shadow-sm min-w-[280px]">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                      </div>
+                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Creating Semester Plan</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span>Analyzing your requirements...</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" style={{ animationDelay: '0.3s' }} />
+                        <span>Searching matching courses...</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" style={{ animationDelay: '0.6s' }} />
+                        <span>Optimizing ECTS balance...</span>
+                      </div>
+                    </div>
+                    <div className="h-1 bg-amber-200/30 dark:bg-amber-800/30 rounded-full overflow-hidden mt-1">
+                      <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse" style={{ width: '60%' }} />
+                    </div>
                   </div>
                 </div>
               )}

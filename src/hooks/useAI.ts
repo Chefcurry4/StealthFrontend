@@ -43,6 +43,7 @@ export const streamAIStudyAdvisor = async ({
   onDone,
   onSearchingDatabase,
   onToolsUsed,
+  onDeepPlanning,
   signal,
 }: {
   messages: { role: string; content: string }[];
@@ -52,6 +53,7 @@ export const streamAIStudyAdvisor = async ({
   onDone: () => void;
   onSearchingDatabase?: (searching: boolean) => void;
   onToolsUsed?: (tools: string[]) => void;
+  onDeepPlanning?: (planning: boolean) => void;
   signal?: AbortSignal;
 }) => {
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-study-advisor`;
@@ -118,13 +120,18 @@ export const streamAIStudyAdvisor = async ({
           // Check for tools_used event (sent before streaming content)
           if (parsed.tools_used) {
             onToolsUsed?.(parsed.tools_used);
+            // Check if generate_semester_plan is being used
+            if (parsed.tools_used.includes('generate_semester_plan')) {
+              onDeepPlanning?.(true);
+            }
             continue;
           }
           
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) {
-            // First content received means search is done, now streaming
+            // First content received means search/planning is done, now streaming
             onSearchingDatabase?.(false);
+            onDeepPlanning?.(false);
             onDelta(content);
           }
         } catch {
