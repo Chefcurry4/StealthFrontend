@@ -153,11 +153,11 @@ export const AIResultCard = ({ type, data, className }: AIResultCardProps) => {
                   variant="outline" 
                   className={cn(
                     "text-[10px] px-1.5 py-0",
-                    courseData.ba_ma === "Ba" ? "border-orange-500/50 text-orange-600" : "border-purple-500/50 text-purple-600"
+                    courseData.ba_ma === "Bachelor" ? "border-orange-500/50 text-orange-600" : "border-purple-500/50 text-purple-600"
                   )}
                 >
                   <GraduationCap className="h-2.5 w-2.5 mr-0.5" />
-                  {courseData.ba_ma === "Ba" ? "Bachelor" : "Master"}
+                  {courseData.ba_ma === "Bachelor" ? "Bachelor" : "Master"}
                 </Badge>
               )}
               {courseData.language && (
@@ -243,7 +243,7 @@ export const parseAIResults = (content: string): { courses: CourseResult[], labs
 };
 
 type SortOption = "name" | "ects-asc" | "ects-desc";
-type FilterLevel = "all" | "Ba" | "Ma";
+type FilterLevel = "all" | "Bachelor" | "Master";
 
 // Component to render all result cards from an AI message
 interface AIResultCardsProps {
@@ -377,8 +377,8 @@ export const AIResultCards = ({ content, className }: AIResultCardsProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All levels</SelectItem>
-                  <SelectItem value="Ba">Bachelor</SelectItem>
-                  <SelectItem value="Ma">Master</SelectItem>
+                  <SelectItem value="Bachelor">Bachelor</SelectItem>
+                  <SelectItem value="Master">Master</SelectItem>
                 </SelectContent>
               </Select>
 
