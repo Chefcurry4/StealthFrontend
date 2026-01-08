@@ -146,24 +146,67 @@ const databaseTools = [
     type: "function",
     function: {
       name: "generate_semester_plan",
-      description: "Generate a semester plan with courses organized by winter and summer semesters. Use this when the user asks to plan their semester, organize courses, or create a study plan. Returns structured data that will be displayed in the semester planner panel.",
+      description: "Generate a custom semester plan with courses. ONLY use this AFTER you have asked the user clarifying questions and gathered their requirements. This tool searches the database for courses matching the criteria and creates a structured plan. The plan appears in the Semester Planner panel.",
       parameters: {
         type: "object",
         properties: {
-          winter_courses: { 
+          semester_type: { 
+            type: "string", 
+            enum: ["winter", "summer", "both"],
+            description: "Which semester(s) to plan: 'winter' (Fall/Autumn), 'summer' (Spring), or 'both'" 
+          },
+          target_ects: { 
+            type: "number", 
+            description: "Target ECTS credits for the semester (e.g., 30). The tool will try to get close to this number." 
+          },
+          ects_flexibility: {
+            type: "string",
+            enum: ["exact", "approximate", "flexible"],
+            description: "How strict the ECTS target is: 'exact' (within 1-2 ECTS), 'approximate' (within 5 ECTS), 'flexible' (as close as reasonable)"
+          },
+          topics: { 
             type: "array", 
             items: { type: "string" },
-            description: "Array of course names or codes to include in winter semester" 
+            description: "Topics/subjects the user is interested in (e.g., ['robotics', 'AI', 'machine learning'])" 
           },
-          summer_courses: { 
+          level: { 
+            type: "string", 
+            enum: ["Ba", "Ma", "any"],
+            description: "Academic level: 'Ba' for Bachelor, 'Ma' for Master, 'any' for both" 
+          },
+          program: { 
+            type: "string", 
+            description: "Specific program to filter courses from (e.g., 'Computer Science', 'Robotics')" 
+          },
+          university_slug: { 
+            type: "string", 
+            description: "University slug to filter courses (e.g., 'epfl')" 
+          },
+          preferred_exam_types: { 
             type: "array", 
             items: { type: "string" },
-            description: "Array of course names or codes to include in summer semester" 
+            description: "Preferred exam types (e.g., ['project', 'oral'] to avoid written exams)" 
           },
-          target_ects: { type: "number", description: "Target total ECTS credits (optional)" },
-          level: { type: "string", description: "Ba for Bachelor, Ma for Master (optional)" },
-          preferences: { type: "string", description: "Additional preferences like exam types, topics (optional)" }
-        }
+          exclude_courses: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "Course names or codes to exclude (e.g., courses already taken)" 
+          },
+          specific_courses: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "Specific course names/codes to include in the plan (must-have courses)" 
+          },
+          max_courses: { 
+            type: "number", 
+            description: "Maximum number of courses to include (default: 6 per semester)" 
+          },
+          plan_title: { 
+            type: "string", 
+            description: "Custom title for the plan (e.g., 'Robotics & AI Focus')" 
+          }
+        },
+        required: ["semester_type", "target_ects"]
       }
     }
   }
@@ -695,75 +738,240 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
     case "generate_semester_plan": {
       console.log("Generating semester plan with args:", args);
       
-      const winterCourses: any[] = [];
-      const summerCourses: any[] = [];
+      const {
+        semester_type = "winter",
+        target_ects = 30,
+        ects_flexibility = "approximate",
+        topics = [],
+        level,
+        program,
+        university_slug,
+        preferred_exam_types = [],
+        exclude_courses = [],
+        specific_courses = [],
+        max_courses = 6,
+        plan_title
+      } = args;
       
-      // Search for winter courses
-      if (args.winter_courses && args.winter_courses.length > 0) {
-        for (const courseQuery of args.winter_courses) {
-          const { data: courses } = await supabase
-            .from("Courses(C)")
-            .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term")
-            .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
-            .limit(1);
-          
-          if (courses && courses.length > 0) {
-            winterCourses.push(courses[0]);
-          }
-        }
-      }
+      // Determine ECTS tolerance based on flexibility
+      let ectsTolerance = 5;
+      if (ects_flexibility === "exact") ectsTolerance = 2;
+      else if (ects_flexibility === "flexible") ectsTolerance = 10;
       
-      // Search for summer courses
-      if (args.summer_courses && args.summer_courses.length > 0) {
-        for (const courseQuery of args.summer_courses) {
-          const { data: courses } = await supabase
-            .from("Courses(C)")
-            .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term")
-            .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
-            .limit(1);
-          
-          if (courses && courses.length > 0) {
-            summerCourses.push(courses[0]);
-          }
-        }
-      }
-      
-      // If no specific semesters given but preferences exist, search and auto-assign
-      if (args.preferences && winterCourses.length === 0 && summerCourses.length === 0) {
-        const { data: allCourses } = await supabase
-          .from("Courses(C)")
-          .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term")
-          .or(`topics.ilike.%${args.preferences}%,description.ilike.%${args.preferences}%,name_course.ilike.%${args.preferences}%`)
-          .limit(10);
+      // Helper function to search courses for a specific semester
+      async function searchCoursesForSemester(semesterTerms: string[]): Promise<any[]> {
+        // First, add any specific courses the user requested
+        const selectedCourses: any[] = [];
+        let currentEcts = 0;
         
-        if (allCourses) {
-          allCourses.forEach((course: any, i: number) => {
-            const term = course.term?.toLowerCase() || "";
-            if (term.includes("spring") || term.includes("summer")) {
-              summerCourses.push(course);
-            } else if (term.includes("fall") || term.includes("winter") || term.includes("autumn")) {
-              winterCourses.push(course);
-            } else {
-              // Distribute evenly if no term info
-              if (i % 2 === 0) winterCourses.push(course);
-              else summerCourses.push(course);
+        // Add specific/must-have courses first
+        if (specific_courses.length > 0) {
+          for (const courseQuery of specific_courses) {
+            const { data: courses } = await supabase
+              .from("Courses(C)")
+              .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description")
+              .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
+              .limit(1);
+            
+            if (courses && courses.length > 0) {
+              const course = courses[0];
+              if (!exclude_courses.some((ec: string) => 
+                course.name_course?.toLowerCase().includes(ec.toLowerCase()) ||
+                course.code?.toLowerCase().includes(ec.toLowerCase())
+              )) {
+                selectedCourses.push(course);
+                currentEcts += course.ects || 0;
+              }
             }
-          });
+          }
         }
+        
+        // Build query for topic-based courses
+        let query = supabase
+          .from("Courses(C)")
+          .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description");
+        
+        // Filter by topics if provided
+        if (topics.length > 0) {
+          const topicConditions = topics.map((t: string) => 
+            `topics.ilike.%${t}%,description.ilike.%${t}%,name_course.ilike.%${t}%`
+          ).join(",");
+          query = query.or(topicConditions);
+        }
+        
+        // Filter by level
+        if (level && level !== "any") {
+          query = query.ilike("ba_ma", `%${level}%`);
+        }
+        
+        // Filter by program
+        if (program) {
+          query = query.ilike("programs", `%${program}%`);
+        }
+        
+        // Filter by term (winter = fall/winter/autumn, summer = spring/summer)
+        if (semesterTerms.length > 0) {
+          const termConditions = semesterTerms.map((t: string) => `term.ilike.%${t}%`).join(",");
+          query = query.or(termConditions);
+        }
+        
+        // Get more courses than needed to allow for selection
+        const { data: candidateCourses } = await query.limit(50);
+        
+        if (!candidateCourses) return selectedCourses;
+        
+        // Handle university filter
+        let filteredCourses = candidateCourses;
+        if (university_slug) {
+          const { data: uniData } = await supabase
+            .from("Universities(U)")
+            .select("uuid")
+            .eq("slug", university_slug)
+            .single();
+          
+          if (uniData) {
+            const { data: courseIds } = await supabase
+              .from("bridge_course_uni(U-C)")
+              .select("id_course")
+              .eq("id_uni", uniData.uuid);
+            
+            if (courseIds?.length) {
+              const courseIdSet = new Set(courseIds.map((c: any) => c.id_course));
+              filteredCourses = candidateCourses.filter((c: any) => courseIdSet.has(c.id_course));
+            }
+          }
+        }
+        
+        // Filter out excluded courses and already selected courses
+        const selectedIds = new Set(selectedCourses.map(c => c.id_course));
+        filteredCourses = filteredCourses.filter((c: any) => {
+          if (selectedIds.has(c.id_course)) return false;
+          if (exclude_courses.some((ec: string) => 
+            c.name_course?.toLowerCase().includes(ec.toLowerCase()) ||
+            c.code?.toLowerCase().includes(ec.toLowerCase())
+          )) return false;
+          return true;
+        });
+        
+        // Score courses based on preferences
+        const scoredCourses = filteredCourses.map((course: any) => {
+          let score = 0;
+          
+          // Topic relevance (higher score for more topic matches)
+          const courseTopics = (course.topics || "" + " " + course.description || "").toLowerCase();
+          topics.forEach((t: string) => {
+            if (courseTopics.includes(t.toLowerCase())) score += 10;
+          });
+          
+          // Preferred exam type bonus
+          if (preferred_exam_types.length > 0 && course.type_exam) {
+            if (preferred_exam_types.some((e: string) => course.type_exam.toLowerCase().includes(e.toLowerCase()))) {
+              score += 5;
+            }
+          }
+          
+          // Penalize courses with no ECTS info
+          if (!course.ects) score -= 5;
+          
+          return { ...course, _score: score };
+        });
+        
+        // Sort by score descending
+        scoredCourses.sort((a: any, b: any) => b._score - a._score);
+        
+        // Select courses to meet target ECTS
+        for (const course of scoredCourses) {
+          if (selectedCourses.length >= max_courses) break;
+          if (currentEcts >= target_ects + ectsTolerance) break;
+          
+          // Don't add if it would exceed target by too much
+          const courseEcts = course.ects || 0;
+          if (currentEcts + courseEcts > target_ects + ectsTolerance && currentEcts > 0) {
+            // Check if we're close enough
+            if (Math.abs(currentEcts - target_ects) <= ectsTolerance) break;
+            continue;
+          }
+          
+          selectedCourses.push(course);
+          currentEcts += courseEcts;
+        }
+        
+        return selectedCourses;
       }
+      
+      // Generate plans based on semester type
+      let winterCourses: any[] = [];
+      let summerCourses: any[] = [];
+      
+      if (semester_type === "winter" || semester_type === "both") {
+        winterCourses = await searchCoursesForSemester(["fall", "winter", "autumn"]);
+      }
+      
+      if (semester_type === "summer" || semester_type === "both") {
+        summerCourses = await searchCoursesForSemester(["spring", "summer"]);
+      }
+      
+      // Calculate totals
+      const winterEcts = winterCourses.reduce((sum, c) => sum + (c.ects || 0), 0);
+      const summerEcts = summerCourses.reduce((sum, c) => sum + (c.ects || 0), 0);
+      const totalEcts = winterEcts + summerEcts;
+      
+      // Generate title
+      const generatedTitle = plan_title || 
+        (topics.length > 0 ? `${topics.slice(0, 2).join(" & ")} Focus` : "Custom Plan") +
+        ` (${target_ects} ECTS target)`;
       
       const plan = {
-        winter: winterCourses,
-        summer: summerCourses,
-        title: args.preferences ? `Plan: ${args.preferences}` : "Semester Plan",
-        total_ects: [...winterCourses, ...summerCourses].reduce((sum, c) => sum + (c.ects || 0), 0),
-        winter_ects: winterCourses.reduce((sum, c) => sum + (c.ects || 0), 0),
-        summer_ects: summerCourses.reduce((sum, c) => sum + (c.ects || 0), 0),
+        winter: winterCourses.map(c => ({
+          id_course: c.id_course,
+          name_course: c.name_course,
+          code: c.code,
+          ects: c.ects,
+          type_exam: c.type_exam,
+          ba_ma: c.ba_ma,
+          professor_name: c.professor_name,
+          topics: c.topics
+        })),
+        summer: summerCourses.map(c => ({
+          id_course: c.id_course,
+          name_course: c.name_course,
+          code: c.code,
+          ects: c.ects,
+          type_exam: c.type_exam,
+          ba_ma: c.ba_ma,
+          professor_name: c.professor_name,
+          topics: c.topics
+        })),
+        title: generatedTitle,
+        total_ects: totalEcts,
+        winter_ects: winterEcts,
+        summer_ects: summerEcts,
+        target_ects: target_ects,
+        ects_flexibility: ects_flexibility
       };
+      
+      // Build feedback message
+      let feedback = `Generated semester plan "${generatedTitle}":\n`;
+      if (semester_type === "winter" || semester_type === "both") {
+        feedback += `- Winter: ${winterCourses.length} courses, ${winterEcts} ECTS\n`;
+      }
+      if (semester_type === "summer" || semester_type === "both") {
+        feedback += `- Summer: ${summerCourses.length} courses, ${summerEcts} ECTS\n`;
+      }
+      feedback += `\nTotal: ${totalEcts} ECTS (target was ${target_ects} ECTS, ${ects_flexibility} flexibility)`;
+      
+      if (Math.abs(totalEcts - target_ects) > ectsTolerance) {
+        feedback += `\n\n⚠️ Note: Could not reach exact target. `;
+        if (totalEcts < target_ects) {
+          feedback += `The available courses matching your criteria total ${totalEcts} ECTS. You may want to broaden your topic preferences or adjust constraints.`;
+        } else {
+          feedback += `The minimum courses exceeded the target slightly.`;
+        }
+      }
       
       return {
         semester_plan: plan,
-        message: `Generated semester plan with ${winterCourses.length} winter courses (${plan.winter_ects} ECTS) and ${summerCourses.length} summer courses (${plan.summer_ects} ECTS). Total: ${plan.total_ects} ECTS.`
+        message: feedback
       };
     }
     
@@ -985,7 +1193,7 @@ You have tools to query the complete database with 1,420+ courses, 424+ labs, 96
 - get_programs_by_university: Get all programs offered by a university
 - search_universities: Find universities by name or country
 - get_document_content: **IMPORTANT** Fetch the content of a user's uploaded document (CV, resume, transcript). Use this when you need to extract the user's name, background, skills, or experiences from their uploaded documents. Call this tool when the user mentions "my CV", "my resume", or when generating personalized emails that reference their documents. Uses OCR for scanned PDFs.
-- generate_semester_plan: **USE THIS** when users ask to plan their semester or organize courses. This generates a structured semester plan that appears in the Semester Planner panel. Specify winter_courses and/or summer_courses arrays.
+- generate_semester_plan: **SMART SEMESTER PLANNER** - Creates a custom study plan respecting ECTS targets, topics, level, and other constraints. The plan appears in the Semester Planner panel.
 
 **University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
@@ -999,7 +1207,44 @@ ${userSpecificContext || "No user-specific data available"}
 - Reference the user's saved courses, labs, email drafts, and documents when they ask about "my" content
 - **SEMESTER PLANS**: The user may have saved semester plans. When they ask about "my winter semester", "my semester plan called X", or similar, refer to the User-Specific Context section. You can provide feedback on their plans like workload balance, exam distribution, or course suggestions.
 - **IMPORTANT**: When generating emails and the user has documents listed (like CV, resume), use the get_document_content tool to fetch their content and extract relevant personal information (name, background, skills)
-- **SEMESTER PLANNING**: When users ask to plan their semester, use the generate_semester_plan tool. Specify courses for winter and/or summer semesters.
+
+**🎯 SEMESTER PLANNING - CRITICAL WORKFLOW:**
+When a user asks to plan their semester (e.g., "Plan my winter semester with 30 ECTS in robotics and AI"), you MUST:
+
+1. **FIRST, ASK CLARIFYING QUESTIONS** before calling generate_semester_plan. Ask things like:
+   - "Should I aim for exactly 30 ECTS or is around 30 ECTS okay? (e.g., 28-32)"
+   - "Can I choose courses from any program, or do you have specific requirements?"
+   - "Are you at Bachelor or Master level?"
+   - "Do you have any exam type preferences? (e.g., prefer projects over written exams)"
+   - "Any courses you've already taken that I should exclude?"
+   - "Which university are you at?" (if not obvious from context)
+
+2. **AFTER getting the user's answers**, call generate_semester_plan with the appropriate parameters:
+   - semester_type: "winter", "summer", or "both"
+   - target_ects: The ECTS target number
+   - ects_flexibility: "exact" (±2), "approximate" (±5), or "flexible" (±10)
+   - topics: Array of topics like ["robotics", "AI", "machine learning"]
+   - level: "Ba" for Bachelor, "Ma" for Master, "any" for both
+   - program: Specific program if mentioned
+   - university_slug: University slug if mentioned
+   - preferred_exam_types: Array like ["project", "oral"] if user prefers
+   - exclude_courses: Courses to skip
+   - specific_courses: Must-include courses
+   - plan_title: Descriptive title
+
+3. **PRESENT THE RESULT** with a summary of the plan, noting if ECTS targets were met.
+
+Example conversation flow:
+User: "Plan my winter semester with 30 ECTS in robotics and AI"
+You: "I'd be happy to help you plan a robotics and AI focused winter semester! A few quick questions:
+1. Should I aim for exactly 30 ECTS or is around 30 okay (e.g., 28-32)?
+2. Are you at Bachelor or Master level?
+3. Any specific university, or can I search across all?
+4. Any exam type preferences (written, oral, project)?"
+
+User: "Around 30 is fine, Master level, I'm at EPFL, and I prefer projects over written exams"
+You: [Now call generate_semester_plan with semester_type="winter", target_ects=30, ects_flexibility="approximate", topics=["robotics","AI","machine learning"], level="Ma", university_slug="epfl", preferred_exam_types=["project"]]
+
 - Be encouraging and supportive
 - Format responses clearly with bullet points when listing multiple items
 - If a query returns no results, try a broader search or suggest alternative search terms
