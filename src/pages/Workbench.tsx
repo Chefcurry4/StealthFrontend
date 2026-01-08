@@ -336,7 +336,31 @@ const Workbench = () => {
   // Track if user explicitly started a new chat - default to true so we always start fresh
   const [isNewChatMode, setIsNewChatMode] = useState(true);
 
-  // When opening workbench, always start with a new chat (no auto-load of previous conversations)
+  // Persist and restore conversation state when navigating away and back
+  useEffect(() => {
+    // Restore conversation ID from sessionStorage when mounting
+    const savedConversationId = sessionStorage.getItem('workbench-current-conversation');
+    const savedMode = sessionStorage.getItem('workbench-is-new-chat');
+    
+    if (savedConversationId && savedConversationId !== 'undefined') {
+      setCurrentConversationId(savedConversationId);
+      setIsNewChatMode(false);
+    } else if (savedMode === 'false') {
+      // Had a conversation but ID wasn't saved - stay in new chat mode
+      setIsNewChatMode(true);
+    }
+  }, []);
+
+  // Save conversation state when it changes
+  useEffect(() => {
+    if (currentConversationId) {
+      sessionStorage.setItem('workbench-current-conversation', currentConversationId);
+      sessionStorage.setItem('workbench-is-new-chat', 'false');
+    } else if (!isNewChatMode) {
+      sessionStorage.removeItem('workbench-current-conversation');
+      sessionStorage.setItem('workbench-is-new-chat', 'true');
+    }
+  }, [currentConversationId, isNewChatMode]);
 
   // Load messages when switching conversations (including attachments & references)
   useEffect(() => {

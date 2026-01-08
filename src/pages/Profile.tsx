@@ -47,7 +47,8 @@ import {
   LogOut,
   Heart,
   Star,
-  Crown
+  Crown,
+  Palette
 } from "lucide-react";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -402,6 +403,36 @@ const Profile = () => {
                     {10 - (reviewStats?.total || 0)} more reviews to reach EPIC status!
                   </p>
                 )}
+              </div>
+
+              <Separator />
+
+              {/* Quick Actions */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Customize Appearance
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveSection("preferences")}
+                    className="gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Change Background Theme
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveSection("preferences")}
+                    className="gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    Change Flashcard Style
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
