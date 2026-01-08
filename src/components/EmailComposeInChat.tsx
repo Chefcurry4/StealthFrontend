@@ -425,7 +425,7 @@ export function EmailComposeInChat({ onSubmit, onCancel }: EmailComposeInChatPro
             <Button
               onClick={handleSubmit}
               disabled={!purpose.trim()}
-              className="flex-1 gap-2"
+              className="flex-1 gap-2 shadow-lg border border-border/50 bg-primary/95 backdrop-blur-md hover:bg-primary/80"
             >
               <Send className="h-4 w-4" />
               Generate Email

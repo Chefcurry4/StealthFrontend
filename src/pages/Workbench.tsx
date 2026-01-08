@@ -1158,7 +1158,7 @@ const Workbench = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <WorkbenchSidebar
         isOpen={sidebarOpen}
@@ -1197,7 +1197,7 @@ const Workbench = () => {
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
-              className="gap-2 border-border bg-transparent hover:bg-accent/30 transition-all text-foreground/70 dark:text-foreground"
+              className="gap-2 border-border/50 bg-card/80 backdrop-blur-md shadow-lg hover:bg-accent/50 transition-all text-foreground/70 dark:text-foreground"
             >
               <span className="text-primary">{selectedModelData.icon}</span>
               <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
@@ -1360,7 +1360,7 @@ const Workbench = () => {
             >
               <Button
                 size="sm"
-                className="gap-1.5 shadow-lg"
+                className="gap-1.5 shadow-lg border border-border/50 bg-card/95 backdrop-blur-md hover:bg-accent"
                 onClick={handleRefineText}
               >
                 <Sparkles className="h-3.5 w-3.5" />
@@ -1492,7 +1492,7 @@ const Workbench = () => {
                         )}
                         {message.role === "assistant" ? (
                           <>
-                            <MarkdownRenderer content={message.content.replace(/<!--(COURSES|LABS):.*?-->/gs, '')} />
+                            <MarkdownRenderer content={message.content.replace(/<!--(COURSES|LABS|SEMESTERPLAN):.*?-->/gs, '')} />
                             <AIResultCards content={message.content} />
                           </>
                         ) : (
@@ -1638,7 +1638,7 @@ const Workbench = () => {
             <Button
               variant="secondary"
               size="sm"
-              className="gap-2 shadow-lg border border-border/50 bg-card/95 backdrop-blur-sm hover:bg-accent"
+              className="gap-2 shadow-lg border border-border/50 bg-card/95 backdrop-blur-md hover:bg-accent"
               onClick={() => scrollToBottom("smooth")}
             >
               <ArrowDown className="h-4 w-4" />

@@ -17,7 +17,9 @@ import {
   Check,
   Image,
   FileJson,
-  BookOpen
+  BookMarked,
+  BookOpen,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,12 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -118,6 +126,26 @@ const countLevels = (courses: SemesterPlanCourse[]) => {
   });
 
   return { bachelor, master };
+};
+
+// Helper function to extract and count topics from courses
+const getTopicSummary = (courses: SemesterPlanCourse[]) => {
+  const topicCounts: Record<string, number> = {};
+  
+  courses.forEach((course) => {
+    const topics = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
+    topics.forEach((topic) => {
+      // Normalize topic name (capitalize first letter)
+      const normalizedTopic = topic.charAt(0).toUpperCase() + topic.slice(1).toLowerCase();
+      topicCounts[normalizedTopic] = (topicCounts[normalizedTopic] || 0) + 1;
+    });
+  });
+  
+  // Sort by count descending, take top 4
+  return Object.entries(topicCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([topic, count]) => ({ topic, count }));
 };
 
 export const WorkbenchSemesterPlanner = ({ 
@@ -307,6 +335,7 @@ export const WorkbenchSemesterPlanner = ({
   const renderPlanCard = (plan: SemesterPlan) => {
     const examCounts = countExamTypes(plan.courses);
     const levelCounts = countLevels(plan.courses);
+    const topicSummary = getTopicSummary(plan.courses);
     const elementId = `plan-${plan.id}`;
     
     return (
@@ -382,15 +411,30 @@ export const WorkbenchSemesterPlanner = ({
         </div>
         
         {/* Stats */}
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
           <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
             {plan.total_ects} ECTS
           </Badge>
           <span>{plan.courses.length} courses</span>
-          <span className="text-blue-500">{examCounts.written}W</span>
-          <span className="text-green-500">{examCounts.oral}O</span>
-          <span className="text-orange-500">{examCounts.projectMidterm}P</span>
+          {examCounts.written > 0 && <span className="text-blue-500">{examCounts.written} Written</span>}
+          {examCounts.oral > 0 && <span className="text-green-500">{examCounts.oral} Oral</span>}
+          {examCounts.projectMidterm > 0 && <span className="text-orange-500">{examCounts.projectMidterm} Project</span>}
         </div>
+        
+        {/* Topic Summary */}
+        {topicSummary.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {topicSummary.map(({ topic, count }) => (
+              <Badge 
+                key={topic} 
+                variant="outline" 
+                className="text-[8px] px-1.5 py-0 bg-primary/5 border-primary/20"
+              >
+                {topic}{count > 1 ? ` ×${count}` : ''}
+              </Badge>
+            ))}
+          </div>
+        )}
         
         {/* Courses */}
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -401,17 +445,25 @@ export const WorkbenchSemesterPlanner = ({
   };
 
   return (
+    <TooltipProvider>
     <div className="w-80 border-l border-border bg-background/95 backdrop-blur-sm flex flex-col h-full">
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-4 w-4 text-primary" />
+          <BookMarked className="h-4 w-4 text-primary" />
           <h3 className="font-semibold text-sm">Semester Planner</h3>
         </div>
         <div className="flex items-center gap-1">
-          <Badge variant="outline" className="text-[9px]">
-            {savedPlans.length}/10
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className="text-[9px] cursor-help">
+                {savedPlans.length}/10
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <p className="text-xs">You can save up to 10 semester plans. Delete old plans to make room for new ones.</p>
+            </TooltipContent>
+          </Tooltip>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggle}>
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -509,66 +561,112 @@ export const WorkbenchSemesterPlanner = ({
                   )}
                   
                   {/* Winter Semester */}
-                  {tempPlan.winter.length > 0 && (
-                    <div 
-                      id="temp-winter-plan"
-                      className="rounded-lg border-2 border-dashed p-2 bg-sky-50/50 border-sky-200 dark:bg-sky-950/20"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <Snowflake className="h-3 w-3 text-sky-600" />
-                          <span className="text-xs font-medium">Winter ({tempPlan.winter.length})</span>
+                  {tempPlan.winter.length > 0 && (() => {
+                    const winterExams = countExamTypes(tempPlan.winter);
+                    const winterTopics = getTopicSummary(tempPlan.winter);
+                    return (
+                      <div 
+                        id="temp-winter-plan"
+                        className="rounded-lg border-2 border-dashed p-2 bg-sky-50/50 border-sky-200 dark:bg-sky-950/20"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1.5">
+                            <Snowflake className="h-3 w-3 text-sky-600" />
+                            <span className="text-xs font-medium">Winter ({tempPlan.winter.length})</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                              {tempPlan.winter.reduce((s, c) => s + (c.ects || 0), 0)} ECTS
+                            </Badge>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-5 w-5"
+                              onClick={() => handleExportTempCSV(tempPlan.winter, "winter")}
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
-                            {tempPlan.winter.reduce((s, c) => s + (c.ects || 0), 0)} ECTS
-                          </Badge>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-5 w-5"
-                            onClick={() => handleExportTempCSV(tempPlan.winter, "winter")}
-                          >
-                            <Download className="h-3 w-3" />
-                          </Button>
+                        {/* Exam & Topic Summary */}
+                        <div className="flex flex-wrap items-center gap-1 text-[9px] text-muted-foreground mb-2">
+                          {winterExams.written > 0 && <span className="text-blue-500">{winterExams.written} Written</span>}
+                          {winterExams.oral > 0 && <span className="text-green-500">{winterExams.oral} Oral</span>}
+                          {winterExams.projectMidterm > 0 && <span className="text-orange-500">{winterExams.projectMidterm} Project</span>}
+                        </div>
+                        {winterTopics.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {winterTopics.map(({ topic, count }) => (
+                              <Badge 
+                                key={topic} 
+                                variant="outline" 
+                                className="text-[8px] px-1.5 py-0 bg-primary/5 border-primary/20"
+                              >
+                                {topic}{count > 1 ? ` ×${count}` : ''}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        <div className="space-y-1.5">
+                          {tempPlan.winter.map((c) => renderCourseCard(c))}
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        {tempPlan.winter.map((c) => renderCourseCard(c))}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   
                   {/* Summer Semester */}
-                  {tempPlan.summer.length > 0 && (
-                    <div 
-                      id="temp-summer-plan"
-                      className="rounded-lg border-2 border-dashed p-2 bg-amber-50/50 border-amber-200 dark:bg-amber-950/20"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <Sun className="h-3 w-3 text-amber-600" />
-                          <span className="text-xs font-medium">Summer ({tempPlan.summer.length})</span>
+                  {tempPlan.summer.length > 0 && (() => {
+                    const summerExams = countExamTypes(tempPlan.summer);
+                    const summerTopics = getTopicSummary(tempPlan.summer);
+                    return (
+                      <div 
+                        id="temp-summer-plan"
+                        className="rounded-lg border-2 border-dashed p-2 bg-amber-50/50 border-amber-200 dark:bg-amber-950/20"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1.5">
+                            <Sun className="h-3 w-3 text-amber-600" />
+                            <span className="text-xs font-medium">Summer ({tempPlan.summer.length})</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                              {tempPlan.summer.reduce((s, c) => s + (c.ects || 0), 0)} ECTS
+                            </Badge>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-5 w-5"
+                              onClick={() => handleExportTempCSV(tempPlan.summer, "summer")}
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
-                            {tempPlan.summer.reduce((s, c) => s + (c.ects || 0), 0)} ECTS
-                          </Badge>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-5 w-5"
-                            onClick={() => handleExportTempCSV(tempPlan.summer, "summer")}
-                          >
-                            <Download className="h-3 w-3" />
-                          </Button>
+                        {/* Exam & Topic Summary */}
+                        <div className="flex flex-wrap items-center gap-1 text-[9px] text-muted-foreground mb-2">
+                          {summerExams.written > 0 && <span className="text-blue-500">{summerExams.written} Written</span>}
+                          {summerExams.oral > 0 && <span className="text-green-500">{summerExams.oral} Oral</span>}
+                          {summerExams.projectMidterm > 0 && <span className="text-orange-500">{summerExams.projectMidterm} Project</span>}
+                        </div>
+                        {summerTopics.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {summerTopics.map(({ topic, count }) => (
+                              <Badge 
+                                key={topic} 
+                                variant="outline" 
+                                className="text-[8px] px-1.5 py-0 bg-primary/5 border-primary/20"
+                              >
+                                {topic}{count > 1 ? ` ×${count}` : ''}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        <div className="space-y-1.5">
+                          {tempPlan.summer.map((c) => renderCourseCard(c))}
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        {tempPlan.summer.map((c) => renderCourseCard(c))}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   
                   {/* Save Section */}
                   <div className="pt-2 border-t border-border space-y-2">
@@ -628,5 +726,6 @@ export const WorkbenchSemesterPlanner = ({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 };
