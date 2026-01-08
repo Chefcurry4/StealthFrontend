@@ -84,88 +84,88 @@ export const ConversationSearchBar = ({
   };
 
   return (
-    <div className="absolute top-16 left-4 right-4 z-20 bg-popover border rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2">
+    <div className="absolute top-[140px] left-4 right-4 z-20 bg-popover border rounded-lg shadow-lg overflow-hidden animate-in slide-in-from-top-2 max-w-sm ml-auto">
       {/* Search input */}
-      <div className="flex items-center gap-2 p-3 border-b">
-        <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="flex items-center gap-2 p-2 border-b">
+        <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <Input
           ref={inputRef}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search in conversation..."
-          className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+          placeholder="Search..."
+          className="border-0 bg-transparent p-0 h-6 text-sm focus-visible:ring-0"
         />
         {results.length > 0 && (
-          <Badge variant="secondary" className="shrink-0">
+          <Badge variant="secondary" className="shrink-0 text-xs px-1.5 py-0.5">
             {activeResultIndex + 1}/{results.length}
           </Badge>
         )}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-6 w-6"
             onClick={onPrevResult}
             disabled={results.length === 0}
           >
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-3 w-3" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-6 w-6"
             onClick={onNextResult}
             disabled={results.length === 0}
           >
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-3 w-3" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-6 w-6"
             onClick={onClose}
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
       </div>
 
       {/* Search results */}
       {searchQuery.length >= 2 && (
-        <div className="max-h-64 overflow-y-auto">
+        <div className="max-h-48 overflow-y-auto">
           {results.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-xs text-muted-foreground text-center py-3">
               No results found
             </p>
           ) : (
             <div className="divide-y">
-              {results.slice(0, 10).map((result, idx) => (
+              {results.slice(0, 5).map((result, idx) => (
                 <button
                   key={`${result.messageId}-${idx}`}
                   className={cn(
-                    "w-full text-left p-3 hover:bg-accent/50 transition-colors",
+                    "w-full text-left p-2 hover:bg-accent/50 transition-colors",
                     idx === activeResultIndex && "bg-accent"
                   )}
                   onClick={() => onResultClick(result.messageIndex)}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 mb-0.5">
                     {result.role === "assistant" ? (
-                      <MessageSquare className="h-3 w-3 text-primary" />
+                      <MessageSquare className="h-2.5 w-2.5 text-primary" />
                     ) : (
-                      <User className="h-3 w-3 text-muted-foreground" />
+                      <User className="h-2.5 w-2.5 text-muted-foreground" />
                     )}
-                    <span className="text-xs font-medium capitalize">
+                    <span className="text-[10px] font-medium capitalize">
                       {result.role}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-xs text-muted-foreground line-clamp-1">
                     {highlightMatch(result.snippet, result.matchStart, result.matchEnd)}
                   </p>
                 </button>
               ))}
-              {results.length > 10 && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  +{results.length - 10} more results
+              {results.length > 5 && (
+                <p className="text-[10px] text-muted-foreground text-center py-1.5">
+                  +{results.length - 5} more results
                 </p>
               )}
             </div>
