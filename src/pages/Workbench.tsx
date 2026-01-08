@@ -1015,6 +1015,14 @@ const Workbench = () => {
           setIsSearchingDatabase(false);
           setActiveSearchTools([]);
           abortControllerRef.current = null;
+          
+          // Check for semester plan in response
+          const parsedPlan = parseSemesterPlanFromResponse(assistantContent);
+          if (parsedPlan) {
+            setSemesterPlan(parsedPlan);
+            toast.success("Semester plan generated! View it in the panel on the right.");
+          }
+          
           // Save assistant message to database after streaming is done
           if (conversationId && assistantContent) {
             await saveMessage.mutateAsync({
@@ -1247,6 +1255,17 @@ const Workbench = () => {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+          {/* Semester Planner Toggle Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-lg hover:bg-accent/30"
+            onClick={togglePlanner}
+            title={isPlannerOpen ? "Hide Semester Planner" : "Show Semester Planner"}
+          >
+            <CalendarDays className={`h-5 w-5 ${isPlannerOpen ? 'text-primary' : 'text-foreground/50'}`} />
+          </Button>
         
         {/* Search button */}
         {messages.length > 0 && (
@@ -1833,6 +1852,15 @@ const Workbench = () => {
         </div>
       </div>
       </div>
+      
+      {/* Semester Planner Panel */}
+      <WorkbenchSemesterPlanner
+        plan={semesterPlan}
+        isOpen={isPlannerOpen}
+        onToggle={togglePlanner}
+        onClearPlan={clearPlan}
+        onRemoveCourse={removeCourse}
+      />
       
       {/* Keyboard shortcuts help */}
       <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
