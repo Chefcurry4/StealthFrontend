@@ -41,7 +41,7 @@ const Index = () => {
     queryKey: ["platform-stats-home"],
     queryFn: async () => {
       const [usersRes, courseReviewsRes, labReviewsRes, savedCoursesRes, savedLabsRes] = await Promise.all([
-        supabase.from("Users(US)").select("id", { count: "exact", head: true }),
+        supabase.from("Users(US)").select("*", { count: "exact" }),
         supabase.from("course_reviews").select("id", { count: "exact", head: true }),
         supabase.from("lab_reviews").select("id", { count: "exact", head: true }),
         supabase.from("user_saved_courses(US-C)").select("id", { count: "exact", head: true }),
@@ -49,7 +49,7 @@ const Index = () => {
       ]);
 
       return {
-        users: usersRes.count || 0,
+        users: usersRes.data?.length || usersRes.count || 0,
         reviews: (courseReviewsRes.count || 0) + (labReviewsRes.count || 0),
         savedItems: (savedCoursesRes.count || 0) + (savedLabsRes.count || 0),
       };
