@@ -16,6 +16,7 @@ interface Program {
   slug?: string;
   description?: string;
   image?: string;
+  level?: string | null;
 }
 
 interface UniversityContentTabsProps {
@@ -30,13 +31,16 @@ export const UniversityContentTabs = ({ programs, universitySlug }: UniversityCo
 
   const filteredPrograms = programs.filter((p) => {
     if (filter === "all") return true;
+    const level = p.level?.toLowerCase() || "";
     const name = p.name.toLowerCase();
     if (filter === "bachelor")
       return (
+        level === "bachelor" ||
         name.includes("bachelor") || name.includes("bsc") || name.includes("b.sc")
       );
     if (filter === "master")
       return (
+        level === "master" ||
         name.includes("master") || name.includes("msc") || name.includes("m.sc")
       );
     return true;

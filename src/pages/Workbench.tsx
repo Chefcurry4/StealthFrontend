@@ -40,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkbenchSidebar } from "@/components/WorkbenchSidebar";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { AIResultCards } from "@/components/AIResultCard";
@@ -362,9 +362,18 @@ const Workbench = () => {
     }
   }, [currentConversationId, isNewChatMode]);
 
+  // Track if this is a restored session (to prevent scroll animation)
+  const isRestoringSession = useRef(false);
+
   // Load messages when switching conversations (including attachments & references)
   useEffect(() => {
     if (loadedMessages && loadedMessages.length > 0) {
+      // Check if this is a session restore (messages loaded on mount)
+      const isInitialLoad = messages.length === 0;
+      if (isInitialLoad) {
+        isRestoringSession.current = true;
+      }
+      
       setMessages(loadedMessages.map(m => ({
         id: m.id,
         role: m.role as "user" | "assistant",
@@ -373,6 +382,17 @@ const Workbench = () => {
         referencedItems: m.referenced_items as ReferencedItem[] | undefined,
         timestamp: new Date(m.created_at)
       })));
+      
+      // Scroll to bottom instantly on restore (no animation)
+      if (isInitialLoad) {
+        requestAnimationFrame(() => {
+          scrollToBottom("auto");
+          // Clear the flag after scroll
+          setTimeout(() => {
+            isRestoringSession.current = false;
+          }, 100);
+        });
+      }
     }
   }, [loadedMessages]);
 
@@ -1437,8 +1457,9 @@ const Workbench = () => {
                       </Avatar>
                     ) : (
                       <Avatar className="h-9 w-9 shrink-0 ring-2 ring-border shadow-sm">
+                        <AvatarImage src={userProfile?.profile_photo_url || ""} />
                         <AvatarFallback className="bg-secondary text-secondary-foreground text-sm font-medium">
-                          {user.email?.charAt(0).toUpperCase() || "U"}
+                          {userProfile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                     )}
@@ -1619,7 +1640,8 @@ const Workbench = () => {
               ))}
               
               {/* Thinking Indicator (before any streaming starts) */}
-              {isThinking && !isSearchingDatabase && (
+              {/* Only show if thinking AND no empty assistant message is already displayed */}
+              {isThinking && !isSearchingDatabase && !messages.some(m => m.role === "assistant" && !m.content) && (
                 <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                   <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
                     <AvatarFallback className="bg-primary/10 text-primary">

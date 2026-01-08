@@ -24,7 +24,7 @@ export const Header = () => {
   const [authDialogFeature, setAuthDialogFeature] = useState("");
   const { user, signOut } = useAuth();
   const { mode, modeConfig, toggleMode } = useBackgroundTheme();
-  const { getNavigationTarget, hasNestedRoute } = useSectionNavigation();
+  const { getNavigationTarget, hasNestedRoute, hasWorkbenchState } = useSectionNavigation();
   const { data: profile } = useUserProfile();
   const navigate = useNavigate();
 
@@ -107,7 +107,7 @@ export const Header = () => {
             >
               <item.icon className="h-4 w-4" />
               {item.name}
-              {hasNestedRoute(item.href) && (
+              {(hasNestedRoute(item.href) || (item.href === '/workbench' && hasWorkbenchState())) && (
                 <span 
                   className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
                   title="You'll return to a subpage"
@@ -301,7 +301,7 @@ export const Header = () => {
             >
               <item.icon className="h-5 w-5" />
               <span className="flex-1">{item.name}</span>
-              {hasNestedRoute(item.href) && (
+              {(hasNestedRoute(item.href) || (item.href === '/workbench' && hasWorkbenchState())) && (
                 <span 
                   className="w-1.5 h-1.5 rounded-full bg-current opacity-60"
                   title="You'll return to a subpage"

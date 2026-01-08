@@ -64,6 +64,11 @@ interface SectionNavigationContextType {
    * This is reactive and will trigger re-renders when it changes.
    */
   sectionsWithNestedRoutes: Set<string>;
+  
+  /**
+   * Check if workbench has a preserved conversation state.
+   */
+  hasWorkbenchState: () => boolean;
 }
 
 const SectionNavigationContext = createContext<SectionNavigationContextType | null>(null);
@@ -140,6 +145,11 @@ export const SectionNavigationProvider = ({ children }: SectionNavigationProvide
   const hasNestedRoute = useCallback((sectionRoot: string): boolean => {
     return sectionsWithNestedRoutes.has(sectionRoot);
   }, [sectionsWithNestedRoutes]);
+  
+  const hasWorkbenchState = useCallback((): boolean => {
+    const savedConversationId = sessionStorage.getItem('workbench-current-conversation');
+    return !!savedConversationId && savedConversationId !== 'undefined';
+  }, []);
 
   return (
     <SectionNavigationContext.Provider
@@ -148,6 +158,7 @@ export const SectionNavigationProvider = ({ children }: SectionNavigationProvide
         getNavigationTarget,
         hasNestedRoute,
         sectionsWithNestedRoutes,
+        hasWorkbenchState,
       }}
     >
       {children}

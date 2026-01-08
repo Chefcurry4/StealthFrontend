@@ -48,18 +48,23 @@ export const useProgram = (slug: string) => {
   });
 };
 
+export interface ProgramWithLevel extends Program {
+  level?: string | null;
+}
+
 export const useProgramsByUniversity = (universityId: string) => {
   return useQuery({
     queryKey: ["programs", "university", universityId],
     queryFn: async () => {
       const { data: bridgeData, error: bridgeError } = await supabase
         .from("bridge_up(U-P)")
-        .select("id_program")
+        .select("id_program, level")
         .eq("id_uni", universityId);
 
       if (bridgeError) throw bridgeError;
 
       const programIds = bridgeData.map((b) => b.id_program).filter(Boolean);
+      const levelMap = new Map(bridgeData.map(b => [b.id_program, b.level]));
 
       if (programIds.length === 0) return [];
 
@@ -70,7 +75,12 @@ export const useProgramsByUniversity = (universityId: string) => {
         .order("name");
 
       if (error) throw error;
-      return data as Program[];
+      
+      // Add level info to each program
+      return (data as Program[]).map(p => ({
+        ...p,
+        level: levelMap.get(p.id) || null
+      })) as ProgramWithLevel[];
     },
     enabled: !!universityId,
   });
