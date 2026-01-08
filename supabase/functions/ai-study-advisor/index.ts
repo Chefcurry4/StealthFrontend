@@ -146,7 +146,7 @@ const databaseTools = [
     type: "function",
     function: {
       name: "generate_semester_plan",
-      description: "Generate a custom semester plan with courses. ONLY use this AFTER you have asked the user clarifying questions and gathered their requirements. This tool searches the database for courses matching the criteria and creates a structured plan. The plan appears in the Semester Planner panel.",
+      description: "Generate or MODIFY a semester plan with courses. Use this tool both for NEW plans AND when the user asks to MODIFY/FIX an existing plan (e.g., 'add more fluid dynamics', 'remove thermodynamics', 'I want more AI courses'). When modifying, include priority_topics to emphasize what to ADD and exclude_topics to specify what to REDUCE or REMOVE.",
       parameters: {
         type: "object",
         properties: {
@@ -168,6 +168,16 @@ const databaseTools = [
             type: "array", 
             items: { type: "string" },
             description: "Topics/subjects the user is interested in (e.g., ['robotics', 'AI', 'machine learning'])" 
+          },
+          priority_topics: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "HIGH-PRIORITY topics that MUST be well-represented in the plan. Used for modifications like 'add more fluid dynamics'. These get 3x scoring boost." 
+          },
+          exclude_topics: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "Topics to EXCLUDE or minimize. Used for modifications like 'too much thermodynamics'. Courses matching these topics will be deprioritized or excluded." 
           },
           level: { 
             type: "string", 
@@ -209,6 +219,10 @@ const databaseTools = [
           plan_title: { 
             type: "string", 
             description: "Custom title for the plan (e.g., 'Robotics & AI Focus')" 
+          },
+          is_modification: {
+            type: "boolean",
+            description: "Set to true when this is a MODIFICATION of an existing plan. This triggers fresh database search with new priorities."
           }
         },
         required: ["semester_type", "target_ects"]
@@ -748,6 +762,8 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         target_ects = 30,
         ects_flexibility = "approximate",
         topics = [],
+        priority_topics = [], // Topics to emphasize (3x boost)
+        exclude_topics = [], // Topics to minimize/exclude
         level,
         program,
         programs, // Allow multiple programs like ["Robotics", "Mechanical Engineering"]
@@ -756,8 +772,11 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         exclude_courses = [],
         specific_courses = [],
         max_courses = 8,
-        plan_title
+        plan_title,
+        is_modification = false
       } = args;
+      
+      console.log(`Semester plan generation - modification: ${is_modification}, priority_topics: ${priority_topics}, exclude_topics: ${exclude_topics}`);
       
       // Determine ECTS tolerance based on flexibility
       let ectsTolerance = 5;
@@ -777,6 +796,10 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         'data science': ['statistics', 'data mining', 'analytics', 'visualization', 'big data'],
         'cybersecurity': ['security', 'cryptography', 'network security', 'privacy'],
         'computer vision': ['image processing', 'object detection', 'image recognition', 'visual'],
+        'fluid dynamics': ['cfd', 'computational fluid', 'fluid mechanics', 'flow', 'aerodynamics', 'hydrodynamics', 'turbulence', 'navier-stokes'],
+        'cfd': ['computational fluid dynamics', 'fluid mechanics', 'flow simulation', 'openfoam', 'ansys fluent'],
+        'thermodynamics': ['heat transfer', 'thermal', 'heat engine', 'entropy'],
+        'mechanical engineering': ['mechanics', 'mechanical', 'materials', 'structural', 'dynamics'],
       };
       
       // Expand topics based on mappings
@@ -786,6 +809,29 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
           topicMappings[lowerTopic].forEach(t => expandedTopics.add(t));
         }
       }
+      
+      // ALSO expand priority_topics
+      const expandedPriorityTopics = new Set<string>(priority_topics.map((t: string) => t.toLowerCase()));
+      for (const topic of priority_topics) {
+        const lowerTopic = topic.toLowerCase();
+        if (topicMappings[lowerTopic]) {
+          topicMappings[lowerTopic].forEach(t => expandedPriorityTopics.add(t));
+        }
+        // Add priority topics to the main search as well
+        expandedTopics.add(lowerTopic);
+      }
+      
+      // Expand exclude_topics
+      const expandedExcludeTopics = new Set<string>(exclude_topics.map((t: string) => t.toLowerCase()));
+      for (const topic of exclude_topics) {
+        const lowerTopic = topic.toLowerCase();
+        if (topicMappings[lowerTopic]) {
+          topicMappings[lowerTopic].forEach(t => expandedExcludeTopics.add(t));
+        }
+      }
+      
+      console.log(`Priority topics expanded: ${Array.from(expandedPriorityTopics).join(', ')}`);
+      console.log(`Exclude topics expanded: ${Array.from(expandedExcludeTopics).join(', ')}`);
       
       // Query Topics table to find related topic IDs and names
       const topicSearchTerms = Array.from(expandedTopics);
@@ -955,13 +1001,34 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         const scoredCourses = filteredCourses.map((course: any) => {
           let score = 0;
           
+          const courseText = ((course.topics || "") + " " + (course.description || "") + " " + (course.name_course || "")).toLowerCase();
+          
+          // FIRST: Check exclude_topics - heavily penalize or skip courses matching excluded topics
+          let excludeMatchCount = 0;
+          expandedExcludeTopics.forEach((t: string) => {
+            if (courseText.includes(t)) {
+              excludeMatchCount++;
+            }
+          });
+          if (excludeMatchCount > 0) {
+            score -= 100 * excludeMatchCount; // Heavy penalty for excluded topics
+          }
+          
+          // HIGH PRIORITY: priority_topics get 3x boost
+          let priorityMatchCount = 0;
+          expandedPriorityTopics.forEach((t: string) => {
+            if (courseText.includes(t)) {
+              priorityMatchCount++;
+              score += 25; // 3x normal topic score
+            }
+          });
+          
           // High score if course is linked via topic bridge table
           if (topicCourseIds.has(course.id_course)) {
             score += 20;
           }
           
           // Topic relevance (higher score for more topic matches)
-          const courseText = ((course.topics || "") + " " + (course.description || "") + " " + (course.name_course || "")).toLowerCase();
           const topicArray = Array.from(expandedTopics);
           topicArray.forEach((t: string) => {
             if (courseText.includes(t)) score += 8;
@@ -993,16 +1060,26 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
           // Slight preference for courses with reasonable ECTS (3-6)
           if (course.ects >= 3 && course.ects <= 6) score += 2;
           
-          return { ...course, _score: score };
+          return { ...course, _score: score, _priorityMatch: priorityMatchCount, _excludeMatch: excludeMatchCount };
+        });
+        
+        // Filter out courses with too many exclude matches (if they have no priority matches)
+        const viableCourses = scoredCourses.filter((c: any) => {
+          // If course matches excluded topics and doesn't match priority topics, exclude it
+          if (c._excludeMatch > 0 && c._priorityMatch === 0) {
+            return false;
+          }
+          return true;
         });
         
         // Sort by score descending
-        scoredCourses.sort((a: any, b: any) => b._score - a._score);
+        viableCourses.sort((a: any, b: any) => b._score - a._score);
         
-        console.log("Top 5 scored courses:", scoredCourses.slice(0, 5).map((c: any) => `${c.name_course} (score: ${c._score})`));
+        console.log(`Viable courses after filtering: ${viableCourses.length}`);
+        console.log("Top 5 scored courses:", viableCourses.slice(0, 5).map((c: any) => `${c.name_course} (score: ${c._score}, priority: ${c._priorityMatch}, excluded: ${c._excludeMatch})`));
         
         // Select courses to meet target ECTS
-        for (const course of scoredCourses) {
+        for (const course of viableCourses) {
           if (selectedCourses.length >= max_courses) break;
           if (currentEcts >= target_ects + ectsTolerance) break;
           
@@ -1355,6 +1432,22 @@ When a user asks to plan their semester (e.g., "Plan my winter semester with 30 
    - plan_title: Descriptive title
 
 3. **PRESENT THE RESULT** with a summary of the plan, noting if ECTS targets were met.
+
+**🔄 MODIFYING EXISTING PLANS - CRITICAL:**
+When a user asks to MODIFY or FIX an existing semester plan (e.g., "add more fluid dynamics", "too much thermodynamics", "I want more AI courses", "fix this"), you MUST:
+
+1. **IMMEDIATELY CALL generate_semester_plan AGAIN** with:
+   - is_modification: true
+   - priority_topics: Topics the user wants MORE of (e.g., ["fluid dynamics", "CFD"])
+   - exclude_topics: Topics the user wants LESS of or to REMOVE (e.g., ["thermodynamics"])
+   - Keep the same semester_type, target_ects, level, university_slug from the previous plan
+   - topics: Combine original topics with priority_topics
+
+2. **DO NOT just respond with text** - you MUST call the tool again to regenerate the plan!
+
+Example modification flow:
+User: "There's not enough fluid dynamics! Why is there so much thermodynamics and no CFD?"
+You: [IMMEDIATELY call generate_semester_plan with is_modification=true, priority_topics=["fluid dynamics", "CFD", "computational fluid dynamics"], exclude_topics=["thermodynamics"], and keep original parameters]
 
 Example conversation flow:
 User: "Plan my winter semester with 30 ECTS in robotics and AI"
