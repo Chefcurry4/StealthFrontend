@@ -176,7 +176,12 @@ const databaseTools = [
           },
           program: { 
             type: "string", 
-            description: "Specific program to filter courses from (e.g., 'Computer Science', 'Robotics')" 
+            description: "Specific program to filter courses from (e.g., 'Computer Science', 'Robotics'). Use 'programs' if user specifies multiple." 
+          },
+          programs: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "Multiple programs to filter courses from (e.g., ['Robotics', 'Mechanical Engineering']). Courses from ANY of these programs will be included." 
           },
           university_slug: { 
             type: "string", 
@@ -745,11 +750,12 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         topics = [],
         level,
         program,
+        programs, // Allow multiple programs like ["Robotics", "Mechanical Engineering"]
         university_slug,
         preferred_exam_types = [],
         exclude_courses = [],
         specific_courses = [],
-        max_courses = 6,
+        max_courses = 8,
         plan_title
       } = args;
       
@@ -758,9 +764,51 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       if (ects_flexibility === "exact") ectsTolerance = 2;
       else if (ects_flexibility === "flexible") ectsTolerance = 10;
       
+      // First, expand topics using the Topics table to find related topics
+      const expandedTopics = new Set<string>(topics.map((t: string) => t.toLowerCase()));
+      
+      // Map user topics to related database topics using Topics(TOP) table
+      const topicMappings: Record<string, string[]> = {
+        'ai': ['machine learning', 'deep learning', 'artificial intelligence', 'neural', 'nlp', 'computer vision', 'reinforcement learning'],
+        'artificial intelligence': ['machine learning', 'deep learning', 'neural', 'nlp', 'computer vision'],
+        'robotics': ['robot', 'automation', 'mechatronics', 'control systems', 'autonomous', 'manipulation'],
+        'machine learning': ['deep learning', 'neural', 'supervised learning', 'unsupervised learning', 'reinforcement', 'pattern recognition'],
+        'deep learning': ['neural networks', 'cnn', 'rnn', 'transformer', 'pytorch', 'tensorflow'],
+        'data science': ['statistics', 'data mining', 'analytics', 'visualization', 'big data'],
+        'cybersecurity': ['security', 'cryptography', 'network security', 'privacy'],
+        'computer vision': ['image processing', 'object detection', 'image recognition', 'visual'],
+      };
+      
+      // Expand topics based on mappings
+      for (const topic of topics) {
+        const lowerTopic = topic.toLowerCase();
+        if (topicMappings[lowerTopic]) {
+          topicMappings[lowerTopic].forEach(t => expandedTopics.add(t));
+        }
+      }
+      
+      // Query Topics table to find related topic IDs and names
+      const topicSearchTerms = Array.from(expandedTopics);
+      let topicConditions = topicSearchTerms.map(t => `topic_name.ilike.%${t}%`).join(',');
+      
+      const { data: relatedTopics } = await supabase
+        .from("Topics(TOP)")
+        .select("id_topic, topic_name")
+        .or(topicConditions)
+        .limit(50);
+      
+      if (relatedTopics && relatedTopics.length > 0) {
+        console.log(`Found ${relatedTopics.length} related topics in database:`, relatedTopics.map((t: any) => t.topic_name).join(', '));
+        relatedTopics.forEach((t: any) => expandedTopics.add(t.topic_name.toLowerCase()));
+      }
+      
+      console.log(`Expanded topics for search: ${Array.from(expandedTopics).join(', ')}`);
+      
+      // Get program list (support both 'program' and 'programs' params)
+      const programList: string[] = programs || (program ? [program] : []);
+      
       // Helper function to search courses for a specific semester
       async function searchCoursesForSemester(semesterTerms: string[]): Promise<any[]> {
-        // First, add any specific courses the user requested
         const selectedCourses: any[] = [];
         let currentEcts = 0;
         
@@ -769,7 +817,7 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
           for (const courseQuery of specific_courses) {
             const { data: courses } = await supabase
               .from("Courses(C)")
-              .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description")
+              .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description, programs")
               .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
               .limit(1);
             
@@ -786,42 +834,8 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
           }
         }
         
-        // Build query for topic-based courses
-        let query = supabase
-          .from("Courses(C)")
-          .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description");
-        
-        // Filter by topics if provided
-        if (topics.length > 0) {
-          const topicConditions = topics.map((t: string) => 
-            `topics.ilike.%${t}%,description.ilike.%${t}%,name_course.ilike.%${t}%`
-          ).join(",");
-          query = query.or(topicConditions);
-        }
-        
-        // Filter by level
-        if (level && level !== "any") {
-          query = query.ilike("ba_ma", `%${level}%`);
-        }
-        
-        // Filter by program
-        if (program) {
-          query = query.ilike("programs", `%${program}%`);
-        }
-        
-        // Filter by term (winter = fall/winter/autumn, summer = spring/summer)
-        if (semesterTerms.length > 0) {
-          const termConditions = semesterTerms.map((t: string) => `term.ilike.%${t}%`).join(",");
-          query = query.or(termConditions);
-        }
-        
-        // Get more courses than needed to allow for selection
-        const { data: candidateCourses } = await query.limit(50);
-        
-        if (!candidateCourses) return selectedCourses;
-        
-        // Handle university filter
-        let filteredCourses = candidateCourses;
+        // Get university course IDs if university filter is specified
+        let universityCourseIds: Set<string> | null = null;
         if (university_slug) {
           const { data: uniData } = await supabase
             .from("Universities(U)")
@@ -836,10 +850,94 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
               .eq("id_uni", uniData.uuid);
             
             if (courseIds?.length) {
-              const courseIdSet = new Set(courseIds.map((c: any) => c.id_course));
-              filteredCourses = candidateCourses.filter((c: any) => courseIdSet.has(c.id_course));
+              universityCourseIds = new Set(courseIds.map((c: any) => c.id_course));
             }
           }
+        }
+        
+        // Get courses related to expanded topics through bridge table
+        const topicCourseIds = new Set<string>();
+        if (expandedTopics.size > 0) {
+          const topicArray = Array.from(expandedTopics);
+          const topicConditions = topicArray.map(t => `topic_name.ilike.%${t}%`).join(',');
+          
+          const { data: bridgeData } = await supabase
+            .from("bridge_topc(TOP-C)")
+            .select("course_id, topic_name")
+            .or(topicConditions)
+            .limit(200);
+          
+          if (bridgeData) {
+            bridgeData.forEach((b: any) => {
+              if (b.course_id) topicCourseIds.add(b.course_id);
+            });
+            console.log(`Found ${topicCourseIds.size} courses linked to topics via bridge table`);
+          }
+        }
+        
+        // Build main query for topic-based courses
+        let query = supabase
+          .from("Courses(C)")
+          .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description, programs");
+        
+        // Build OR conditions for topics
+        if (expandedTopics.size > 0) {
+          const topicArray = Array.from(expandedTopics);
+          const topicConditions = topicArray.flatMap((t: string) => [
+            `topics.ilike.%${t}%`,
+            `description.ilike.%${t}%`,
+            `name_course.ilike.%${t}%`
+          ]).join(",");
+          query = query.or(topicConditions);
+        }
+        
+        // Filter by level
+        if (level && level !== "any") {
+          query = query.ilike("ba_ma", `%${level}%`);
+        }
+        
+        // Filter by program(s)
+        if (programList.length > 0) {
+          const programConditions = programList.map((p: string) => `programs.ilike.%${p}%`).join(",");
+          query = query.or(programConditions);
+        }
+        
+        // Filter by term (winter = fall/winter/autumn, summer = spring/summer)
+        if (semesterTerms.length > 0) {
+          const termConditions = semesterTerms.map((t: string) => `term.ilike.%${t}%`).join(",");
+          query = query.or(termConditions);
+        }
+        
+        // Get more courses than needed to allow for selection
+        const { data: candidateCourses } = await query.limit(100);
+        
+        if (!candidateCourses || candidateCourses.length === 0) {
+          console.log("No candidate courses found with topic filter, trying broader search...");
+          // Fallback: search with just term and level
+          let fallbackQuery = supabase
+            .from("Courses(C)")
+            .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description, programs");
+          
+          if (level && level !== "any") {
+            fallbackQuery = fallbackQuery.ilike("ba_ma", `%${level}%`);
+          }
+          if (semesterTerms.length > 0) {
+            const termConditions = semesterTerms.map((t: string) => `term.ilike.%${t}%`).join(",");
+            fallbackQuery = fallbackQuery.or(termConditions);
+          }
+          
+          const { data: fallbackCourses } = await fallbackQuery.limit(50);
+          if (!fallbackCourses) return selectedCourses;
+          candidateCourses?.push(...fallbackCourses);
+        }
+        
+        console.log(`Found ${candidateCourses?.length || 0} candidate courses`);
+        
+        // Filter by university if specified
+        let filteredCourses = candidateCourses || [];
+        if (universityCourseIds) {
+          filteredCourses = filteredCourses.filter((c: any) => universityCourseIds!.has(c.id_course));
+          console.log(`After university filter: ${filteredCourses.length} courses`);
         }
         
         // Filter out excluded courses and already selected courses
@@ -857,11 +955,30 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         const scoredCourses = filteredCourses.map((course: any) => {
           let score = 0;
           
+          // High score if course is linked via topic bridge table
+          if (topicCourseIds.has(course.id_course)) {
+            score += 20;
+          }
+          
           // Topic relevance (higher score for more topic matches)
-          const courseTopics = (course.topics || "" + " " + course.description || "").toLowerCase();
-          topics.forEach((t: string) => {
-            if (courseTopics.includes(t.toLowerCase())) score += 10;
+          const courseText = ((course.topics || "") + " " + (course.description || "") + " " + (course.name_course || "")).toLowerCase();
+          const topicArray = Array.from(expandedTopics);
+          topicArray.forEach((t: string) => {
+            if (courseText.includes(t)) score += 8;
           });
+          
+          // Original user topics get higher weight
+          topics.forEach((t: string) => {
+            if (courseText.includes(t.toLowerCase())) score += 15;
+          });
+          
+          // Program match bonus
+          if (programList.length > 0 && course.programs) {
+            const coursePrograms = course.programs.toLowerCase();
+            programList.forEach((p: string) => {
+              if (coursePrograms.includes(p.toLowerCase())) score += 10;
+            });
+          }
           
           // Preferred exam type bonus
           if (preferred_exam_types.length > 0 && course.type_exam) {
@@ -871,13 +988,18 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
           }
           
           // Penalize courses with no ECTS info
-          if (!course.ects) score -= 5;
+          if (!course.ects) score -= 10;
+          
+          // Slight preference for courses with reasonable ECTS (3-6)
+          if (course.ects >= 3 && course.ects <= 6) score += 2;
           
           return { ...course, _score: score };
         });
         
         // Sort by score descending
         scoredCourses.sort((a: any, b: any) => b._score - a._score);
+        
+        console.log("Top 5 scored courses:", scoredCourses.slice(0, 5).map((c: any) => `${c.name_course} (score: ${c._score})`));
         
         // Select courses to meet target ECTS
         for (const course of scoredCourses) {
@@ -1316,6 +1438,9 @@ Include ALL fields that are available. Place these at the very end of your respo
       // Get tool names for status update
       const toolNames = assistantMessage.tool_calls.map((tc: any) => tc.function.name);
       
+      // Check if semester planning is being done - force premium model
+      const isSemesterPlanning = toolNames.includes('generate_semester_plan');
+      
       const toolResults = [];
       
       for (const toolCall of assistantMessage.tool_calls) {
@@ -1333,16 +1458,41 @@ Include ALL fields that are available. Place these at the very end of your respo
         });
       }
       
-      // Second AI call with tool results - use requested model/provider
-      console.log(`Making second AI call with tool results using ${provider}/${modelConfig.model}...`);
-      const finalResponse = await fetch(apiEndpoint, {
+      // For semester planning, always use premium models regardless of user selection
+      let finalApiKey = apiKey;
+      let finalApiEndpoint = apiEndpoint;
+      let finalModel = modelConfig.model;
+      
+      if (isSemesterPlanning) {
+        console.log("Semester planning detected - upgrading to premium model");
+        
+        // Upgrade model based on provider
+        if (provider === "perplexity") {
+          // Upgrade to sonar-pro for Perplexity
+          finalModel = "sonar-pro";
+        } else {
+          // For Lovable AI, upgrade to gemini-pro or keep gpt-5 if already selected
+          if (modelConfig.model === "openai/gpt-5" || modelConfig.model === "openai/gpt-5-mini") {
+            finalModel = "openai/gpt-5";
+          } else {
+            finalModel = "google/gemini-2.5-pro";
+          }
+          finalApiKey = lovableApiKey!;
+          finalApiEndpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
+        }
+        console.log(`Using premium model for semester planning: ${finalModel}`);
+      }
+      
+      // Second AI call with tool results - use upgraded model for semester planning
+      console.log(`Making second AI call with tool results using ${finalModel}...`);
+      const finalResponse = await fetch(finalApiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${finalApiKey}`,
         },
         body: JSON.stringify({
-          model: modelConfig.model,
+          model: finalModel,
           messages: [
             { role: "system", content: systemPrompt },
             ...messages,
