@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, ChevronDown, ExternalLink, BookOpen, HelpCircle, MessageSquare, FileText, GraduationCap, FlaskConical, Users, Briefcase, Calendar, Mail, Keyboard, BarChart3, Sparkles, Bot } from "lucide-react";
+import { Search, ChevronDown, ExternalLink, BookOpen, HelpCircle, MessageSquare, FileText, GraduationCap, FlaskConical, Users, Briefcase, Mail, Keyboard, BarChart3, Sparkles, Bot, FolderOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -14,7 +14,7 @@ const faqs = [
     questions: [
       {
         question: "What is Students Hub?",
-        answer: "Students Hub is a comprehensive platform designed for university students to explore courses, discover research labs, find universities, and plan their academic journey. It includes AI-powered guidance with multiple AI models, an interactive diary for semester planning, email drafting tools, document management, and learning agreement creation."
+        answer: "Students Hub is a comprehensive platform designed for university students to explore courses, discover research labs, find universities, and plan their academic journey. It features an advanced AI-powered Workbench with multiple AI models, email drafting tools, document management, semester planning, and saved items organization."
       },
       {
         question: "How do I create an account?",
@@ -22,11 +22,11 @@ const faqs = [
       },
       {
         question: "Is Students Hub free to use?",
-        answer: "Yes! Students Hub is completely free for all students. You can browse universities, courses, and labs without an account. Create an account to save items, use the AI advisor, access the Diary, and draft emails."
+        answer: "Yes! Students Hub is completely free for all students. You can browse universities, courses, and labs without an account. Create an account to save items, use the AI Workbench, and draft emails."
       },
       {
         question: "What features are available?",
-        answer: "Key features include: browsing 1400+ courses and 420+ labs, AI-powered study advisor with multiple models (Gemini, GPT-5, Perplexity), interactive Diary for semester planning, email drafting assistance, document uploads, course and lab reviews, professor contact information, and platform statistics."
+        answer: "Key features include: browsing 1400+ courses and 420+ labs, AI-powered Workbench with multiple models (Gemini, GPT-5, Perplexity), email drafting with AI assistance, document uploads, semester planning, saved courses/labs management, course and lab reviews, professor contact information, and platform statistics."
       }
     ]
   },
@@ -62,7 +62,7 @@ const faqs = [
       },
       {
         question: "Can I contact lab professors directly?",
-        answer: "Yes! Click on any professor's name to view their popup profile, which includes their email address and research topics. Click the email to copy it to your clipboard, or use the AI Email Composer to draft a professional outreach email."
+        answer: "Yes! Click on any professor's name to view their popup profile, which includes their email address and research topics. Click the email to copy it to your clipboard, or use the AI Email Composer in the Workbench to draft a professional outreach email."
       },
       {
         question: "How do I find labs related to my interests?",
@@ -75,36 +75,56 @@ const faqs = [
     ]
   },
   {
-    category: "AI Advisor (hubAI)",
+    category: "AI Workbench (hubAI)",
     icon: Bot,
     questions: [
       {
-        question: "What can the AI Advisor help me with?",
-        answer: "hubAI can help you choose courses, find research labs matching your interests, plan your study abroad semester, generate semester plans, draft professional emails to professors, compare courses, and answer any questions about your academic journey."
+        question: "What is the Workbench?",
+        answer: "The Workbench is your central hub for AI-powered academic assistance. It combines an intelligent AI advisor (hubAI), saved courses and labs, email drafts, document storage, and semester planning - all in one integrated interface."
+      },
+      {
+        question: "What can hubAI help me with?",
+        answer: "hubAI can: recommend courses based on your interests, find research labs matching your academic goals, compare courses side-by-side, generate personalized semester plans, draft professional emails to professors, answer questions about course content, explain academic concepts, and provide guidance on your study abroad journey."
       },
       {
         question: "Which AI models are available?",
-        answer: "hubAI offers multiple AI models: Google Gemini (Flash for fast responses, Pro for advanced reasoning), OpenAI GPT-5 (standard and mini versions), and Perplexity Sonar (with web search, reasoning, and citation capabilities). Switch between models using the dropdown in the Workbench header."
+        answer: "hubAI offers 7 AI models across 3 providers: Google Gemini (Flash for fast responses, Pro for advanced reasoning), OpenAI GPT-5 (standard for powerful responses, Mini for quick answers), and Perplexity Sonar (basic web search, Pro for multi-step reasoning with citations, Reasoning for deep analysis with real-time search). Switch models using the dropdown in the Workbench header."
+      },
+      {
+        question: "How does the AI know about courses and labs?",
+        answer: "hubAI has direct access to the entire Students Hub database. It can search through 1400+ courses and 420+ labs, look up professor information, find courses by topic, ECTS, or exam type, and provide recommendations based on actual platform data - not generic information."
       },
       {
         question: "Can I attach documents to my AI conversations?",
-        answer: "Yes! You can upload text files, PDFs, images, and documents (up to 20MB). The AI can read your CV, transcripts, syllabi, or other documents to give personalized recommendations. Images are processed with OCR to extract text content."
+        answer: "Yes! You can upload text files (.txt, .md, .json, .csv), PDFs, Word documents (.docx), and images (.png, .jpg, .gif, .webp) up to 20MB each. The AI can read your CV, transcripts, syllabi, or course materials. Images are processed with OCR to extract text content."
       },
       {
         question: "How do I reference my saved courses or labs in a conversation?",
-        answer: "You can reference saved items in two ways: 1) Type '@' in the chat input to see a popup of your saved courses and labs - select one to add it as context. 2) Drag and drop courses or labs from the sidebar directly into the chat area."
+        answer: "Two ways: 1) Type '@' in the chat input to see a popup of your saved courses and labs - select one to add it as context with full details (ECTS, professor, description). 2) Drag and drop items from the sidebar directly into the chat area. The AI receives complete metadata about referenced items."
       },
       {
-        question: "Can the AI generate a semester plan?",
-        answer: "Yes! Ask hubAI to create a semester plan based on your interests, saved courses, or requirements. The AI will generate a structured plan that appears in the Semester Planner panel. You can save, edit, and manage multiple semester plans."
+        question: "What is the Workbench sidebar?",
+        answer: "The sidebar organizes all your saved content: AI chat history, saved courses (with drag-and-drop), saved labs, email drafts, and uploaded documents. Click items to reference them in chat, or drag them to add as context. Use the search bar to filter across all sections."
       },
       {
         question: "Are my conversations saved?",
-        answer: "Yes, all your AI conversations are automatically saved to your account. Access conversation history from the Workbench sidebar. You can also export conversations as Markdown, plain text, or JSON files."
+        answer: "Yes! All conversations are automatically saved with full message history, attachments, and referenced items. Access past conversations from the sidebar. Rename conversations by double-clicking the title, or delete them using the trash icon."
+      },
+      {
+        question: "Can I export my conversations?",
+        answer: "Yes! Click the download button in the input area to export conversations in three formats: Markdown (.md) for documentation, Plain Text (.txt) for simple sharing, or JSON (.json) for structured data backup."
       },
       {
         question: "How do I search within a conversation?",
-        answer: "Press Ctrl+F (Cmd+F on Mac) while in the Workbench to open the conversation search bar. Search results are highlighted and you can navigate between matches."
+        answer: "Press Ctrl+F (Cmd+F on Mac) while in the Workbench to open the conversation search bar. Type to search, and results are highlighted with navigation to jump between matches."
+      },
+      {
+        question: "Can I stop an AI response?",
+        answer: "Yes! While hubAI is generating a response, click the stop button (square icon) next to the input field to interrupt the generation. This is useful if you need to rephrase your question or start a new conversation."
+      },
+      {
+        question: "What do the thinking and searching indicators mean?",
+        answer: "When you ask a question, you'll see: 'Thinking...' while the AI processes your request, then 'Searching courses/labs/teachers...' when it queries the database for relevant data. This real-time feedback shows exactly what the AI is doing."
       }
     ]
   },
@@ -114,45 +134,97 @@ const faqs = [
     questions: [
       {
         question: "How do I compose an email with AI assistance?",
-        answer: "Click 'Compose Email' in the Workbench or sidebar. Fill in the purpose, recipient name, and any context. You can attach your documents (CV, transcripts) and select relevant courses or labs. The AI will generate a professional email draft."
+        answer: "Click 'Compose Email' button in the Workbench header or sidebar. Fill in the purpose (e.g., 'Request to join research lab'), recipient name (with professor autocomplete), and any context. Optionally attach documents and select relevant courses/labs. The AI generates a professional, personalized email."
+      },
+      {
+        question: "Does the email composer know about professors?",
+        answer: "Yes! Start typing a professor's name and the composer shows matching professors from the database with their research topics. Selecting a professor automatically includes their research interests in the email context for better personalization."
       },
       {
         question: "Can the AI read my CV to personalize emails?",
-        answer: "Yes! Upload your CV or other documents in the email composer, and the AI will extract your name, background, skills, and interests to create personalized outreach emails."
+        answer: "Yes! In the 'Advanced Options' section of the email composer, select your uploaded documents (CV, transcripts, cover letters). The AI will extract your name, background, skills, and interests to create highly personalized outreach emails that highlight relevant experience."
       },
       {
         question: "How do I refine parts of a generated email?",
-        answer: "Select any text in an AI-generated email response and click 'Refine with AI' to improve that specific section. This is useful for polishing specific paragraphs or sentences."
+        answer: "After the AI generates an email, select any text portion and click 'Refine with AI' to improve that specific section. This allows you to polish individual paragraphs or adjust the tone without regenerating the entire email."
       },
       {
-        question: "Can I save email drafts?",
-        answer: "Yes! After the AI generates an email, click the mail icon to save it to your Email Drafts. Access saved drafts from Profile > Email Drafts. You can also copy emails to clipboard or open them directly in your email client."
+        question: "What can I do with generated emails?",
+        answer: "Generated emails have multiple actions: Copy to clipboard, Open in your email client (Gmail, Outlook, etc.) via mailto link, Save to Email Drafts for later editing, or Regenerate for a different version. All options appear as icons below the email."
+      },
+      {
+        question: "Where are my email drafts stored?",
+        answer: "Saved email drafts appear in the Workbench sidebar under 'Email Drafts' and in Profile > Email Drafts. You can view, edit, delete, or reference them in new conversations. Drafts show subject and recipient for easy identification."
       }
     ]
   },
   {
-    category: "Diary & Semester Planning",
-    icon: Calendar,
+    category: "Semester Planner",
+    icon: Briefcase,
     questions: [
       {
-        question: "What is the Diary feature?",
-        answer: "The Diary is an interactive notebook for planning your academic semester. You can create multiple pages, drag and drop courses and labs, add text notes, and use the semester planner module to organize your courses by winter/summer terms."
+        question: "How do I access the Semester Planner?",
+        answer: "Click the calendar icon in the Workbench header to open/close the Semester Planner panel. It appears as a side panel that shows your saved semester plans and any AI-generated plans."
       },
       {
-        question: "How do I add courses to a diary page?",
-        answer: "Open the Diary sidebar to see your saved courses and labs. Drag any item onto the page canvas. You can also add text blocks, semester planner modules, and lab trackers using the modules section."
+        question: "Can the AI generate semester plans?",
+        answer: "Yes! Ask hubAI something like 'Create a semester plan for a Master's in Computer Science focusing on machine learning' or 'Help me plan courses for winter semester with 30 ECTS'. The AI generates a structured plan with winter/summer course distribution that appears in the Semester Planner panel."
       },
       {
-        question: "Can I organize courses by semester?",
-        answer: "Yes! Add a 'Semester Planner' module to your page. It displays winter and summer semester zones. Drag courses into the appropriate zone. The planner automatically calculates total ECTS credits for each semester."
+        question: "How do I save an AI-generated semester plan?",
+        answer: "When hubAI generates a semester plan, it appears as a temporary plan in the Semester Planner panel. Click 'Save Plan' and give it a name. The plan is then stored permanently with up to 10 saved plans allowed."
       },
       {
-        question: "How do I export my diary pages?",
-        answer: "Click the 'Export PNG' button in the toolbar to download the current page as a high-quality image. You can share this with advisors or keep it for your records."
+        question: "What information does the semester plan show?",
+        answer: "Each plan displays: course names and codes, ECTS credits per course, total ECTS for each semester (winter/summer), exam types breakdown (written, oral, project), and professor names. The planner automatically calculates totals."
       },
       {
-        question: "Can I undo/redo changes in the Diary?",
-        answer: "Yes! Use Ctrl+Z to undo and Ctrl+Shift+Z to redo. You can also use the undo/redo buttons in the toolbar when the sidebar is closed."
+        question: "Can I edit saved semester plans?",
+        answer: "Yes! You can rename plans, remove individual courses, or delete entire plans. Click the edit icon to rename, or use the trash icons to remove courses or plans. Changes are saved automatically."
+      },
+      {
+        question: "Can I export semester plans?",
+        answer: "Yes! Each plan has an export option to save as an image (PNG) for sharing with advisors, or as JSON for data backup. The exported image includes all course details and ECTS totals."
+      }
+    ]
+  },
+  {
+    category: "Saved Items & Documents",
+    icon: FolderOpen,
+    questions: [
+      {
+        question: "How do I save courses and labs?",
+        answer: "Click the bookmark/heart icon on any course or lab card to save it. Saved items appear in your Workbench sidebar and Profile > Saved Items. You can add notes to saved items for personal reference."
+      },
+      {
+        question: "How do I manage my saved items?",
+        answer: "Access saved items from the Workbench sidebar or Profile page. The sidebar shows quick access to your most recent saves (up to 8), while Profile > Saved Items shows all items with filtering and sorting options. Click items to view details or drag them to reference in AI chat."
+      },
+      {
+        question: "How do I upload documents?",
+        answer: "Go to Profile > Documents to upload files. Supported formats include PDFs, text files, Word documents, and images. Documents are stored securely and can be referenced in AI conversations or email drafting."
+      },
+      {
+        question: "How do I use documents with the AI?",
+        answer: "In the Workbench, click the paperclip icon to attach a file directly to your message, or click on documents in the sidebar to reference them. The AI will read and analyze the document content to provide personalized responses."
+      },
+      {
+        question: "What's the file size limit?",
+        answer: "Individual files can be up to 20MB. For best results with AI processing, PDFs should be text-based (not scanned images). Images are processed with OCR, which works best with clear, high-contrast text."
+      }
+    ]
+  },
+  {
+    category: "Statistics & Analytics",
+    icon: BarChart3,
+    questions: [
+      {
+        question: "What statistics are available?",
+        answer: "The Statistics page shows platform-wide data including: total courses and labs, course distribution by topics, ECTS distribution, exam type breakdowns, user growth trends, review counts, and popular research domains."
+      },
+      {
+        question: "How do I access platform statistics?",
+        answer: "Navigate to the Statistics page from the header menu. This page provides insights into the platform's content and user engagement with interactive charts and graphs."
       }
     ]
   },
@@ -171,38 +243,6 @@ const faqs = [
       {
         question: "Can I export my learning agreement?",
         answer: "Yes! Once learning agreements are available, you'll be able to export them as PDF documents to share with your academic advisor or submit to your university's exchange office."
-      }
-    ]
-  },
-  {
-    category: "Semester Planner (Workbench)",
-    icon: Briefcase,
-    questions: [
-      {
-        question: "How do I use the Semester Planner in Workbench?",
-        answer: "Click the calendar icon in the Workbench header to open the Semester Planner panel. You can view AI-generated plans, save them, add courses from your saved items, and manage multiple semester plans."
-      },
-      {
-        question: "Can the AI generate semester plans?",
-        answer: "Yes! Ask hubAI something like 'Create a semester plan for a Master's in Computer Science focusing on machine learning'. The AI will generate a structured plan that automatically appears in the Semester Planner panel."
-      },
-      {
-        question: "How do I save an AI-generated semester plan?",
-        answer: "When the AI generates a semester plan, it appears in the Semester Planner panel as a temporary plan. Click 'Save Plan' to add it to your saved plans. You can then rename it and add or remove courses."
-      }
-    ]
-  },
-  {
-    category: "Statistics & Analytics",
-    icon: BarChart3,
-    questions: [
-      {
-        question: "What statistics are available?",
-        answer: "The Statistics page shows platform-wide data including: total courses and labs, course distribution by topics, ECTS distribution, exam type breakdowns, user growth trends, review counts, and popular research domains."
-      },
-      {
-        question: "How do I access platform statistics?",
-        answer: "Navigate to the Statistics page from the header menu. This page provides insights into the platform's content and user engagement with interactive charts and graphs."
       }
     ]
   },
@@ -242,15 +282,11 @@ const faqs = [
     questions: [
       {
         question: "What keyboard shortcuts are available?",
-        answer: "Press '?' anywhere in the app to see all keyboard shortcuts. Key shortcuts include: Ctrl+N (new chat), Ctrl+F (search conversation), @ (mention courses/labs), Ctrl+Z/Ctrl+Shift+Z (undo/redo in Diary), and arrow keys for page navigation."
+        answer: "Press '?' anywhere in the app to see all keyboard shortcuts. Key shortcuts include: Ctrl+N (new chat), Ctrl+F (search conversation), @ (mention courses/labs), and Escape (close sidebar or popup)."
       },
       {
         question: "Workbench shortcuts",
-        answer: "Ctrl+N: New conversation, Ctrl+Enter: Send message, @: Mention saved courses/labs, Ctrl+F: Search in conversation, Escape: Close sidebar or popup"
-      },
-      {
-        question: "Diary shortcuts",
-        answer: "Ctrl+Z: Undo last action, Ctrl+Shift+Z: Redo action, Ctrl+C: Copy selected item, Ctrl+V: Paste item, Delete: Delete selected item, G: Toggle grid overlay, ←/→: Navigate between pages"
+        answer: "Ctrl+N: Start new conversation, Ctrl+Enter: Send message, @: Open mention popup for saved courses/labs, Ctrl+F: Search within current conversation, Escape: Close sidebar, search bar, or popups. Double-click conversation title to rename."
       }
     ]
   }
@@ -261,7 +297,6 @@ const quickLinks = [
   { title: "Explore Courses", href: "/courses", icon: BookOpen },
   { title: "Discover Labs", href: "/labs", icon: FlaskConical },
   { title: "AI Workbench", href: "/workbench", icon: Bot },
-  { title: "My Diary", href: "/diary", icon: Calendar },
   { title: "Statistics", href: "/statistics", icon: BarChart3 },
 ];
 
@@ -284,8 +319,8 @@ const HelpCenter = () => {
     <>
       <SEO 
         title="Help Center"
-        description="Find answers to common questions about Students Hub. Learn how to use the AI advisor, plan your semester with the Diary, browse courses and labs, draft emails, and more."
-        keywords={["help", "FAQ", "support", "how to", "student help", "AI advisor", "semester planning", "email drafting", "course reviews"]}
+        description="Find answers to common questions about Students Hub. Learn how to use the AI Workbench with multiple AI models, draft emails, manage saved courses and labs, and more."
+        keywords={["help", "FAQ", "support", "how to", "student help", "AI workbench", "hubAI", "email drafting", "course reviews", "semester planning"]}
         structuredData={faqSchema}
       />
       <div className="min-h-screen">
@@ -317,7 +352,7 @@ const HelpCenter = () => {
       <section className="py-8 border-b">
         <div className="container mx-auto px-4">
           <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {quickLinks.map((link) => (
               <Link key={link.href} to={link.href}>
                 <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
