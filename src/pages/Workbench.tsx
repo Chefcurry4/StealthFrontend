@@ -1162,14 +1162,14 @@ const Workbench = () => {
     if (data.selectedCourses.length > 0) {
       prompt += `\n**Relevant courses I'm taking:**\n`;
       data.selectedCourses.forEach(c => {
-        prompt += `- ${c?.code || ''} ${c?.name_course || ''}\n`;
+        prompt += `- ${c?.code || ''} ${c?.name_course || ''}${c?.ects ? ` (${c.ects} ECTS)` : ''}\n`;
       });
     }
     
     if (data.selectedLabs.length > 0) {
       prompt += `\n**Labs I'm interested in:**\n`;
       data.selectedLabs.forEach(l => {
-        prompt += `- ${l?.name || ''}\n`;
+        prompt += `- ${l?.name || ''}${l?.slug ? ` (${l.slug})` : ''}\n`;
       });
     }
     
@@ -1474,7 +1474,7 @@ const Workbench = () => {
                     )}
 
                     {/* Message Content */}
-                    <div className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
+                    <div className={`flex-1 min-w-0 max-w-[calc(100%-3rem)] sm:max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
                       <div
                         className={`inline-block rounded-2xl px-4 py-3 shadow-sm ${
                           message.role === "user"
