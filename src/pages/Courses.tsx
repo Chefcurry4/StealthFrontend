@@ -14,6 +14,8 @@ import { usePrograms } from "@/hooks/usePrograms";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { BackToTopButton } from "@/components/BackToTopButton";
+import { MobileFilterSheet } from "@/components/MobileFilterSheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
 import { useCourseRatings } from "@/hooks/useCourseRatings";
@@ -157,6 +159,126 @@ const Courses = () => {
         {/* Filters */}
         <section className="py-6 border-b backdrop-blur theme-section" style={{ borderColor: 'var(--theme-card-border)' }}>
           <div className="container mx-auto px-4">
+            {/* Mobile Filter Button */}
+            <MobileFilterSheet
+              activeFiltersCount={hasActiveFilters ? Object.values(filters).filter(v => v !== undefined && v !== '').length + (ectsRange[0] !== 0 || ectsRange[1] !== 30 ? 1 : 0) + selectedTopics.length : 0}
+              onReset={resetFilters}
+              onApply={() => {}}
+            >
+              {/* Filter content for mobile sheet */}
+              <div className="space-y-4">
+                <TopicFilterMultiSelect
+                  selectedTopics={selectedTopics}
+                  onTopicsChange={(topics) => {
+                    setSelectedTopics(topics);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full"
+                />
+
+                <Select 
+                  value={filters.programId || "all"} 
+                  onValueChange={(value) => updateFilter("programId", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Program" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Programs</SelectItem>
+                    {programs?.map((prog) => (
+                      <SelectItem key={prog.id} value={prog.id}>
+                        {prog.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={filters.language || "all"} 
+                  onValueChange={(value) => updateFilter("language", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Languages</SelectItem>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="French">French</SelectItem>
+                    <SelectItem value="German">German</SelectItem>
+                    <SelectItem value="French/English">French/English</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={filters.term || "all"} 
+                  onValueChange={(value) => updateFilter("term", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Term" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Terms</SelectItem>
+                    <SelectItem value="Winter">Winter</SelectItem>
+                    <SelectItem value="Summer">Summer</SelectItem>
+                    <SelectItem value="Winter/Summer">Winter/Summer</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={filters.examType || "all"} 
+                  onValueChange={(value) => updateFilter("examType", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Exam Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Exam Types</SelectItem>
+                    <SelectItem value="Written">Written</SelectItem>
+                    <SelectItem value="Oral">Oral</SelectItem>
+                    <SelectItem value="During the semester">During Semester</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex flex-col justify-center">
+                  <label className="text-xs font-medium mb-1">
+                    ECTS: {ectsRange[0]} - {ectsRange[1]}
+                  </label>
+                  <Slider
+                    min={0}
+                    max={30}
+                    step={1}
+                    value={ectsRange}
+                    onValueChange={handleEctsChange}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium opacity-70">Level:</span>
+                  <div className="flex gap-1 flex-1">
+                    <Button
+                      variant={filters.level === "Bachelor" ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => updateFilter("level", filters.level === "Bachelor" ? "all" : "Bachelor")}
+                    >
+                      Bachelor
+                    </Button>
+                    <Button
+                      variant={filters.level === "Master" ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => updateFilter("level", filters.level === "Master" ? "all" : "Master")}
+                    >
+                      Master
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </MobileFilterSheet>
+
+            {/* Desktop Filters */}
+            <div className="hidden md:block">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 opacity-70" />
@@ -305,6 +427,7 @@ const Courses = () => {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </section>
 
@@ -449,6 +572,7 @@ const Courses = () => {
             )}
           </div>
         </section>
+        <BackToTopButton />
       </div>
       </PullToRefresh>
     </>

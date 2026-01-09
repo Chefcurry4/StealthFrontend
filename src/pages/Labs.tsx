@@ -13,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { useLabSaveCounts } from "@/hooks/useLabSaveCounts";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { BackToTopButton } from "@/components/BackToTopButton";
+import { MobileFilterSheet } from "@/components/MobileFilterSheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { SEO } from "@/components/SEO";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
@@ -314,6 +316,7 @@ const Labs = () => {
             )}
           </div>
         </section>
+        <BackToTopButton />
       </div>
       </PullToRefresh>
     </>

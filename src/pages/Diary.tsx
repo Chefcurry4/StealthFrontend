@@ -5,6 +5,7 @@ import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSe
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useDiaryNotebooks, useCreateDiaryNotebook } from "@/hooks/useDiaryNotebooks";
 import { useDiaryPages, useCreateDiaryPage, useDeleteDiaryPage, useUpdateDiaryPage, useReorderDiaryPages } from "@/hooks/useDiaryPages";
 import { useDiaryPageItems, useCreateDiaryPageItem, useUpdateDiaryPageItem, useDeleteDiaryPageItem } from "@/hooks/useDiaryPageItems";
@@ -38,7 +39,8 @@ const Diary = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { modeConfig } = useBackgroundTheme();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedNotebookId, setSelectedNotebookId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
