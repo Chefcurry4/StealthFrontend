@@ -64,7 +64,6 @@ import {
   RefreshCw,
   ThumbsUp,
   ThumbsDown,
-  GraduationCap,
   PanelLeft,
   Database,
   Search,

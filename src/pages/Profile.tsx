@@ -167,15 +167,18 @@ const Profile = () => {
 
     // Attach to main content area instead of document to avoid interfering with other interactions
     const mainElement = document.querySelector('main');
-    if (mainElement) {
-      mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      mainElement.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-      return () => {
-        mainElement.removeEventListener('touchstart', handleTouchStart);
-        mainElement.removeEventListener('touchend', handleTouchEnd);
-      };
+    if (!mainElement) {
+      console.warn('Main element not found for swipe navigation');
+      return;
     }
+
+    mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      mainElement.removeEventListener('touchstart', handleTouchStart);
+      mainElement.removeEventListener('touchend', handleTouchEnd);
+    };
   }, [isMobile, activeSection]);
 
   if (authLoading || profileLoading) {
@@ -475,9 +478,15 @@ const Profile = () => {
                     onClick={() => {
                       setActiveSection("preferences");
                       // Wait for navigation to complete before scrolling
-                      setTimeout(() => {
-                        document.getElementById('background-theme')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }, 100);
+                      // Using requestAnimationFrame for more reliable DOM update detection
+                      requestAnimationFrame(() => {
+                        setTimeout(() => {
+                          const element = document.getElementById('background-theme');
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }, 50);
+                      });
                     }}
                     className="gap-2"
                   >
@@ -490,9 +499,15 @@ const Profile = () => {
                     onClick={() => {
                       setActiveSection("preferences");
                       // Wait for navigation to complete before scrolling
-                      setTimeout(() => {
-                        document.getElementById('flashcard-style')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }, 100);
+                      // Using requestAnimationFrame for more reliable DOM update detection
+                      requestAnimationFrame(() => {
+                        setTimeout(() => {
+                          const element = document.getElementById('flashcard-style');
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }, 50);
+                      });
                     }}
                     className="gap-2"
                   >
