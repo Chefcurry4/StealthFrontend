@@ -1503,7 +1503,7 @@ const Workbench = () => {
                     )}
 
                     {/* Message Content */}
-                    <div className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
+                    <div className={`flex-1 sm:max-w-[85%] max-w-[calc(100%-3rem)] ${message.role === "user" ? "text-right" : ""}`}>
                       <div
                         className={`inline-block rounded-2xl px-4 py-3 shadow-sm ${
                           message.role === "user"
@@ -1953,37 +1953,39 @@ const Workbench = () => {
       </div>
       </div>
       
-      {/* Semester Planner Panel */}
-      <WorkbenchSemesterPlanner
-        isOpen={isPlannerOpen}
-        onToggle={togglePlanner}
-        savedPlans={savedSemesterPlans}
-        tempPlan={tempPlan}
-        onSaveTempPlan={async (name, winterCourses, summerCourses) => {
-          await saveAIPlan.mutateAsync({ name, winterCourses, summerCourses });
-          clearTempPlan();
-        }}
-        onClearTempPlan={clearTempPlan}
-        onDeletePlan={(planId) => deleteSemesterPlan.mutate(planId)}
-        onUpdatePlanName={(planId, newName) => updateSemesterPlan.mutate({ id: planId, name: newName })}
-        onRemoveCourseFromPlan={(planId, courseId) => {
-          const plan = savedSemesterPlans.find(p => p.id === planId);
-          if (plan) {
-            const updatedCourses = plan.courses.filter(c => c.id_course !== courseId);
-            updateSemesterPlan.mutate({ id: planId, courses: updatedCourses });
-          }
-        }}
-        savedCourses={savedCourses?.map(c => ({
-          id_course: c.Courses?.id_course || '',
-          name_course: c.Courses?.name_course || '',
-          code: c.Courses?.code || undefined,
-          ects: c.Courses?.ects || undefined,
-          type_exam: c.Courses?.type_exam || undefined,
-          ba_ma: c.Courses?.ba_ma || undefined,
-          professor_name: c.Courses?.professor_name || undefined,
-          term: c.Courses?.term || undefined
-        })).filter(c => c.id_course) || []}
-      />
+      {/* Semester Planner Panel - Hidden on mobile to avoid overlap */}
+      {!isMobile && (
+        <WorkbenchSemesterPlanner
+          isOpen={isPlannerOpen}
+          onToggle={togglePlanner}
+          savedPlans={savedSemesterPlans}
+          tempPlan={tempPlan}
+          onSaveTempPlan={async (name, winterCourses, summerCourses) => {
+            await saveAIPlan.mutateAsync({ name, winterCourses, summerCourses });
+            clearTempPlan();
+          }}
+          onClearTempPlan={clearTempPlan}
+          onDeletePlan={(planId) => deleteSemesterPlan.mutate(planId)}
+          onUpdatePlanName={(planId, newName) => updateSemesterPlan.mutate({ id: planId, name: newName })}
+          onRemoveCourseFromPlan={(planId, courseId) => {
+            const plan = savedSemesterPlans.find(p => p.id === planId);
+            if (plan) {
+              const updatedCourses = plan.courses.filter(c => c.id_course !== courseId);
+              updateSemesterPlan.mutate({ id: planId, courses: updatedCourses });
+            }
+          }}
+          savedCourses={savedCourses?.map(c => ({
+            id_course: c.Courses?.id_course || '',
+            name_course: c.Courses?.name_course || '',
+            code: c.Courses?.code || undefined,
+            ects: c.Courses?.ects || undefined,
+            type_exam: c.Courses?.type_exam || undefined,
+            ba_ma: c.Courses?.ba_ma || undefined,
+            professor_name: c.Courses?.professor_name || undefined,
+            term: c.Courses?.term || undefined
+          })).filter(c => c.id_course) || []}
+        />
+      )}
       
       {/* Mobile Floating Action Button */}
       {isMobile && (
