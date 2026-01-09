@@ -153,6 +153,7 @@ const Profile = () => {
       }
 
       const currentIndex = swipeableSections.indexOf(activeSection);
+      // Only handle swipes on swipeable sections
       if (currentIndex === -1) return;
 
       if (deltaX > 0 && currentIndex > 0) {
@@ -164,13 +165,17 @@ const Profile = () => {
       }
     };
 
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    // Attach to main content area instead of document to avoid interfering with other interactions
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      mainElement.addEventListener('touchend', handleTouchEnd, { passive: true });
 
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
+      return () => {
+        mainElement.removeEventListener('touchstart', handleTouchStart);
+        mainElement.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
   }, [isMobile, activeSection]);
 
   if (authLoading || profileLoading) {
@@ -469,7 +474,7 @@ const Profile = () => {
                     size="sm"
                     onClick={() => {
                       setActiveSection("preferences");
-                      // Scroll to background theme section after navigation
+                      // Wait for navigation to complete before scrolling
                       setTimeout(() => {
                         document.getElementById('background-theme')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                       }, 100);
@@ -484,7 +489,7 @@ const Profile = () => {
                     size="sm"
                     onClick={() => {
                       setActiveSection("preferences");
-                      // Scroll to flashcard style section after navigation
+                      // Wait for navigation to complete before scrolling
                       setTimeout(() => {
                         document.getElementById('flashcard-style')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                       }, 100);
