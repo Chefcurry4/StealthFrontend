@@ -1759,6 +1759,11 @@ const Workbench = () => {
             ? 'bg-primary/10 border-primary shadow-[0_-4px_24px_-4px_rgba(var(--primary),0.25)]' 
             : ''
         }`}
+        style={{ 
+          paddingBottom: `max(env(safe-area-inset-bottom), 12px)`,
+          position: 'sticky',
+          bottom: 0
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

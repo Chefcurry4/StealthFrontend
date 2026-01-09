@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useCallback } from "react";
 import { ChevronRight, BookOpen, Bookmark, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,8 @@ import { useSavedCourses, useToggleSaveCourse } from "@/hooks/useSavedItems";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useCourseReviews } from "@/hooks/useCourseReviews";
 import { SEO, generateCourseSchema, generateBreadcrumbSchema } from "@/components/SEO";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   CourseInfoCard, 
   UserDetailsCard, 
@@ -22,7 +24,8 @@ const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: course, isLoading, error } = useCourse(id!);
+  const queryClient = useQueryClient();
+  const { data: course, isLoading, error, refetch } = useCourse(id!);
   
   // Check if user came from workbench
   const cameFromWorkbench = location.state?.fromWorkbench === true;
@@ -66,6 +69,12 @@ const CourseDetail = () => {
   }, [reviews]);
 
   const isSaved = savedCourses?.some((saved: any) => saved.course_id === id);
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["courses", id] });
+    await queryClient.invalidateQueries({ queryKey: ["course-reviews", id] });
+    await refetch();
+  }, [queryClient, id, refetch]);
 
   // Track recently viewed course
   useEffect(() => {
@@ -169,6 +178,7 @@ const CourseDetail = () => {
         structuredData={{ "@graph": [breadcrumbSchema, courseSchema] }}
       />
       
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Header Section */}
@@ -272,6 +282,7 @@ const CourseDetail = () => {
           </div>
         </div>
       </div>
+      </PullToRefresh>
     </>
   );
 };
