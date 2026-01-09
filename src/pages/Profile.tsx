@@ -254,6 +254,21 @@ const Profile = () => {
     }
   };
 
+  // Utility function to navigate to preferences and scroll to a specific section
+  const navigateToPreferenceSection = (sectionId: string) => {
+    setActiveSection("preferences");
+    // Wait for navigation to complete before scrolling
+    // Using requestAnimationFrame for more reliable DOM update detection
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    });
+  };
+
   const createdDate = profile?.created_at ? format(new Date(profile.created_at), "MMMM yyyy") : null;
   
   const userUniversity = profile?.university 
@@ -475,19 +490,7 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setActiveSection("preferences");
-                      // Wait for navigation to complete before scrolling
-                      // Using requestAnimationFrame for more reliable DOM update detection
-                      requestAnimationFrame(() => {
-                        setTimeout(() => {
-                          const element = document.getElementById('background-theme');
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }
-                        }, 50);
-                      });
-                    }}
+                    onClick={() => navigateToPreferenceSection('background-theme')}
                     className="gap-2"
                   >
                     <Settings className="h-4 w-4" />
@@ -496,19 +499,7 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setActiveSection("preferences");
-                      // Wait for navigation to complete before scrolling
-                      // Using requestAnimationFrame for more reliable DOM update detection
-                      requestAnimationFrame(() => {
-                        setTimeout(() => {
-                          const element = document.getElementById('flashcard-style');
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }
-                        }, 50);
-                      });
-                    }}
+                    onClick={() => navigateToPreferenceSection('flashcard-style')}
                     className="gap-2"
                   >
                     <User className="h-4 w-4" />
