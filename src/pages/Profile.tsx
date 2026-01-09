@@ -115,6 +115,13 @@ const Profile = () => {
   });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
+
+  // Define swipeable sections (only main content sections)
+  const swipeableSections: SectionId[] = ["profile", "saved", "diary"];
 
   // Update activeSection when URL params change
   useEffect(() => {
@@ -122,6 +129,57 @@ const Profile = () => {
       setActiveSection(sectionFromUrl);
     }
   }, [sectionFromUrl]);
+
+  // Add swipe navigation for mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX.current = e.changedTouches[0].clientX;
+      touchEndY.current = e.changedTouches[0].clientY;
+      
+      const deltaX = touchEndX.current - touchStartX.current;
+      const deltaY = Math.abs(touchEndY.current - touchStartY.current);
+      const minSwipeDistance = 80;
+      
+      // Only trigger if horizontal swipe is greater than vertical (to avoid conflicts with scrolling)
+      if (Math.abs(deltaX) < minSwipeDistance || deltaY > Math.abs(deltaX) * 0.5) {
+        return;
+      }
+
+      const currentIndex = swipeableSections.indexOf(activeSection);
+      // Only handle swipes on swipeable sections
+      if (currentIndex === -1) return;
+
+      if (deltaX > 0 && currentIndex > 0) {
+        // Swipe right - go to previous section
+        setActiveSection(swipeableSections[currentIndex - 1]);
+      } else if (deltaX < 0 && currentIndex < swipeableSections.length - 1) {
+        // Swipe left - go to next section
+        setActiveSection(swipeableSections[currentIndex + 1]);
+      }
+    };
+
+    // Attach to main content area instead of document to avoid interfering with other interactions
+    const mainElement = document.querySelector('main');
+    if (!mainElement) {
+      console.warn('Main element not found for swipe navigation');
+      return;
+    }
+
+    mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      mainElement.removeEventListener('touchstart', handleTouchStart);
+      mainElement.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobile, activeSection]);
 
   if (authLoading || profileLoading) {
     return <Loader fullScreen />;
@@ -194,6 +252,21 @@ const Profile = () => {
       console.error("Delete account error:", error);
       toast.error("Failed to delete account. Please try again.");
     }
+  };
+
+  // Utility function to navigate to preferences and scroll to a specific section
+  const navigateToPreferenceSection = (sectionId: string) => {
+    setActiveSection("preferences");
+    // Wait for navigation to complete before scrolling
+    // Using requestAnimationFrame for more reliable DOM update detection
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    });
   };
 
   const createdDate = profile?.created_at ? format(new Date(profile.created_at), "MMMM yyyy") : null;
@@ -417,7 +490,7 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setActiveSection("preferences")}
+                    onClick={() => navigateToPreferenceSection('background-theme')}
                     className="gap-2"
                   >
                     <Settings className="h-4 w-4" />
@@ -426,7 +499,7 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setActiveSection("preferences")}
+                    onClick={() => navigateToPreferenceSection('flashcard-style')}
                     className="gap-2"
                   >
                     <User className="h-4 w-4" />
