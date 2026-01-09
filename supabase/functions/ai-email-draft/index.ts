@@ -32,7 +32,7 @@ serve(async (req) => {
     }
     
     if (savedLabs?.length > 0) {
-      const labsList = savedLabs.map((l: any) => `- ${l.name}${l.slug ? ` (${l.slug})` : ''}`).join("\n");
+      const labsList = savedLabs.map((l: any) => `- ${l.name}`).join("\n");
       enrichedContext += `\n\nUser's saved labs of interest:\n${labsList}`;
     }
     

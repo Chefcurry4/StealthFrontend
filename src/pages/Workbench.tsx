@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { streamAIStudyAdvisor } from "@/hooks/useAI";
 import { extractPdfTextFromFile } from "@/lib/pdfText";
 import { extractTextFromImage } from "@/lib/imageOcr";
-import { useTouchGestures } from "@/hooks/useTouchGestures";
 import { useSavedCourses, useSavedLabs, useSavedPrograms } from "@/hooks/useSavedItems";
 import { useLearningAgreements } from "@/hooks/useLearningAgreements";
 import { useEmailDrafts, useCreateEmailDraft } from "@/hooks/useEmailDrafts";
@@ -77,11 +76,11 @@ import {
   Mail,
   BookOpen,
   Beaker,
+  ExternalLink,
   Edit3,
   Image,
   ArrowDown,
-  CalendarDays,
-  Plus
+  CalendarDays
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -246,23 +245,6 @@ const Workbench = () => {
   const inputAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
-  const [showFab, setShowFab] = useState(false);
-  
-  // Swipe gesture to open sidebar on mobile
-  const { bind: bindSwipe } = useTouchGestures({
-    onSwipeRight: () => {
-      if (isMobile && !sidebarOpen) {
-        setSidebarOpen(true);
-      }
-    },
-    onSwipeLeft: () => {
-      if (isMobile && sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    },
-    swipeThreshold: 80,
-    enabled: isMobile
-  });
   
   // Semester planner hooks
   const {
@@ -1180,14 +1162,14 @@ const Workbench = () => {
     if (data.selectedCourses.length > 0) {
       prompt += `\n**Relevant courses I'm taking:**\n`;
       data.selectedCourses.forEach(c => {
-        prompt += `- ${c?.code || ''} ${c?.name_course || ''}${c?.ects ? ` (${c.ects} ECTS)` : ''}\n`;
+        prompt += `- ${c?.code || ''} ${c?.name_course || ''}\n`;
       });
     }
     
     if (data.selectedLabs.length > 0) {
       prompt += `\n**Labs I'm interested in:**\n`;
       data.selectedLabs.forEach(l => {
-        prompt += `- ${l?.name || ''}${l?.slug ? ` (${l.slug})` : ''}\n`;
+        prompt += `- ${l?.name || ''}\n`;
       });
     }
     
@@ -1249,21 +1231,10 @@ const Workbench = () => {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0" ref={bindSwipe}>
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
           <div className="flex items-center gap-2">
-            {/* Mobile sidebar toggle button */}
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-lg hover:bg-accent/30"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <PanelLeft className="h-5 w-5 text-foreground/50" />
-              </Button>
-            )}
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -1503,7 +1474,7 @@ const Workbench = () => {
                     )}
 
                     {/* Message Content */}
-                    <div className={`flex-1 sm:max-w-[85%] max-w-[calc(100%-3rem)] ${message.role === "user" ? "text-right" : ""}`}>
+                    <div className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
                       <div
                         className={`inline-block rounded-2xl px-4 py-3 shadow-sm ${
                           message.role === "user"
@@ -1611,25 +1582,65 @@ const Workbench = () => {
                           {(message.content.toLowerCase().includes('subject:') || 
                             message.content.toLowerCase().includes('dear ') ||
                             message.content.toLowerCase().includes('email')) && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 rounded-lg hover:bg-accent/50"
-                              title="Save to Email Drafts"
-                              onClick={async () => {
-                                let content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
-                                const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
-                                await createEmailDraft.mutateAsync({
-                                  subject: subjectMatch ? subjectMatch[1].trim() : "AI Generated Email",
-                                  body: content,
-                                  recipient: "",
-                                });
-                                toast.success("Email saved to drafts");
-                              }}
-                            >
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                            </Button>
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                                title="Copy email content"
+                                onClick={() => {
+                                  // Extract just the email part (after Subject: line)
+                                  let emailContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  navigator.clipboard.writeText(emailContent);
+                                  toast.success("Email copied to clipboard");
+                                }}
+                              >
+                                <Copy className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                                title="Open in email client"
+                                onClick={() => {
+                                  const content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  // Try to extract subject
+                                  const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
+                                  const subject = subjectMatch ? subjectMatch[1].trim() : 'Email';
+                                  // Get body (everything after subject line)
+                                  const bodyStart = content.indexOf('\n', content.toLowerCase().indexOf('subject:'));
+                                  const body = bodyStart > -1 ? content.substring(bodyStart).trim() : content;
+                                  window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                                }}
+                              >
+                                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                                title="Save to Email Drafts"
+                                onClick={async () => {
+                                  let content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
+                                  await createEmailDraft.mutateAsync({
+                                    subject: subjectMatch ? subjectMatch[1].trim() : "AI Generated Email",
+                                    body: content,
+                                    recipient: "",
+                                  });
+                                  toast.success("Email saved to drafts");
+                                }}
+                              >
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </>
                           )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
+                            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
+                            <ThumbsDown className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1953,84 +1964,37 @@ const Workbench = () => {
       </div>
       </div>
       
-      {/* Semester Planner Panel - Hidden on mobile to avoid overlap */}
-      {!isMobile && (
-        <WorkbenchSemesterPlanner
-          isOpen={isPlannerOpen}
-          onToggle={togglePlanner}
-          savedPlans={savedSemesterPlans}
-          tempPlan={tempPlan}
-          onSaveTempPlan={async (name, winterCourses, summerCourses) => {
-            await saveAIPlan.mutateAsync({ name, winterCourses, summerCourses });
-            clearTempPlan();
-          }}
-          onClearTempPlan={clearTempPlan}
-          onDeletePlan={(planId) => deleteSemesterPlan.mutate(planId)}
-          onUpdatePlanName={(planId, newName) => updateSemesterPlan.mutate({ id: planId, name: newName })}
-          onRemoveCourseFromPlan={(planId, courseId) => {
-            const plan = savedSemesterPlans.find(p => p.id === planId);
-            if (plan) {
-              const updatedCourses = plan.courses.filter(c => c.id_course !== courseId);
-              updateSemesterPlan.mutate({ id: planId, courses: updatedCourses });
-            }
-          }}
-          savedCourses={savedCourses?.map(c => ({
-            id_course: c.Courses?.id_course || '',
-            name_course: c.Courses?.name_course || '',
-            code: c.Courses?.code || undefined,
-            ects: c.Courses?.ects || undefined,
-            type_exam: c.Courses?.type_exam || undefined,
-            ba_ma: c.Courses?.ba_ma || undefined,
-            professor_name: c.Courses?.professor_name || undefined,
-            term: c.Courses?.term || undefined
-          })).filter(c => c.id_course) || []}
-        />
-      )}
-      
-      {/* Mobile Floating Action Button */}
-      {isMobile && (
-        <div className="fixed bottom-24 right-4 z-50">
-          {/* FAB expanded options */}
-          {showFab && (
-            <div className="absolute bottom-16 right-0 flex flex-col gap-2 animate-in fade-in-0 slide-in-from-bottom-4 duration-200">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="gap-2 shadow-lg rounded-full px-4"
-                onClick={() => {
-                  handleNewChat();
-                  setShowFab(false);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                New Chat
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                className="gap-2 shadow-lg rounded-full px-4"
-                onClick={() => {
-                  handleNewChat();
-                  setShowEmailCompose(true);
-                  setShowFab(false);
-                }}
-              >
-                <Mail className="h-4 w-4" />
-                Compose Email
-              </Button>
-            </div>
-          )}
-          
-          {/* Main FAB button */}
-          <Button
-            size="icon"
-            className={`h-14 w-14 rounded-full shadow-lg transition-transform ${showFab ? 'rotate-45' : ''}`}
-            onClick={() => setShowFab(!showFab)}
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        </div>
-      )}
+      {/* Semester Planner Panel */}
+      <WorkbenchSemesterPlanner
+        isOpen={isPlannerOpen}
+        onToggle={togglePlanner}
+        savedPlans={savedSemesterPlans}
+        tempPlan={tempPlan}
+        onSaveTempPlan={async (name, winterCourses, summerCourses) => {
+          await saveAIPlan.mutateAsync({ name, winterCourses, summerCourses });
+          clearTempPlan();
+        }}
+        onClearTempPlan={clearTempPlan}
+        onDeletePlan={(planId) => deleteSemesterPlan.mutate(planId)}
+        onUpdatePlanName={(planId, newName) => updateSemesterPlan.mutate({ id: planId, name: newName })}
+        onRemoveCourseFromPlan={(planId, courseId) => {
+          const plan = savedSemesterPlans.find(p => p.id === planId);
+          if (plan) {
+            const updatedCourses = plan.courses.filter(c => c.id_course !== courseId);
+            updateSemesterPlan.mutate({ id: planId, courses: updatedCourses });
+          }
+        }}
+        savedCourses={savedCourses?.map(c => ({
+          id_course: c.Courses?.id_course || '',
+          name_course: c.Courses?.name_course || '',
+          code: c.Courses?.code || undefined,
+          ects: c.Courses?.ects || undefined,
+          type_exam: c.Courses?.type_exam || undefined,
+          ba_ma: c.Courses?.ba_ma || undefined,
+          professor_name: c.Courses?.professor_name || undefined,
+          term: c.Courses?.term || undefined
+        })).filter(c => c.id_course) || []}
+      />
       
       {/* Keyboard shortcuts help */}
       <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
