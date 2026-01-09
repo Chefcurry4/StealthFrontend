@@ -320,7 +320,7 @@ const Index = () => {
               <CardContent className="p-2.5 md:p-4 text-center">
                 <Bookmark className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-purple-500" />
                 <div className="text-xl md:text-2xl font-bold">{platformStats?.savedItems || 0}</div>
-                <p className="text-[11px] md:text-xs text-muted-foreground">Saved</p>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Bookmarks</p>
               </CardContent>
             </Card>
             

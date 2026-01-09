@@ -24,7 +24,6 @@ export const useHaptic = () => {
       navigator.vibrate(vibrationPattern);
     } catch (error) {
       // Silently fail if vibration is not supported
-      console.debug('Haptic feedback not available:', error);
     }
   }, []);
 

@@ -63,7 +63,7 @@ export const MobileFilterSheet = ({
             )}
           </Button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+        <SheetContent side="bottom" className="h-[min(85vh,800px)] flex flex-col">
           <SheetHeader>
             <SheetTitle>Filter Results</SheetTitle>
             <SheetDescription>

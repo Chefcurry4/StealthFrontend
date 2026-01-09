@@ -46,7 +46,7 @@ export const SwipeIndicator = () => {
                 "rounded-full transition-all duration-300 flex items-center justify-center touch-manipulation",
                 index === currentIndex 
                   ? "bg-primary min-h-[44px] px-3 min-w-[44px]" 
-                  : "bg-muted-foreground/40 hover:bg-muted-foreground/60 min-h-[44px] min-w-[44px]"
+                  : "bg-muted-foreground/60 hover:bg-muted-foreground/70 min-h-[44px] min-w-[44px]"
               )}
               title={route.label}
             >
