@@ -1246,14 +1246,7 @@ const Workbench = () => {
                 <PanelLeft className="h-5 w-5 text-foreground/70" />
               </Button>
             )}
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
-                <GraduationCap className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <div>
-              <h1 className="font-bold text-xl text-foreground/80 dark:text-foreground leading-none">hubAI</h1>
-            </div>
+
           </div>
 
         {/* Model Selector with Provider Groups */}

@@ -90,7 +90,7 @@ export const PreferencesSettings = () => {
   return (
     <div className="space-y-6">
       {/* Background Theme */}
-      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
+      <Card id="background-theme" className="backdrop-blur-md border scroll-mt-20" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export const PreferencesSettings = () => {
       </Card>
 
       {/* Appearance - Flashcard Style */}
-      <Card className="backdrop-blur-md border" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
+      <Card id="flashcard-style" className="backdrop-blur-md border scroll-mt-20" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />

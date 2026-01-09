@@ -115,6 +115,13 @@ const Profile = () => {
   });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
+
+  // Define swipeable sections (only main content sections)
+  const swipeableSections: SectionId[] = ["profile", "saved", "diary"];
 
   // Update activeSection when URL params change
   useEffect(() => {
@@ -122,6 +129,49 @@ const Profile = () => {
       setActiveSection(sectionFromUrl);
     }
   }, [sectionFromUrl]);
+
+  // Add swipe navigation for mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX.current = e.changedTouches[0].clientX;
+      touchEndY.current = e.changedTouches[0].clientY;
+      
+      const deltaX = touchEndX.current - touchStartX.current;
+      const deltaY = Math.abs(touchEndY.current - touchStartY.current);
+      const minSwipeDistance = 80;
+      
+      // Only trigger if horizontal swipe is greater than vertical (to avoid conflicts with scrolling)
+      if (Math.abs(deltaX) < minSwipeDistance || deltaY > Math.abs(deltaX) * 0.5) {
+        return;
+      }
+
+      const currentIndex = swipeableSections.indexOf(activeSection);
+      if (currentIndex === -1) return;
+
+      if (deltaX > 0 && currentIndex > 0) {
+        // Swipe right - go to previous section
+        setActiveSection(swipeableSections[currentIndex - 1]);
+      } else if (deltaX < 0 && currentIndex < swipeableSections.length - 1) {
+        // Swipe left - go to next section
+        setActiveSection(swipeableSections[currentIndex + 1]);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobile, activeSection]);
 
   if (authLoading || profileLoading) {
     return <Loader fullScreen />;
@@ -417,7 +467,13 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setActiveSection("preferences")}
+                    onClick={() => {
+                      setActiveSection("preferences");
+                      // Scroll to background theme section after navigation
+                      setTimeout(() => {
+                        document.getElementById('background-theme')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);
+                    }}
                     className="gap-2"
                   >
                     <Settings className="h-4 w-4" />
@@ -426,7 +482,13 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setActiveSection("preferences")}
+                    onClick={() => {
+                      setActiveSection("preferences");
+                      // Scroll to flashcard style section after navigation
+                      setTimeout(() => {
+                        document.getElementById('flashcard-style')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);
+                    }}
                     className="gap-2"
                   >
                     <User className="h-4 w-4" />
