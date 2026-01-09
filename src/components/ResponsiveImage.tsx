@@ -22,8 +22,16 @@ export const ResponsiveImage = ({
 }: ResponsiveImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   
-  // Check if it's an Unsplash image
-  const isUnsplash = src.includes('unsplash.com');
+  // Check if it's an Unsplash image - validate the hostname
+  const isUnsplash = (() => {
+    try {
+      const url = new URL(src);
+      return url.hostname === 'images.unsplash.com' || 
+             url.hostname === 'unsplash.com';
+    } catch {
+      return false;
+    }
+  })();
   
   // Generate srcset for different sizes
   const getSrcSet = () => {
