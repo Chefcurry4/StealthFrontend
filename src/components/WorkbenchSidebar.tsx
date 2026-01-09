@@ -225,15 +225,15 @@ export const WorkbenchSidebar = ({
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h2 className="font-semibold text-foreground">Workbench</h2>
         {!isMobile && (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onClose || onToggle}
-          className="gap-1.5 bg-accent/50 hover:bg-accent"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-          <span className="text-xs">Close</span>
-        </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onClose || onToggle}
+            className="gap-1.5 bg-accent/50 hover:bg-accent"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+            <span className="text-xs">Close</span>
+          </Button>
         )}
       </div>
 
