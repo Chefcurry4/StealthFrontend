@@ -177,7 +177,7 @@ export const GlobalSearch = ({
                       <button
                         key={`${result.type}-${result.id}`}
                         onClick={() => handleResultClick(result)}
-                        className="w-full px-3 py-2 flex items-center gap-3 hover:bg-primary/10 transition-colors text-left"
+                        className="w-full px-3 py-3 min-h-[52px] flex items-center gap-3 hover:bg-primary/10 active:bg-primary/20 transition-colors text-left touch-manipulation"
                         style={{ color: modeConfig.textColor }}
                       >
                         <span 

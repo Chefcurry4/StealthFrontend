@@ -272,7 +272,7 @@ export const Header = () => {
           {navigation.map((item) => (
             <button
               key={item.name}
-              className="relative text-base font-medium opacity-70 hover:opacity-100 transition-opacity py-3 px-2 rounded-lg active:scale-98 w-full text-left flex items-center justify-between"
+              className="relative text-base font-medium opacity-70 hover:opacity-100 transition-opacity py-4 px-4 min-h-[56px] rounded-lg active:scale-[0.97] active:bg-primary/10 w-full text-left flex items-center justify-between touch-manipulation"
               style={{ color: modeConfig.textColor }}
               onClick={() => {
                 setMobileMenuOpen(false);
@@ -292,7 +292,7 @@ export const Header = () => {
           {userNavigation.map((item) => (
             <button
               key={item.name}
-              className="relative text-base font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 py-3 px-2 rounded-lg active:scale-98 w-full text-left"
+              className="relative text-base font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2 py-4 px-4 min-h-[56px] rounded-lg active:scale-[0.97] active:bg-primary/10 w-full text-left touch-manipulation"
               style={{ color: modeConfig.textColor }}
               onClick={() => {
                 setMobileMenuOpen(false);

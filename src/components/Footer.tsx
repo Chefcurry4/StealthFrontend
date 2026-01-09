@@ -36,7 +36,7 @@ export const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:col-span-1 col-span-1">
             <Link to="/" className="flex items-center gap-2">
               <GraduationCap className="h-8 w-8" />
               <span className="text-xl font-bold">Student Hub</span>
@@ -54,7 +54,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity min-h-[44px] py-2 block"
                   >
                     {link.name}
                   </Link>
@@ -71,7 +71,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity min-h-[44px] py-2 block"
                   >
                     {link.name}
                   </Link>
@@ -88,7 +88,7 @@ export const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity min-h-[44px] py-2 block"
                   >
                     {link.name}
                   </Link>
