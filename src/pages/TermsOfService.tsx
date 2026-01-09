@@ -39,7 +39,7 @@ const TermsOfService = () => {
               <ul className="list-disc pl-6 space-y-2 opacity-80 mb-4">
                 <li><strong>University & Course Discovery:</strong> Browse and search universities, courses, and academic programs</li>
                 <li><strong>Research Lab Exploration:</strong> Discover research labs, principal investigators, and research topics</li>
-                <li><strong>AI Study Advisor:</strong> Receive personalized academic guidance powered by Google Gemini AI</li>
+                <li><strong>AI Study Advisor:</strong> Receive personalized academic guidance powered by Gemini, Perplexity, and OpenAI</li>
                 <li><strong>AI Course Recommendations:</strong> Get intelligent course suggestions based on your interests and saved items</li>
                 <li><strong>AI Email Composer:</strong> Generate professional email drafts for contacting professors and labs</li>
                 <li><strong>Learning Agreement Builder:</strong> Create and manage learning agreements for exchange semesters</li>
@@ -109,7 +109,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">6. AI-Generated Content & Disclaimer</h2>
               <p className="opacity-80 leading-relaxed mb-4">
-                Student Hub uses Google Gemini AI to power several features. Important disclaimers:
+                Student Hub uses multiple AI services (Gemini API, Perplexity API, and OpenAI API via Lovable Gateway) to power several features. Important disclaimers:
               </p>
               <ul className="list-disc pl-6 space-y-2 opacity-80">
                 <li><strong>AI Study Advisor:</strong> Provides general academic guidance based on available data. Responses are for informational purposes only and should not replace advice from academic advisors, professors, or institutional staff.</li>

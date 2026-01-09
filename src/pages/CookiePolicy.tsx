@@ -96,8 +96,12 @@ const CookiePolicy = () => {
                 </p>
                 <ul className="list-disc pl-6 space-y-2 opacity-80">
                   <li><strong>Supabase:</strong> Provides authentication, database services, and edge functions. Sets essential cookies for user authentication and session management. Required for login and account features.</li>
-                  <li><strong>Mapbox:</strong> Displays interactive maps showing university locations. May set cookies for map rendering and usage analytics according to their privacy policy.</li>
-                  <li><strong>Google Gemini (via Lovable AI Gateway):</strong> Powers our AI features. Does not set cookies directly on your device but processes conversation data server-side.</li>
+                  <li><strong>Lovable:</strong> Our development and hosting platform that provides the AI gateway. May set cookies for session management and platform functionality.</li>
+                  <li><strong>Gemini API (via Lovable Gateway):</strong> Powers our AI Study Advisor features. Processes conversation data server-side.</li>
+                  <li><strong>Perplexity API (via Lovable Gateway):</strong> Provides AI-powered search capabilities. Processes queries server-side.</li>
+                  <li><strong>OpenAI API:</strong> Used for additional AI features. Processes data server-side without setting client cookies.</li>
+                  <li><strong>Firecrawl:</strong> Enables web scraping for gathering university data. Does not set cookies on your device.</li>
+                  <li><strong>Notion:</strong> Used for content management. May set cookies if you interact with embedded Notion content.</li>
                 </ul>
               </section>
 

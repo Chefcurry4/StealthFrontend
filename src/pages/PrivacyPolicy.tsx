@@ -74,9 +74,9 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="list-disc pl-6 space-y-2 opacity-80">
                 <li>Provide and maintain our academic planning services including course discovery, lab exploration, and learning agreement creation</li>
-                <li>Power our AI Study Advisor to provide personalized academic guidance and course recommendations using Google Gemini</li>
+                <li>Power our AI Study Advisor to provide personalized academic guidance and course recommendations using Gemini, Perplexity, and OpenAI</li>
                 <li>Generate AI-assisted email drafts for contacting professors and research labs</li>
-                <li>Display university locations on interactive maps using Mapbox</li>
+                <li>Display university locations on interactive maps</li>
                 <li>Personalize your experience including theme preferences and recently viewed items</li>
                 <li>Process and store your learning agreements and semester planning data</li>
                 <li>Enable you to save, organize, and manage courses, labs, and programs in your Workbench</li>
@@ -92,8 +92,12 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="list-disc pl-6 space-y-2 opacity-80">
                 <li><strong>Supabase:</strong> Provides authentication, database storage, and edge functions for our backend services. Your account data and platform content are stored securely in Supabase infrastructure.</li>
-                <li><strong>Google Gemini (via Lovable AI Gateway):</strong> Powers our AI Study Advisor, course recommendations, and email draft generation. Conversation data is processed to provide AI responses but is not used to train AI models.</li>
-                <li><strong>Mapbox:</strong> Displays interactive maps showing university locations. Map usage data may be collected by Mapbox according to their privacy policy.</li>
+                <li><strong>Lovable:</strong> Our development and hosting platform that provides the AI gateway for connecting to various AI services.</li>
+                <li><strong>Gemini API (via Lovable Gateway):</strong> Powers our AI Study Advisor, course recommendations, and email draft generation. Conversation data is processed to provide AI responses.</li>
+                <li><strong>Perplexity API (via Lovable Gateway):</strong> Provides AI-powered search and research capabilities for academic content discovery.</li>
+                <li><strong>OpenAI API:</strong> Used for additional AI features including content generation and natural language processing.</li>
+                <li><strong>Firecrawl:</strong> Enables web scraping and data extraction for gathering university and course information.</li>
+                <li><strong>Notion:</strong> Used for content management and documentation purposes.</li>
               </ul>
             </section>
 
@@ -105,7 +109,7 @@ const PrivacyPolicy = () => {
               <ul className="list-disc pl-6 space-y-2 opacity-80">
                 <li><strong>Public Profile:</strong> If you choose to make your profile public, other users may view your display name, profile photo, and public activity</li>
                 <li><strong>Reviews:</strong> Course and lab reviews you submit are visible to other users of the platform</li>
-                <li><strong>Service Providers:</strong> We share data with third-party services (Supabase, Google Gemini, Mapbox) as necessary to provide platform functionality</li>
+                <li><strong>Service Providers:</strong> We share data with third-party services (Supabase, Lovable, Gemini, Perplexity, OpenAI, Firecrawl, Notion) as necessary to provide platform functionality</li>
                 <li><strong>Legal Requirements:</strong> We may disclose information if required by law or to protect our rights and safety</li>
               </ul>
             </section>
