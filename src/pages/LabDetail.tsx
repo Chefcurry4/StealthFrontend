@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useCallback } from "react";
 import { ChevronRight, Beaker, Bookmark, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ import { useSavedLabs, useToggleSaveLab } from "@/hooks/useSavedItems";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useLabReviews, calculateLabReviewSummary } from "@/hooks/useLabReviews";
 import { SEO, generateLabSchema, generateBreadcrumbSchema } from "@/components/SEO";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   LabInfoCard, 
   LabUserActionsCard, 
@@ -21,7 +23,8 @@ import {
 const LabDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { data: lab, isLoading, error } = useLab(slug!);
+  const queryClient = useQueryClient();
+  const { data: lab, isLoading, error, refetch } = useLab(slug!);
   const { data: universities } = useUniversitiesByLab(lab?.id_lab || "");
   const { user } = useAuth();
   const { data: savedLabs } = useSavedLabs();
@@ -36,6 +39,12 @@ const LabDetail = () => {
   }, [reviews]);
 
   const isSaved = savedLabs?.some((saved: any) => saved.lab_id === lab?.id_lab);
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["labs", slug] });
+    await queryClient.invalidateQueries({ queryKey: ["lab-reviews", lab?.id_lab] });
+    await refetch();
+  }, [queryClient, slug, lab?.id_lab, refetch]);
 
   // Scroll to top when the page loads
   useEffect(() => {
@@ -143,6 +152,7 @@ const LabDetail = () => {
         structuredData={{ "@graph": [breadcrumbSchema, labSchema] }}
       />
       
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Header Section */}
@@ -267,6 +277,7 @@ const LabDetail = () => {
           </div>
         </div>
       </div>
+      </PullToRefresh>
     </>
   );
 };

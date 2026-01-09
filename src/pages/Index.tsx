@@ -147,7 +147,7 @@ const Index = () => {
       <section className="relative flex-1 flex items-center justify-center py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+            <h1 className="text-2xl xs:text-3xl md:text-4xl lg:text-6xl font-bold mb-4">
               Student Hub
             </h1>
             <p className="text-lg md:text-xl opacity-80 mb-8">
@@ -299,52 +299,52 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 max-w-5xl mx-auto">
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
-              <CardContent className="p-4 text-center">
-                <Users className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-                <div className="text-2xl font-bold">{platformStats?.users || 0}</div>
-                <p className="text-xs text-muted-foreground">Users</p>
+              <CardContent className="p-2.5 md:p-4 text-center">
+                <Users className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-blue-500" />
+                <div className="text-xl md:text-2xl font-bold">{platformStats?.users || 0}</div>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Users</p>
               </CardContent>
             </Card>
             
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
-              <CardContent className="p-4 text-center">
-                <MessageSquare className="h-6 w-6 mx-auto mb-2 text-green-500" />
-                <div className="text-2xl font-bold">{platformStats?.reviews || 0}</div>
-                <p className="text-xs text-muted-foreground">Reviews</p>
+              <CardContent className="p-2.5 md:p-4 text-center">
+                <MessageSquare className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-green-500" />
+                <div className="text-xl md:text-2xl font-bold">{platformStats?.reviews || 0}</div>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Reviews</p>
               </CardContent>
             </Card>
             
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
-              <CardContent className="p-4 text-center">
-                <Bookmark className="h-6 w-6 mx-auto mb-2 text-purple-500" />
-                <div className="text-2xl font-bold">{platformStats?.savedItems || 0}</div>
-                <p className="text-xs text-muted-foreground">Saved Items</p>
+              <CardContent className="p-2.5 md:p-4 text-center">
+                <Bookmark className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-purple-500" />
+                <div className="text-xl md:text-2xl font-bold">{platformStats?.savedItems || 0}</div>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Saved</p>
               </CardContent>
             </Card>
             
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
-              <CardContent className="p-4 text-center">
-                <BookOpen className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
-                <div className="text-2xl font-bold">{courses?.length || 0}+</div>
-                <p className="text-xs text-muted-foreground">Courses</p>
+              <CardContent className="p-2.5 md:p-4 text-center">
+                <BookOpen className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-emerald-500" />
+                <div className="text-xl md:text-2xl font-bold">{courses?.length || 0}+</div>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Courses</p>
               </CardContent>
             </Card>
             
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
-              <CardContent className="p-4 text-center">
-                <Microscope className="h-6 w-6 mx-auto mb-2 text-orange-500" />
-                <div className="text-2xl font-bold">{labs?.length || 0}</div>
-                <p className="text-xs text-muted-foreground">Labs</p>
+              <CardContent className="p-2.5 md:p-4 text-center">
+                <Microscope className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-orange-500" />
+                <div className="text-xl md:text-2xl font-bold">{labs?.length || 0}</div>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Labs</p>
               </CardContent>
             </Card>
             
             <Card className="backdrop-blur-md bg-background/50 border-border/50">
-              <CardContent className="p-4 text-center">
-                <Globe className="h-6 w-6 mx-auto mb-2 text-rose-500" />
-                <div className="text-2xl font-bold">1</div>
-                <p className="text-xs text-muted-foreground">Universities</p>
+              <CardContent className="p-2.5 md:p-4 text-center">
+                <Globe className="h-4 w-4 md:h-6 md:w-6 mx-auto mb-2 text-rose-500" />
+                <div className="text-xl md:text-2xl font-bold">1</div>
+                <p className="text-[11px] md:text-xs text-muted-foreground">Unis</p>
               </CardContent>
             </Card>
           </div>
