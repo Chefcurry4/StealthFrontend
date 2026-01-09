@@ -1211,7 +1211,7 @@ const Workbench = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-[100dvh] overflow-hidden">
       {/* Sidebar */}
       <WorkbenchSidebar
         isOpen={sidebarOpen}
@@ -1231,10 +1231,21 @@ const Workbench = () => {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-transparent sticky top-0 z-10">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/30 bg-background/80 backdrop-blur-sm z-10">
           <div className="flex items-center gap-2">
+            {/* Mobile sidebar toggle */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg hover:bg-accent/50"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <PanelLeft className="h-5 w-5 text-foreground/70" />
+              </Button>
+            )}
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -1390,9 +1401,9 @@ const Workbench = () => {
         onResultClick={scrollToMessage}
       />
 
-      {/* Chat Area */}
-      <ScrollArea className="flex-1 px-4 relative" ref={scrollRef}>
-        <div className="py-8 space-y-6">
+      {/* Chat Area - Only this scrolls */}
+      <ScrollArea className="flex-1 min-h-0 px-4 relative" ref={scrollRef}>
+        <div className="py-4 sm:py-8 space-y-6">
           {/* Email Compose Form - shows when composing email */}
           {showEmailCompose && messages.length === 0 && (
             <EmailComposeInChat
@@ -1740,12 +1751,12 @@ const Workbench = () => {
         )}
       </ScrollArea>
 
-      {/* Input Area - Fixed bottom with animated drop zone */}
+      {/* Input Area - Fixed at bottom, never scrolls */}
       <div 
         ref={inputAreaRef}
-        className={`border-t border-border/50 bg-transparent p-4 transition-all duration-300 ${
+        className={`flex-shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-3 sm:p-4 transition-all duration-300 ${
           isDragOver 
-            ? 'bg-primary/10 border-primary shadow-[0_-4px_24px_-4px_rgba(var(--primary),0.25)] scale-[1.01]' 
+            ? 'bg-primary/10 border-primary shadow-[0_-4px_24px_-4px_rgba(var(--primary),0.25)]' 
             : ''
         }`}
         onDragOver={handleDragOver}
@@ -1939,13 +1950,13 @@ const Workbench = () => {
         </div>
 
 
-        <div className="flex flex-col items-center gap-2 mt-3">
-          <p className="text-xs text-foreground/40 dark:text-muted-foreground/70">
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <p className="text-[10px] sm:text-xs text-foreground/40 dark:text-muted-foreground/70">
             hubAI can make mistakes. Consider checking important information.
           </p>
           
-          {/* Powered By Section */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
+          {/* Powered By Section - Hidden on mobile for space */}
+          <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground/60">
             <span>Powered by</span>
             <div className="flex items-center gap-1.5">
               <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
