@@ -39,6 +39,8 @@ export interface AIMessage {
   created_at: string;
   attachments?: AIMessageAttachment[] | null;
   referenced_items?: AIMessageReferencedItem[] | null;
+  feedback?: "positive" | "negative" | null;
+  feedback_at?: string | null;
 }
 
 export const useAIConversations = () => {
@@ -188,6 +190,28 @@ export const useDeleteConversation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
+    },
+  });
+};
+
+export const useMessageFeedback = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ messageId, feedback }: { messageId: string; feedback: "positive" | "negative" }) => {
+      const { error } = await supabase
+        .from("ai_messages")
+        .update({ 
+          feedback,
+          feedback_at: new Date().toISOString()
+        })
+        .eq("id", messageId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate messages query to refetch with new feedback
+      queryClient.invalidateQueries({ queryKey: ["ai-messages"] });
     },
   });
 };
