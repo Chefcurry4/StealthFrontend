@@ -168,10 +168,22 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
     try {
       const recipientName = selectedProfessor?.full_name || selectedProfessor?.name || recipient || "Professor";
       
-      // Get selected items data - savedCourses/Labs have nested Courses/Labs objects
-      const coursesData = savedCourses?.filter(c => selectedCourses.includes(c.course_id || '')).map(c => c.Courses) || [];
-      const labsData = savedLabs?.filter(l => selectedLabs.includes(l.lab_id || '')).map(l => l.Labs) || [];
-      const docsData = userDocuments?.filter(d => selectedDocs.includes(d.id)) || [];
+      // Get selected items data - single pass using reduce
+      const selectedCourseSet = new Set(selectedCourses);
+      const selectedLabSet = new Set(selectedLabs);
+      const selectedDocSet = new Set(selectedDocs);
+      
+      const coursesData = savedCourses?.reduce<any[]>((acc, c) => {
+        if (selectedCourseSet.has(c.course_id || '')) acc.push(c.Courses);
+        return acc;
+      }, []) || [];
+      
+      const labsData = savedLabs?.reduce<any[]>((acc, l) => {
+        if (selectedLabSet.has(l.lab_id || '')) acc.push(l.Labs);
+        return acc;
+      }, []) || [];
+      
+      const docsData = userDocuments?.filter(d => selectedDocSet.has(d.id)) || [];
       
       const result = await generateAI.mutateAsync({
         purpose,

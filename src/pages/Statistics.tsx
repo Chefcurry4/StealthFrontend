@@ -357,7 +357,7 @@ const Statistics = () => {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }} 
-                    animationDuration={200}
+                    animationDuration={0}
                   />
                   <Legend />
                   <Line 
@@ -368,8 +368,7 @@ const Statistics = () => {
                     strokeWidth={3}
                     dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
                     activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
-                    animationDuration={1000}
-                    animationEasing="ease-out"
+                    isAnimationActive={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -401,14 +400,13 @@ const Statistics = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      isAnimationActive={false}
                     >
                       {levelPieData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip animationDuration={200} />
+                    <Tooltip animationDuration={0} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -447,14 +445,13 @@ const Statistics = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name.substring(0, 3)} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      isAnimationActive={false}
                     >
                       {languagePieData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip animationDuration={200} />
+                    <Tooltip animationDuration={0} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -491,14 +488,13 @@ const Statistics = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name.replace(' ECTS', '')} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      isAnimationActive={false}
                     >
                       {ectsPieData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip animationDuration={200} />
+                    <Tooltip animationDuration={0} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -535,15 +531,14 @@ const Statistics = () => {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }} 
-                    animationDuration={200}
+                    animationDuration={0}
                   />
                   <Bar 
                     dataKey="value" 
                     name="Courses" 
                     fill="hsl(var(--primary))" 
                     radius={[0, 4, 4, 0]} 
-                    animationDuration={800}
-                    animationEasing="ease-out"
+                    isAnimationActive={false}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -585,15 +580,14 @@ const Statistics = () => {
                         borderRadius: '8px'
                       }}
                       formatter={(value: number, name: string, props: any) => [value, props.payload.fullName]}
-                      animationDuration={200}
+                      animationDuration={0}
                     />
                     <Bar 
                       dataKey="value" 
                       name="Courses" 
                       fill="#10b981" 
                       radius={[0, 4, 4, 0]}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      isAnimationActive={false}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -628,15 +622,14 @@ const Statistics = () => {
                         borderRadius: '8px'
                       }}
                       formatter={(value: number, name: string, props: any) => [value, props.payload.fullName]}
-                      animationDuration={200}
+                      animationDuration={0}
                     />
                     <Bar 
                       dataKey="value" 
                       name="Labs" 
                       fill="#8b5cf6" 
                       radius={[0, 4, 4, 0]}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      isAnimationActive={false}
                     />
                   </BarChart>
                 </ResponsiveContainer>

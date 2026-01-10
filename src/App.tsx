@@ -42,7 +42,17 @@ import HelpCenter from "./pages/HelpCenter";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+      gcTime: 10 * 60 * 1000, // Cache for 10 minutes (was cacheTime)
+      retry: 1, // Only retry failed requests once
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnReconnect: false, // Don't refetch on reconnect
+    },
+  },
+});
 
 const AppContent = () => {
   const location = useLocation();

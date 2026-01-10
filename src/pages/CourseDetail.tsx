@@ -45,10 +45,29 @@ const CourseDetail = () => {
     const workloadMap: Record<string, number> = { "Light": 1, "Okay": 2, "Heavy": 3 };
     const organizationMap: Record<string, number> = { "Poor": 1, "Fair": 2, "Good": 3, "Great": 4 };
     
-    const difficulties = reviews.filter(r => r.difficulty).map(r => difficultyMap[r.difficulty!] || 0).filter(v => v > 0);
-    const workloads = reviews.filter(r => r.workload).map(r => workloadMap[r.workload!] || 0).filter(v => v > 0);
-    const organizations = reviews.filter(r => r.organization).map(r => organizationMap[r.organization!] || 0).filter(v => v > 0);
-    const ratings = reviews.filter(r => r.rating).map(r => Number(r.rating));
+    // Single pass through reviews
+    const difficulties: number[] = [];
+    const workloads: number[] = [];
+    const organizations: number[] = [];
+    const ratings: number[] = [];
+    
+    reviews.forEach(r => {
+      if (r.difficulty) {
+        const val = difficultyMap[r.difficulty];
+        if (val > 0) difficulties.push(val);
+      }
+      if (r.workload) {
+        const val = workloadMap[r.workload];
+        if (val > 0) workloads.push(val);
+      }
+      if (r.organization) {
+        const val = organizationMap[r.organization];
+        if (val > 0) organizations.push(val);
+      }
+      if (r.rating) {
+        ratings.push(Number(r.rating));
+      }
+    });
     
     const avgDiffNum = difficulties.length ? difficulties.reduce((a, b) => a + b, 0) / difficulties.length : 0;
     const avgWorkNum = workloads.length ? workloads.reduce((a, b) => a + b, 0) / workloads.length : 0;
