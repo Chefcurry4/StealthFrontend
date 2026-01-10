@@ -1241,6 +1241,7 @@ const Workbench = () => {
                 size="icon"
                 className="h-8 w-8 rounded-lg hover:bg-accent/50"
                 onClick={() => setSidebarOpen(true)}
+                data-tour="sidebar-toggle"
               >
                 <PanelLeft className="h-4 w-4 text-foreground/70" />
               </Button>
@@ -1253,6 +1254,7 @@ const Workbench = () => {
               <Button 
                 variant="outline" 
                 className="gap-1.5 sm:gap-2 border-border/50 bg-card/80 backdrop-blur-md shadow-lg hover:bg-accent/50 transition-all text-foreground/70 dark:text-foreground px-2 sm:px-4 h-8 sm:h-9"
+                data-tour="model-selector"
               >
                 <span className="text-primary">{selectedModelData.icon}</span>
                 <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
@@ -1365,6 +1367,7 @@ const Workbench = () => {
                 handleNewChat();
                 setShowEmailCompose(true);
               }}
+              data-tour="compose-email-btn"
             >
               <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline text-sm">Compose Email</span>
@@ -1923,6 +1926,7 @@ const Workbench = () => {
               }}
               disabled={isStreaming}
               className="pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border"
+              data-tour="chat-input"
             />
             {isStreaming ? (
               <Button

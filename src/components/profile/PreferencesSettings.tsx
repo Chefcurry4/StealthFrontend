@@ -88,7 +88,7 @@ export const PreferencesSettings = () => {
   const themeIds = Object.values(ThemeId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="profile-preferences">
       {/* Background Theme */}
       <Card id="background-theme" className="backdrop-blur-md border scroll-mt-20" style={{ background: 'var(--theme-card-bg)', borderColor: 'var(--theme-card-border)' }}>
         <CardHeader>

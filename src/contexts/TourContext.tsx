@@ -39,8 +39,8 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   
-  // Total steps - will be updated based on step definitions
-  const totalSteps = 13; // Updated based on the tour journey
+  // Total steps from tour definitions
+  const totalSteps = 13;
 
   // Load tour progress on mount
   useEffect(() => {

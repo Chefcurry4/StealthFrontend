@@ -182,6 +182,7 @@ const Labs = () => {
                 selectedTopics={selectedTopics}
                 onTopicsChange={setSelectedTopics}
                 className="w-full"
+                data-tour="labs-topic-filter"
               />
 
               <Select 

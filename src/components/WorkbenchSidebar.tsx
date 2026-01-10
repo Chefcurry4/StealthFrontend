@@ -220,7 +220,7 @@ export const WorkbenchSidebar = ({
     : userDocuments;
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" data-tour="sidebar">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h2 className="font-semibold text-foreground">Workbench</h2>
@@ -453,6 +453,7 @@ export const WorkbenchSidebar = ({
                         onClick={(e) => handleCourseClick(e, item)}
                         className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                         title={courseName}
+                        data-tour="saved-course-item"
                       >
                         <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                         <BookOpen className="h-3 w-3 shrink-0 text-blue-500" />
@@ -533,6 +534,7 @@ export const WorkbenchSidebar = ({
                         onClick={(e) => handleLabClick(e, item)}
                         className="flex items-center gap-2 p-2 rounded-lg text-sm hover:bg-accent/50 transition-colors w-full text-left group"
                         title={labName}
+                        data-tour="saved-lab-item"
                       >
                         <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
                         <Beaker className="h-3 w-3 shrink-0 text-green-500" />

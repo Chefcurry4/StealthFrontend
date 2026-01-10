@@ -166,7 +166,7 @@ const Courses = () => {
               onApply={() => {}}
             >
               {/* Filter content for mobile sheet */}
-              <div className="space-y-4">
+              <div className="space-y-4" data-tour="courses-filters">
                 <TopicFilterMultiSelect
                   selectedTopics={selectedTopics}
                   onTopicsChange={(topics) => {
@@ -463,6 +463,7 @@ const Courses = () => {
                         key={course.id_course} 
                         className="flex flex-col overflow-hidden backdrop-blur-md cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all duration-200"
                         onClick={() => navigate(`/courses/${course.id_course}`)}
+                        data-tour="course-card"
                       >
                         <CourseCardImage 
                           courseId={course.id_course}
