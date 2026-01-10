@@ -10,9 +10,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BackgroundThemeProvider, useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 import { NavigationTrackerProvider } from "@/contexts/NavigationTrackerContext";
 import { SectionNavigationProvider } from "@/contexts/SectionNavigationContext";
+import { TourProvider } from "@/contexts/TourContext";
 import { GrainyBackground } from "@/components/GrainyBackground";
 import { ThemeModeSync } from "@/components/ThemeModeSync";
 import { PageTransition } from "@/components/PageTransition";
+import { InteractiveTour } from "@/components/tour/InteractiveTour";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -100,6 +102,7 @@ const AppContent = () => {
         </main>
         <SwipeIndicator />
         {!hideFooter && <Footer />}
+        <InteractiveTour />
       </div>
     </GrainyBackground>
   );
@@ -110,23 +113,25 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
-          <BackgroundThemeProvider>
-            <ThemeModeSync />
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <NavigationTrackerProvider>
-                  <SectionNavigationProvider>
-                    <ScrollToTop />
-                    <ErrorBoundary>
-                      <AppContent />
-                    </ErrorBoundary>
-                  </SectionNavigationProvider>
-                </NavigationTrackerProvider>
-              </BrowserRouter>
-            </TooltipProvider>
-          </BackgroundThemeProvider>
+          <TourProvider>
+            <BackgroundThemeProvider>
+              <ThemeModeSync />
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <NavigationTrackerProvider>
+                    <SectionNavigationProvider>
+                      <ScrollToTop />
+                      <ErrorBoundary>
+                        <AppContent />
+                      </ErrorBoundary>
+                    </SectionNavigationProvider>
+                  </NavigationTrackerProvider>
+                </BrowserRouter>
+              </TooltipProvider>
+            </BackgroundThemeProvider>
+          </TourProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

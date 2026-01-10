@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Mail, Users, MessageSquare, Bookmark, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTour } from "@/contexts/TourContext";
 import { useUniversities } from "@/hooks/useUniversities";
 import { useCourses } from "@/hooks/useCourses";
 import { useLabs } from "@/hooks/useLabs";
@@ -11,9 +12,6 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { SEO } from "@/components/SEO";
 import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
-import { useGuide } from "@/hooks/useGuide";
-import { WebsiteGuide } from "@/components/guide/WebsiteGuide";
-import { GuidePromptDialog } from "@/components/guide/GuidePromptDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -26,15 +24,7 @@ const Index = () => {
   const { data: courses } = useCourses({});
   const { data: labs } = useLabs();
   
-  const {
-    showPrompt,
-    showGuide,
-    startGuide,
-    closePrompt,
-    closeGuide,
-    completeGuide,
-    openGuide,
-  } = useGuide();
+  const { startTour } = useTour();
 
   // Fetch platform stats using RPC function
   const { data: platformStats } = useQuery({
@@ -220,7 +210,7 @@ const Index = () => {
               Your journey to the perfect exchange semester in four simple steps
             </p>
             <Button 
-              onClick={openGuide}
+              onClick={startTour}
               variant="outline"
               className="group"
             >
@@ -356,18 +346,6 @@ const Index = () => {
       open={authDialogOpen} 
       onOpenChange={setAuthDialogOpen}
       feature={authDialogFeature}
-    />
-
-    {/* Guide Components */}
-    <GuidePromptDialog
-      isOpen={showPrompt}
-      onClose={closePrompt}
-      onStartGuide={startGuide}
-    />
-    <WebsiteGuide
-      isOpen={showGuide}
-      onClose={closeGuide}
-      onComplete={completeGuide}
     />
     </>
   );
