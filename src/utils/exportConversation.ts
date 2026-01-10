@@ -124,10 +124,22 @@ export const exportAsPDF = (messages: Message[], title?: string): void => {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0);
     
-    // Clean content - remove HTML comments and markdown artifacts
-    const cleanContent = message.content
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .trim();
+    // Clean content - remove HTML comments, markdown artifacts, and potential XSS vectors
+    let cleanContent = message.content;
+    
+    // Remove HTML comments completely (handle all edge cases)
+    while (cleanContent.includes('<!--')) {
+      const start = cleanContent.indexOf('<!--');
+      const end = cleanContent.indexOf('-->', start);
+      if (end === -1) {
+        // Unclosed comment, remove everything from start
+        cleanContent = cleanContent.substring(0, start);
+        break;
+      }
+      cleanContent = cleanContent.substring(0, start) + cleanContent.substring(end + 3);
+    }
+    
+    cleanContent = cleanContent.trim();
     
     // Split content into lines that fit the page width
     const lines = doc.splitTextToSize(cleanContent, maxWidth);
