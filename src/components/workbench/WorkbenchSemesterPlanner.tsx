@@ -21,17 +21,17 @@ import {
   BookOpen,
   Info
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -493,24 +493,29 @@ export const WorkbenchSemesterPlanner = ({
 
   return (
     <TooltipProvider>
-    <div className="w-80 border-l border-border bg-background/95 backdrop-blur-sm flex flex-col h-full">
+    <div className="w-72 sm:w-80 border-l border-border bg-background/95 backdrop-blur-sm flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b border-border flex items-center justify-between">
+      <div className="p-2.5 sm:p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookMarked className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">Semester Planner</h3>
+          <h3 className="font-semibold text-xs sm:text-sm">Semester Planner</h3>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="outline" className="text-[9px] cursor-help">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Badge variant="outline" className="text-[10px] sm:text-xs cursor-pointer hover:bg-accent">
                 {savedPlans.length}/10
               </Badge>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs">
-              <p className="text-xs">You can save up to 10 semester plans. Delete old plans to make room for new ones.</p>
-            </TooltipContent>
-          </Tooltip>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="bottom" align="end" className="max-w-xs p-3">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  You can save up to 10 semester plans. Delete old plans to make room for new ones.
+                </p>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggle}>
             <ChevronRight className="h-4 w-4" />
           </Button>

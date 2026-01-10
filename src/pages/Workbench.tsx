@@ -1232,153 +1232,155 @@ const Workbench = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/30 bg-background/80 backdrop-blur-sm z-10">
-          <div className="flex items-center gap-2">
-            {/* Mobile sidebar toggle */}
+        <div className="flex-shrink-0 flex items-center justify-between gap-2 px-2 sm:px-4 py-2 sm:py-3 border-b border-border/30 bg-background/80 backdrop-blur-sm z-10">
+          {/* Left side - sidebar toggle on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {isMobile && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg hover:bg-accent/50"
+                className="h-8 w-8 rounded-lg hover:bg-accent/50"
                 onClick={() => setSidebarOpen(true)}
               >
-                <PanelLeft className="h-5 w-5 text-foreground/70" />
+                <PanelLeft className="h-4 w-4 text-foreground/70" />
               </Button>
             )}
-
           </div>
 
-        {/* Model Selector with Provider Groups */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="gap-2 border-border/50 bg-card/80 backdrop-blur-md shadow-lg hover:bg-accent/50 transition-all text-foreground/70 dark:text-foreground"
+          {/* Center - Model Selector */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="gap-1.5 sm:gap-2 border-border/50 bg-card/80 backdrop-blur-md shadow-lg hover:bg-accent/50 transition-all text-foreground/70 dark:text-foreground px-2 sm:px-4 h-8 sm:h-9"
+              >
+                <span className="text-primary">{selectedModelData.icon}</span>
+                <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
+                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-72">
+              {/* Google Gemini Models */}
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
+                {providerInfo.gemini.name}
+              </DropdownMenuLabel>
+              {models.filter(m => m.provider === "gemini").map(model => (
+                <DropdownMenuItem
+                  key={model.id}
+                  onClick={() => setSelectedModel(model.id)}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <div className="mt-0.5 text-primary">{model.icon}</div>
+                  <div className="flex-1">
+                    <div className="font-medium">{model.name}</div>
+                    <div className="text-xs opacity-70">{model.description}</div>
+                  </div>
+                  {selectedModel === model.id && (
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+              
+              {/* OpenAI Models */}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <img src={providerInfo.openai.logo} alt="OpenAI" className="h-4 w-4" />
+                {providerInfo.openai.name}
+              </DropdownMenuLabel>
+              {models.filter(m => m.provider === "openai").map(model => (
+                <DropdownMenuItem
+                  key={model.id}
+                  onClick={() => setSelectedModel(model.id)}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <div className="mt-0.5 text-primary">{model.icon}</div>
+                  <div className="flex-1">
+                    <div className="font-medium">{model.name}</div>
+                    <div className="text-xs opacity-70">{model.description}</div>
+                  </div>
+                  {selectedModel === model.id && (
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+              
+              {/* Perplexity Models */}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
+                {providerInfo.perplexity.name}
+              </DropdownMenuLabel>
+              {models.filter(m => m.provider === "perplexity").map(model => (
+                <DropdownMenuItem
+                  key={model.id}
+                  onClick={() => setSelectedModel(model.id)}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <div className="mt-0.5 text-primary">{model.icon}</div>
+                  <div className="flex-1">
+                    <div className="font-medium">{model.name}</div>
+                    <div className="text-xs opacity-70">{model.description}</div>
+                  </div>
+                  {selectedModel === model.id && (
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Right side - action buttons */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* Semester Planner Toggle Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg hover:bg-accent/30"
+              onClick={togglePlanner}
+              title={isPlannerOpen ? "Hide Semester Planner" : "Show Semester Planner"}
             >
-              <span className="text-primary">{selectedModelData.icon}</span>
-              <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
-              <ChevronDown className="h-4 w-4" />
+              <CalendarDays className={`h-4 w-4 sm:h-5 sm:w-5 ${isPlannerOpen ? 'text-primary' : 'text-foreground/50'}`} />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            {/* Google Gemini Models */}
-            <DropdownMenuLabel className="flex items-center gap-2">
-              <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
-              {providerInfo.gemini.name}
-            </DropdownMenuLabel>
-            {models.filter(m => m.provider === "gemini").map(model => (
-              <DropdownMenuItem
-                key={model.id}
-                onClick={() => setSelectedModel(model.id)}
-                className="flex items-start gap-3 p-3 cursor-pointer"
+          
+            {/* Search button - hide on mobile */}
+            {messages.length > 0 && !isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-foreground"
+                onClick={openSearch}
+                title="Search in conversation (Ctrl+F)"
               >
-                <div className="mt-0.5 text-primary">{model.icon}</div>
-                <div className="flex-1">
-                  <div className="font-medium">{model.name}</div>
-                  <div className="text-xs opacity-70">{model.description}</div>
-                </div>
-                {selectedModel === model.id && (
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
-                )}
-              </DropdownMenuItem>
-            ))}
+                <Search className="h-4 w-4" />
+              </Button>
+            )}
             
-            {/* OpenAI Models */}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="flex items-center gap-2">
-              <img src={providerInfo.openai.logo} alt="OpenAI" className="h-4 w-4" />
-              {providerInfo.openai.name}
-            </DropdownMenuLabel>
-            {models.filter(m => m.provider === "openai").map(model => (
-              <DropdownMenuItem
-                key={model.id}
-                onClick={() => setSelectedModel(model.id)}
-                className="flex items-start gap-3 p-3 cursor-pointer"
-              >
-                <div className="mt-0.5 text-primary">{model.icon}</div>
-                <div className="flex-1">
-                  <div className="font-medium">{model.name}</div>
-                  <div className="text-xs opacity-70">{model.description}</div>
-                </div>
-                {selectedModel === model.id && (
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
-                )}
-              </DropdownMenuItem>
-            ))}
+            {/* Compose Email Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 sm:gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20 h-8 sm:h-9 px-2 sm:px-4"
+              onClick={() => {
+                handleNewChat();
+                setShowEmailCompose(true);
+              }}
+            >
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline text-sm">Compose Email</span>
+            </Button>
             
-            {/* Perplexity Models */}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="flex items-center gap-2">
-              <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
-              {providerInfo.perplexity.name}
-            </DropdownMenuLabel>
-            {models.filter(m => m.provider === "perplexity").map(model => (
-              <DropdownMenuItem
-                key={model.id}
-                onClick={() => setSelectedModel(model.id)}
-                className="flex items-start gap-3 p-3 cursor-pointer"
-              >
-                <div className="mt-0.5 text-primary">{model.icon}</div>
-                <div className="flex-1">
-                  <div className="font-medium">{model.name}</div>
-                  <div className="text-xs opacity-70">{model.description}</div>
-                </div>
-                {selectedModel === model.id && (
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-          {/* Semester Planner Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-lg hover:bg-accent/30"
-            onClick={togglePlanner}
-            title={isPlannerOpen ? "Hide Semester Planner" : "Show Semester Planner"}
-          >
-            <CalendarDays className={`h-5 w-5 ${isPlannerOpen ? 'text-primary' : 'text-foreground/50'}`} />
-          </Button>
-        
-        {/* Search button */}
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-foreground"
-            onClick={openSearch}
-            title="Search in conversation (Ctrl+F)"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-        )}
-        
-        {/* Compose Email Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20"
-          onClick={() => {
-            handleNewChat();
-            setShowEmailCompose(true);
-          }}
-        >
-          <Mail className="h-4 w-4" />
-          <span className="hidden sm:inline">Compose Email</span>
-        </Button>
-        
-        {/* Document Context Indicator */}
-        {attachments.length > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
-            <Paperclip className="h-3.5 w-3.5 text-cyan-500" />
-            <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">
-              {attachments.length} doc{attachments.length > 1 ? 's' : ''} attached
-            </span>
+            {/* Document Context Indicator - hide on mobile */}
+            {attachments.length > 0 && !isMobile && (
+              <div className="flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+                <Paperclip className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-cyan-500" />
+                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium hidden sm:inline">
+                  {attachments.length} doc{attachments.length > 1 ? 's' : ''} attached
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
       
       {/* Conversation Search Bar */}
       <ConversationSearchBar

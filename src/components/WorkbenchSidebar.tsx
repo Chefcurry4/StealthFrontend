@@ -307,7 +307,7 @@ export const WorkbenchSidebar = ({
                   <div
                     key={conv.id}
                     className={cn(
-                      "group flex items-center gap-2 p-2 rounded-lg text-sm transition-colors",
+                      "group flex items-center gap-2 p-2 rounded-lg text-sm transition-colors relative",
                       editingConvId === conv.id ? "" : "cursor-pointer",
                       currentConversationId === conv.id
                         ? "bg-primary/10 text-primary"
@@ -323,7 +323,7 @@ export const WorkbenchSidebar = ({
                     <MessageSquare className="h-3 w-3 shrink-0" />
                     
                     {editingConvId === conv.id ? (
-                      <div className="flex-1 flex items-center gap-1">
+                      <div className="flex-1 flex items-center gap-1 min-w-0">
                         <Input
                           ref={editInputRef}
                           value={editingTitle}
@@ -333,12 +333,12 @@ export const WorkbenchSidebar = ({
                             if (e.key === "Escape") cancelEditing();
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="h-6 text-xs px-1"
+                          className="h-6 text-xs px-1 flex-1 min-w-0"
                         />
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-5 w-5"
+                          className="h-5 w-5 shrink-0"
                           onClick={(e) => { e.stopPropagation(); saveTitle(); }}
                         >
                           <Check className="h-3 w-3 text-primary" />
@@ -346,7 +346,7 @@ export const WorkbenchSidebar = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-5 w-5"
+                          className="h-5 w-5 shrink-0"
                           onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
                         >
                           <X className="h-3 w-3 text-muted-foreground" />
@@ -355,7 +355,7 @@ export const WorkbenchSidebar = ({
                     ) : (
                       <>
                         <span 
-                          className="flex-1 truncate cursor-text"
+                          className="flex-1 truncate cursor-text min-w-0 pr-14"
                           onDoubleClick={(e) => { 
                             e.stopPropagation(); 
                             startEditing(conv.id, conv.title); 
@@ -367,28 +367,30 @@ export const WorkbenchSidebar = ({
                             ? conv.title.split(' ').slice(0, 4).join(' ') + '...'
                             : conv.title}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditing(conv.id, conv.title);
-                          }}
-                        >
-                          <Pencil className="h-3 w-3 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteConversation.mutate(conv.id);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
+                        <div className="absolute right-1 flex items-center gap-0.5 bg-inherit">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditing(conv.id, conv.title);
+                            }}
+                          >
+                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation.mutate(conv.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
                       </>
                     )}
                   </div>
