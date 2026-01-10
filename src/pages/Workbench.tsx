@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DropdownMenu, 
@@ -1910,7 +1911,7 @@ const Workbench = () => {
               searchQuery={mentionSearchQuery}
             />
             
-            <Input
+            <Textarea
               ref={inputRef}
               placeholder="Message hubAI... (type @ to mention courses/labs)"
               value={input}
@@ -1925,7 +1926,10 @@ const Workbench = () => {
                 }
               }}
               disabled={isStreaming}
-              className="pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border"
+              className="pr-14 py-3 min-h-[50px] max-h-[150px] resize-none rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border overflow-y-auto"
+              rows={1}
+              aria-label="Message input"
+              aria-describedby="input-hint"
               data-tour="chat-input"
             />
             {isStreaming ? (
