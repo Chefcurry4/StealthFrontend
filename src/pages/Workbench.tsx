@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { exportConversation } from "@/utils/exportConversation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DropdownMenu, 
@@ -49,6 +50,7 @@ import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
 import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
 import { WorkbenchSemesterPlanner } from "@/components/workbench/WorkbenchSemesterPlanner";
+import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
 import { 
   Send, 
   Loader2, 
@@ -238,11 +240,12 @@ const Workbench = () => {
   const [refinePopupPosition, setRefinePopupPosition] = useState({ x: 0, y: 0 });
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Semester planner hooks
@@ -315,6 +318,55 @@ const Workbench = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [sidebarOpen, messages.length, isSearchOpen, openSearch, closeSearch]);
+  
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      const scrollHeight = inputRef.current.scrollHeight;
+      // Max 6 lines (roughly 150px)
+      const maxHeight = 150;
+      inputRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [input]);
+  
+  // Handle paste events for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            toast.info("Processing pasted image...");
+            try {
+              const text = await extractTextFromImage(file);
+              const newAttachment: Attachment = {
+                id: crypto.randomUUID(),
+                name: `Pasted Image ${new Date().toLocaleTimeString()}`,
+                type: 'image',
+                content: text,
+              };
+              setAttachments(prev => [...prev, newAttachment]);
+              toast.success("Image pasted and processed");
+            } catch (error) {
+              console.error("Error processing pasted image:", error);
+              toast.error("Failed to process pasted image");
+            }
+          }
+        }
+      }
+    };
+    
+    const inputElement = inputRef.current;
+    if (inputElement) {
+      inputElement.addEventListener('paste', handlePaste as any);
+      return () => inputElement.removeEventListener('paste', handlePaste as any);
+    }
+  }, []);
   
   // Data hooks for comprehensive AI context
   const { data: savedCourses } = useSavedCourses();
@@ -1655,75 +1707,31 @@ const Workbench = () => {
               
               {/* Thinking Indicator (before any streaming starts) */}
               {/* Only show if thinking AND no empty assistant message is already displayed */}
-              {isThinking && !isSearchingDatabase && !messages.some(m => m.role === "assistant" && !m.content) && (
-                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      <Sparkles className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">Thinking…</span>
-                  </div>
-                </div>
+              {isThinking && !isSearchingDatabase && !isPlanningDeep && !messages.some(m => m.role === "assistant" && !m.content) && (
+                <ThinkingIndicator 
+                  mode="thinking"
+                />
               )}
 
               {/* Database Searching Indicator */}
               {isSearchingDatabase && !isPlanningDeep && (
-                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      <Sparkles className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
-                    <Database className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-sm text-muted-foreground">
-                      {activeSearchTools.length > 0 
-                        ? `Searching ${activeSearchTools.map(formatToolName).join(', ')}...`
-                        : 'Searching database...'}
-                    </span>
-                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                  </div>
-                </div>
+                <ThinkingIndicator 
+                  mode="searching"
+                  searchTools={activeSearchTools}
+                  isCollapsible={true}
+                  isExpanded={thinkingExpanded}
+                  onToggleExpand={() => setThinkingExpanded(!thinkingExpanded)}
+                />
               )}
               
               {/* Deep Planning Indicator (like ChatGPT deep think) */}
               {isPlanningDeep && (
-                <div className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-amber-400/30 shadow-sm">
-                    <AvatarFallback className="bg-gradient-to-br from-amber-400/20 to-orange-500/20 text-amber-600 dark:text-amber-400">
-                      <Brain className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col gap-2 rounded-2xl px-4 py-3 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200/50 dark:border-amber-700/30 shadow-sm min-w-[280px]">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                      </div>
-                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Creating Semester Plan</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span>Analyzing your requirements...</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" style={{ animationDelay: '0.3s' }} />
-                        <span>Searching matching courses...</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" style={{ animationDelay: '0.6s' }} />
-                        <span>Optimizing ECTS balance...</span>
-                      </div>
-                    </div>
-                    <div className="h-1 bg-amber-200/30 dark:bg-amber-800/30 rounded-full overflow-hidden mt-1">
-                      <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse" style={{ width: '60%' }} />
-                    </div>
-                  </div>
-                </div>
+                <ThinkingIndicator 
+                  mode="planning"
+                  isCollapsible={true}
+                  isExpanded={thinkingExpanded}
+                  onToggleExpand={() => setThinkingExpanded(!thinkingExpanded)}
+                />
               )}
             </>
           )}
@@ -1907,7 +1915,7 @@ const Workbench = () => {
               searchQuery={mentionSearchQuery}
             />
             
-            <Input
+            <Textarea
               ref={inputRef}
               placeholder="Message hubAI... (type @ to mention courses/labs)"
               value={input}
@@ -1922,13 +1930,14 @@ const Workbench = () => {
                 }
               }}
               disabled={isStreaming}
-              className="pr-14 py-6 rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border"
+              className="pr-14 py-3 min-h-[50px] max-h-[150px] resize-none rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border overflow-y-auto"
+              rows={1}
             />
             {isStreaming ? (
               <Button
                 size="icon"
                 variant="destructive"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleStop}
                 title="Stop generating"
               >
@@ -1938,7 +1947,7 @@ const Workbench = () => {
               <Button
                 size="icon"
                 data-send-button
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleSend}
                 disabled={!input.trim() && attachments.length === 0}
               >
