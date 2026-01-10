@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface UniversityCardImageProps {
   universityId: string;
   universityName: string;
@@ -43,7 +45,7 @@ const getUniversityCampusImage = (universityName: string, universityId: string):
   return `https://source.unsplash.com/800x600/?${searchQuery}&sig=${seed}`;
 };
 
-export const UniversityCardImage = ({ 
+export const UniversityCardImage = memo(({ 
   universityId, 
   universityName,
   logoUrl,
@@ -87,4 +89,4 @@ export const UniversityCardImage = ({
       )}
     </div>
   );
-};
+});

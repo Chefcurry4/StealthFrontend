@@ -201,9 +201,25 @@ export const calculateLabReviewSummary = (reviews: LabReview[] | undefined) => {
 
   const reverseLabels = ["Poor", "Fair", "Good", "Excellent"];
 
-  const research = reviews.filter(r => r.research_quality).map(r => researchMap[r.research_quality!] || 0).filter(v => v > 0);
-  const mentorship = reviews.filter(r => r.mentorship).map(r => mentorshipMap[r.mentorship!] || 0).filter(v => v > 0);
-  const environment = reviews.filter(r => r.work_environment).map(r => environmentMap[r.work_environment!] || 0).filter(v => v > 0);
+  const research: number[] = [];
+  const mentorship: number[] = [];
+  const environment: number[] = [];
+
+  // Single pass through reviews array
+  reviews.forEach(r => {
+    if (r.research_quality) {
+      const val = researchMap[r.research_quality];
+      if (val > 0) research.push(val);
+    }
+    if (r.mentorship) {
+      const val = mentorshipMap[r.mentorship];
+      if (val > 0) mentorship.push(val);
+    }
+    if (r.work_environment) {
+      const val = environmentMap[r.work_environment];
+      if (val > 0) environment.push(val);
+    }
+  });
 
   const getLabel = (arr: number[]) => {
     if (arr.length === 0) return null;

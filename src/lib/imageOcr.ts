@@ -14,13 +14,7 @@ export const extractTextFromImage = async (
     // Create a URL for the file
     const imageUrl = URL.createObjectURL(file);
     
-    const result = await Tesseract.recognize(imageUrl, 'eng', {
-      logger: (m) => {
-        if (m.status === 'recognizing text') {
-          console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-        }
-      },
-    });
+    const result = await Tesseract.recognize(imageUrl, 'eng');
 
     // Clean up the URL
     URL.revokeObjectURL(imageUrl);

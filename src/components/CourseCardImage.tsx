@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { memo } from "react";
 
 interface CourseCardImageProps {
   courseId: string;
@@ -9,7 +10,7 @@ interface CourseCardImageProps {
   reviewCount?: number;
 }
 
-export const CourseCardImage = ({ 
+export const CourseCardImage = memo(({ 
   courseId, 
   courseName, 
   level,
@@ -61,4 +62,4 @@ export const CourseCardImage = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10" />
     </div>
   );
-};
+});
