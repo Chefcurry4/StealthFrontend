@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
 interface MarkdownRendererProps {
   content: string;
@@ -32,7 +33,7 @@ const sanitizeUrl = (rawUrl: string): string => {
   return "#";
 };
 
-export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) => {
+export const MarkdownRenderer = memo(({ content, className }: MarkdownRendererProps) => {
   const renderMarkdown = (text: string): React.ReactNode[] => {
     // Remove hidden semester plan data (AI internal use only)
     const cleanedText = text.replace(/<!--SEMESTERPLAN:.*?-->/gs, '').trim();
@@ -261,4 +262,4 @@ export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) 
       {renderMarkdown(content)}
     </div>
   );
-};
+});

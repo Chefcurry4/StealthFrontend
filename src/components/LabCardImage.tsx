@@ -1,4 +1,5 @@
 import { getLabCategoryId, LAB_CATEGORIES } from "@/lib/labCategories";
+import { memo } from "react";
 
 // Import all category images
 import aiMlImage from "@/assets/lab-categories/ai-ml.png";
@@ -48,7 +49,7 @@ interface LabCardImageProps {
   className?: string;
 }
 
-export const LabCardImage = ({ 
+export const LabCardImage = memo(({ 
   labName, 
   labId, 
   topics, 
@@ -71,4 +72,4 @@ export const LabCardImage = ({
       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
     </div>
   );
-};
+});

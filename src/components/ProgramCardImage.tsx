@@ -1,10 +1,12 @@
+import { memo } from "react";
+
 interface ProgramCardImageProps {
   programId: string;
   programName: string;
   className?: string;
 }
 
-export const ProgramCardImage = ({ 
+export const ProgramCardImage = memo(({ 
   programId, 
   programName,
   className = "" 
@@ -47,4 +49,4 @@ export const ProgramCardImage = ({
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-black/10" />
     </div>
   );
-};
+});

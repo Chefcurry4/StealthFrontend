@@ -1,10 +1,12 @@
+import { memo } from "react";
+
 interface TeacherCardImageProps {
   teacherId: string;
   teacherName: string;
   className?: string;
 }
 
-export const TeacherCardImage = ({ 
+export const TeacherCardImage = memo(({ 
   teacherId, 
   teacherName,
   className = "" 
@@ -52,4 +54,4 @@ export const TeacherCardImage = ({
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
     </div>
   );
-};
+});
