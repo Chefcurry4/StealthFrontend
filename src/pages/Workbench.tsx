@@ -1981,27 +1981,28 @@ const Workbench = () => {
                   className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
                   disabled={isStreaming}
                   title="Export conversation"
+                  aria-label="Export conversation in different formats"
                 >
                   <Download className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="start" aria-label="Export format options">
                 <DropdownMenuLabel>Export as</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleExport('markdown')} className="cursor-pointer">
-                  <FileText className="h-4 w-4 mr-2" />
+                  <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
                   Markdown (.md)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('text')} className="cursor-pointer">
-                  <FileDown className="h-4 w-4 mr-2" />
+                  <FileDown className="h-4 w-4 mr-2" aria-hidden="true" />
                   Plain Text (.txt)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
-                  <FileJson className="h-4 w-4 mr-2" />
+                  <FileJson className="h-4 w-4 mr-2" aria-hidden="true" />
                   JSON (.json)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer">
-                  <FileType className="h-4 w-4 mr-2" />
+                  <FileType className="h-4 w-4 mr-2" aria-hidden="true" />
                   PDF (.pdf)
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -2037,6 +2038,8 @@ const Workbench = () => {
               disabled={isStreaming}
               className="pr-14 py-3 min-h-[50px] max-h-[150px] resize-none rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border overflow-y-auto"
               rows={1}
+              aria-label="Message input"
+              aria-describedby="input-hint"
             />
             {isStreaming ? (
               <Button
@@ -2045,8 +2048,9 @@ const Workbench = () => {
                 className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleStop}
                 title="Stop generating"
+                aria-label="Stop generating response"
               >
-                <Square className="h-4 w-4" />
+                <Square className="h-4 w-4" aria-hidden="true" />
               </Button>
             ) : (
               <Button
@@ -2055,8 +2059,9 @@ const Workbench = () => {
                 className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleSend}
                 disabled={!input.trim() && attachments.length === 0}
+                aria-label="Send message"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4" aria-hidden="true" />
               </Button>
             )}
           </div>
