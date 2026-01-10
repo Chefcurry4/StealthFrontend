@@ -8,6 +8,7 @@ export interface AIConversation {
   title: string;
   created_at: string;
   updated_at: string;
+  pinned?: boolean;
 }
 
 export interface AIMessageAttachment {
@@ -212,6 +213,24 @@ export const useMessageFeedback = () => {
     onSuccess: (_, variables) => {
       // Invalidate messages query to refetch with new feedback
       queryClient.invalidateQueries({ queryKey: ["ai-messages"] });
+    },
+  });
+};
+
+export const useTogglePinConversation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, pinned }: { id: string; pinned: boolean }) => {
+      const { error } = await supabase
+        .from("ai_conversations")
+        .update({ pinned })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
     },
   });
 };
