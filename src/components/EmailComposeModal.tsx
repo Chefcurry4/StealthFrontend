@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useTeachers, Teacher } from "@/hooks/useTeachers";
+import { useState } from "react";
+import { Teacher } from "@/hooks/useTeachers";
 import { useAIEmailDraft } from "@/hooks/useAI";
 import { useCreateEmailDraft } from "@/hooks/useEmailDrafts";
 import { useSavedCourses } from "@/hooks/useSavedItems";
 import { useSavedLabs } from "@/hooks/useSavedItems";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
+import { useTeacherAutocomplete } from "@/hooks/useTeacherAutocomplete";
+import { useItemSelections } from "@/hooks/useItemSelections";
+import { getSelectedCoursesData, getSelectedLabsData, getSelectedDocsData } from "@/lib/emailComposeUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,102 +65,21 @@ const AI_MODELS = [
 
 export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComposeModalProps) {
   const [recipient, setRecipient] = useState("");
-  const [recipientSearch, setRecipientSearch] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [purpose, setPurpose] = useState("");
   const [context, setContext] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [selectedProfessor, setSelectedProfessor] = useState<Teacher | null>(null);
   const [selectedModel, setSelectedModel] = useState(AI_MODELS[0].id);
-  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const [selectedLabs, setSelectedLabs] = useState<string[]>([]);
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   
-  const recipientInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const teacherAutocomplete = useTeacherAutocomplete();
+  const itemSelections = useItemSelections();
   
-  const { data: allTeachers, isLoading: isLoadingTeachers } = useTeachers();
   const { data: savedCourses } = useSavedCourses();
   const { data: savedLabs } = useSavedLabs();
   const { data: userDocuments } = useUserDocuments();
   const generateAI = useAIEmailDraft();
   const createDraft = useCreateEmailDraft();
-
-  // Smart matching - search through all teachers client-side
-  const matchingTeachers = useMemo(() => {
-    if (!allTeachers || recipientSearch.length < 2) return [];
-    
-    const searchLower = recipientSearch.toLowerCase();
-    
-    return allTeachers
-      .filter(t => 
-        t.full_name?.toLowerCase().includes(searchLower) ||
-        t.name?.toLowerCase().includes(searchLower) ||
-        t.email?.toLowerCase().includes(searchLower)
-      )
-      .sort((a, b) => {
-        const aName = (a.full_name || a.name || "").toLowerCase();
-        const bName = (b.full_name || b.name || "").toLowerCase();
-        const aStarts = aName.startsWith(searchLower);
-        const bStarts = bName.startsWith(searchLower);
-        if (aStarts && !bStarts) return -1;
-        if (bStarts && !aStarts) return 1;
-        return aName.localeCompare(bName);
-      })
-      .slice(0, 8);
-  }, [allTeachers, recipientSearch]);
-
-  useEffect(() => {
-    if (recipientSearch.length >= 2 && matchingTeachers.length > 0 && !selectedProfessor) {
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [recipientSearch, matchingTeachers.length, selectedProfessor]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
-          recipientInputRef.current && !recipientInputRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSelectProfessor = (teacher: Teacher) => {
-    setSelectedProfessor(teacher);
-    setRecipient(teacher.email || "");
-    setRecipientSearch(teacher.full_name || teacher.name || "");
-    setShowSuggestions(false);
-  };
-
-  const handleClearProfessor = () => {
-    setSelectedProfessor(null);
-    setRecipient("");
-    setRecipientSearch("");
-  };
-
-  const toggleCourse = (courseId: string) => {
-    setSelectedCourses(prev => 
-      prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
-    );
-  };
-
-  const toggleLab = (labId: string) => {
-    setSelectedLabs(prev => 
-      prev.includes(labId) ? prev.filter(id => id !== labId) : [...prev, labId]
-    );
-  };
-
-  const toggleDoc = (docId: string) => {
-    setSelectedDocs(prev => 
-      prev.includes(docId) ? prev.filter(id => id !== docId) : [...prev, docId]
-    );
-  };
 
   const handleGenerateAI = async () => {
     if (!purpose.trim()) {
@@ -166,12 +88,14 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
     }
 
     try {
-      const recipientName = selectedProfessor?.full_name || selectedProfessor?.name || recipient || "Professor";
+      const recipientName = teacherAutocomplete.selectedProfessor?.full_name || 
+                           teacherAutocomplete.selectedProfessor?.name || 
+                           recipient || "Professor";
       
       // Get selected items data - savedCourses/Labs have nested Courses/Labs objects
-      const coursesData = savedCourses?.filter(c => selectedCourses.includes(c.course_id || '')).map(c => c.Courses) || [];
-      const labsData = savedLabs?.filter(l => selectedLabs.includes(l.lab_id || '')).map(l => l.Labs) || [];
-      const docsData = userDocuments?.filter(d => selectedDocs.includes(d.id)) || [];
+      const coursesData = getSelectedCoursesData(savedCourses, itemSelections.selectedCourses);
+      const labsData = getSelectedLabsData(savedLabs, itemSelections.selectedLabs);
+      const docsData = getSelectedDocsData(userDocuments, itemSelections.selectedDocs);
       
       const result = await generateAI.mutateAsync({
         purpose,
@@ -181,7 +105,7 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
         savedCourses: coursesData.length > 0 ? coursesData : undefined,
         savedLabs: labsData.length > 0 ? labsData : undefined,
         documents: docsData.length > 0 ? docsData : undefined,
-        teacherInfo: selectedProfessor || undefined,
+        teacherInfo: teacherAutocomplete.selectedProfessor || undefined,
       });
 
       if (result.subject) setSubject(result.subject);
@@ -321,24 +245,24 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                     Recipient
                   </Label>
                   <div className="relative mt-1">
-                    {selectedProfessor ? (
+                    {teacherAutocomplete.selectedProfessor ? (
                       <div className="flex items-center gap-2 p-2 rounded-lg border border-primary/30 bg-primary/5">
                         <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                           <User className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {selectedProfessor.full_name || selectedProfessor.name}
+                            {teacherAutocomplete.selectedProfessor.full_name || teacherAutocomplete.selectedProfessor.name}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {selectedProfessor.email || "No email available"}
+                            {teacherAutocomplete.selectedProfessor.email || "No email available"}
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0"
-                          onClick={handleClearProfessor}
+                          onClick={teacherAutocomplete.handleClearProfessor}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -347,14 +271,14 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                       <>
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                          ref={recipientInputRef}
+                          ref={teacherAutocomplete.recipientInputRef}
                           id="recipient-search"
                           placeholder="Start typing professor's name..."
-                          value={recipientSearch}
-                          onChange={(e) => setRecipientSearch(e.target.value)}
+                          value={teacherAutocomplete.recipientSearch}
+                          onChange={(e) => teacherAutocomplete.setRecipientSearch(e.target.value)}
                           onFocus={() => {
-                            if (recipientSearch.length >= 2 && matchingTeachers.length > 0) {
-                              setShowSuggestions(true);
+                            if (teacherAutocomplete.recipientSearch.length >= 2 && teacherAutocomplete.matchingTeachers.length > 0) {
+                              teacherAutocomplete.setShowSuggestions(true);
                             }
                           }}
                           className="pl-9 h-9 md:h-10 text-sm"
@@ -362,22 +286,22 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                       </>
                     )}
                     
-                    {showSuggestions && (
+                    {teacherAutocomplete.showSuggestions && (
                       <div 
-                        ref={suggestionsRef}
+                        ref={teacherAutocomplete.suggestionsRef}
                         className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-lg shadow-xl overflow-hidden"
                       >
                         <div className="p-2 text-xs text-muted-foreground border-b border-border/50 bg-muted/30 flex items-center justify-between">
-                          <span>Professors matching "{recipientSearch}"</span>
+                          <span>Professors matching "{teacherAutocomplete.recipientSearch}"</span>
                           <Badge variant="secondary" className="text-[10px]">
-                            {matchingTeachers.length} found
+                            {teacherAutocomplete.matchingTeachers.length} found
                           </Badge>
                         </div>
                         <ScrollArea className="max-h-48">
-                          {matchingTeachers.map((teacher) => (
+                          {teacherAutocomplete.matchingTeachers.map((teacher) => (
                             <button
                               key={teacher.id_teacher}
-                              onClick={() => handleSelectProfessor(teacher)}
+                              onClick={() => teacherAutocomplete.handleSelectProfessor(teacher)}
                               className="w-full flex items-center gap-3 p-2.5 hover:bg-accent/50 transition-colors text-left group"
                             >
                               <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0 group-hover:from-primary/30 group-hover:to-primary/20 transition-colors">
@@ -419,15 +343,15 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                     <TabsList className="grid w-full grid-cols-3 h-8">
                       <TabsTrigger value="courses" className="text-xs gap-1">
                         <BookOpen className="h-3 w-3" />
-                        Courses {selectedCourses.length > 0 && `(${selectedCourses.length})`}
+                        Courses {itemSelections.selectedCourses.length > 0 && `(${itemSelections.selectedCourses.length})`}
                       </TabsTrigger>
                       <TabsTrigger value="labs" className="text-xs gap-1">
                         <FlaskConical className="h-3 w-3" />
-                        Labs {selectedLabs.length > 0 && `(${selectedLabs.length})`}
+                        Labs {itemSelections.selectedLabs.length > 0 && `(${itemSelections.selectedLabs.length})`}
                       </TabsTrigger>
                       <TabsTrigger value="docs" className="text-xs gap-1">
                         <File className="h-3 w-3" />
-                        Docs {selectedDocs.length > 0 && `(${selectedDocs.length})`}
+                        Docs {itemSelections.selectedDocs.length > 0 && `(${itemSelections.selectedDocs.length})`}
                       </TabsTrigger>
                     </TabsList>
                     
@@ -441,8 +365,8 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                                 className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/50 cursor-pointer"
                               >
                                 <Checkbox
-                                  checked={selectedCourses.includes(item.course_id || '')}
-                                  onCheckedChange={() => toggleCourse(item.course_id || '')}
+                                  checked={itemSelections.selectedCourses.includes(item.course_id || '')}
+                                  onCheckedChange={() => itemSelections.toggleCourse(item.course_id || '')}
                                 />
                                 <span className="text-xs truncate flex-1">{item.Courses?.name_course}</span>
                                 <span className="text-[10px] text-muted-foreground">{item.Courses?.code}</span>
@@ -465,8 +389,8 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                                 className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/50 cursor-pointer"
                               >
                                 <Checkbox
-                                  checked={selectedLabs.includes(item.lab_id || '')}
-                                  onCheckedChange={() => toggleLab(item.lab_id || '')}
+                                  checked={itemSelections.selectedLabs.includes(item.lab_id || '')}
+                                  onCheckedChange={() => itemSelections.toggleLab(item.lab_id || '')}
                                 />
                                 <span className="text-xs truncate flex-1">{item.Labs?.name}</span>
                               </label>
@@ -488,8 +412,8 @@ export function EmailComposeModal({ open, onOpenChange, onEmailSent }: EmailComp
                                 className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/50 cursor-pointer"
                               >
                                 <Checkbox
-                                  checked={selectedDocs.includes(doc.id)}
-                                  onCheckedChange={() => toggleDoc(doc.id)}
+                                  checked={itemSelections.selectedDocs.includes(doc.id)}
+                                  onCheckedChange={() => itemSelections.toggleDoc(doc.id)}
                                 />
                                 <span className="text-xs truncate flex-1">{doc.name}</span>
                                 <span className="text-[10px] text-muted-foreground">

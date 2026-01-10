@@ -1,3 +1,5 @@
+import { generateHSLColors, createNoiseTextureStyle } from "@/lib/cardImageUtils";
+
 interface ProgramCardImageProps {
   programId: string;
   programName: string;
@@ -10,10 +12,14 @@ export const ProgramCardImage = ({
   className = "" 
 }: ProgramCardImageProps) => {
   // Generate warm color palette (oranges, reds, yellows)
-  const hash = programId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const hue = 10 + (hash % 50); // Warm hues: 10-60 (red-orange-yellow)
-  const saturation = 70 + (hash % 20);
-  const lightness = 60 + (hash % 15);
+  const { hue, saturation, lightness } = generateHSLColors(programId, {
+    hueOffset: 10,
+    hueRange: 50, // Warm hues: 10-60 (red-orange-yellow)
+    saturationBase: 70,
+    saturationRange: 20,
+    lightnessBase: 60,
+    lightnessRange: 15,
+  });
   
   const color1 = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   const color2 = `hsl(${(hue + 30) % 60 + 10}, ${saturation - 10}%, ${lightness - 10}%)`;
@@ -23,15 +29,14 @@ export const ProgramCardImage = ({
     background: `linear-gradient(135deg, ${color1} 0%, ${color2} 50%, ${color3} 100%)`,
   };
 
+  const noiseStyle = createNoiseTextureStyle(0.8, 3, 0.5, '180px 180px');
+
   return (
     <div className={`relative overflow-hidden ${className}`} style={gradientStyle}>
       {/* Noise texture overlay */}
       <div 
         className="absolute inset-0 opacity-25"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E")`,
-          backgroundSize: '180px 180px',
-        }}
+        style={noiseStyle}
       />
       
       {/* Wave pattern overlay */}

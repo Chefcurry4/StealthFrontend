@@ -1,3 +1,5 @@
+import { generateHSLColors, createNoiseTextureStyle } from "@/lib/cardImageUtils";
+
 interface TeacherCardImageProps {
   teacherId: string;
   teacherName: string;
@@ -10,10 +12,13 @@ export const TeacherCardImage = ({
   className = "" 
 }: TeacherCardImageProps) => {
   // Generate pastel color palette
-  const hash = teacherId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const hue = hash % 360;
-  const saturation = 50 + (hash % 30);
-  const lightness = 70 + (hash % 15);
+  const { hash, hue, saturation, lightness } = generateHSLColors(teacherId, {
+    hueRange: 360,
+    saturationBase: 50,
+    saturationRange: 30,
+    lightnessBase: 70,
+    lightnessRange: 15,
+  });
   
   const color1 = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   const color2 = `hsl(${(hue + 80) % 360}, ${saturation - 10}%, ${lightness - 5}%)`;
@@ -30,15 +35,14 @@ export const TeacherCardImage = ({
     .toUpperCase()
     .slice(0, 2);
 
+  const noiseStyle = createNoiseTextureStyle(0.75, 3, 0.3, '150px 150px');
+
   return (
     <div className={`relative overflow-hidden ${className}`} style={gradientStyle}>
       {/* Noise texture overlay */}
       <div 
         className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.3'/%3E%3C/svg%3E")`,
-          backgroundSize: '150px 150px',
-        }}
+        style={noiseStyle}
       />
       
       {/* Initials */}

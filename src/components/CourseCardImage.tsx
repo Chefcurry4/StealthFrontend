@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { generateHSLColors, createNoiseTextureStyle } from "@/lib/cardImageUtils";
 
 interface CourseCardImageProps {
   courseId: string;
@@ -18,10 +19,13 @@ export const CourseCardImage = ({
   reviewCount = 0,
 }: CourseCardImageProps) => {
   // Generate color based on course ID
-  const hash = courseId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const hue = hash % 360;
-  const saturation = 65 + (hash % 20);
-  const lightness = 55 + (hash % 15);
+  const { hue, saturation, lightness } = generateHSLColors(courseId, {
+    hueRange: 360,
+    saturationBase: 65,
+    saturationRange: 20,
+    lightnessBase: 55,
+    lightnessRange: 15,
+  });
   
   const color1 = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   const color2 = `hsl(${(hue + 60) % 360}, ${saturation}%, ${lightness - 10}%)`;
@@ -31,15 +35,14 @@ export const CourseCardImage = ({
     background: `linear-gradient(135deg, ${color1} 0%, ${color2} 50%, ${color3} 100%)`,
   };
 
+  const noiseStyle = createNoiseTextureStyle(0.9, 4, 0.4, '200px 200px');
+
   return (
     <div className={`relative overflow-hidden ${className}`} style={gradientStyle}>
       {/* Noise texture overlay */}
       <div 
         className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`,
-          backgroundSize: '200px 200px',
-        }}
+        style={noiseStyle}
       />
       
       {/* Rating badge - top right with yellow star */}

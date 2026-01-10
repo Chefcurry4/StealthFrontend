@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Building, Camera, User, Crown, Star, Fingerprint } from "lucide-react";
+import { generateIdHash } from "@/lib/cardImageUtils";
 
 export type FlashcardColorStyle = 'gradient' | 'ocean' | 'sunset' | 'forest' | 'epic-dark' | 'epic-pink';
 
@@ -89,7 +90,7 @@ const UserFlashcard = ({
     const colors = COLOR_STYLES[colorStyle] || COLOR_STYLES.gradient;
     
     if (!username) return colors[0];
-    const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = generateIdHash(username);
     return colors[hash % colors.length];
   }, [username, colorStyle]);
 
