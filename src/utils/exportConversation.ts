@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { jsPDF } from 'jspdf';
 
 interface Message {
   id: string;
@@ -71,9 +72,94 @@ export const downloadFile = (content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url);
 };
 
+export const exportAsPDF = (messages: Message[], title?: string): void => {
+  const conversationTitle = title || `AI Conversation - ${format(new Date(), 'yyyy-MM-dd HH:mm')}`;
+  
+  // Create PDF
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const maxWidth = pageWidth - 2 * margin;
+  let yPosition = margin;
+  
+  // Title
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(conversationTitle, margin, yPosition);
+  yPosition += 10;
+  
+  // Export date
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100);
+  doc.text(`Exported on ${format(new Date(), 'MMMM d, yyyy at h:mm a')}`, margin, yPosition);
+  yPosition += 15;
+  
+  // Line separator
+  doc.setDrawColor(200);
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  yPosition += 10;
+  
+  // Messages
+  messages.forEach((message, index) => {
+    const role = message.role === 'user' ? 'You' : 'hubAI';
+    const time = format(new Date(message.timestamp), 'h:mm a');
+    
+    // Check if we need a new page
+    if (yPosition > pageHeight - 40) {
+      doc.addPage();
+      yPosition = margin;
+    }
+    
+    // Role and time header
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(message.role === 'user' ? 60 : 40);
+    doc.text(`${role} - ${time}`, margin, yPosition);
+    yPosition += 7;
+    
+    // Message content
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0);
+    
+    // Clean content - remove HTML comments and markdown artifacts
+    const cleanContent = message.content
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .trim();
+    
+    // Split content into lines that fit the page width
+    const lines = doc.splitTextToSize(cleanContent, maxWidth);
+    
+    lines.forEach((line: string) => {
+      if (yPosition > pageHeight - 20) {
+        doc.addPage();
+        yPosition = margin;
+      }
+      doc.text(line, margin, yPosition);
+      yPosition += 5;
+    });
+    
+    yPosition += 5;
+    
+    // Separator between messages
+    if (index < messages.length - 1) {
+      doc.setDrawColor(230);
+      doc.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 8;
+    }
+  });
+  
+  // Save the PDF
+  const timestamp = new Date().toISOString().split('T')[0];
+  const safeTitle = (title || 'conversation').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+  doc.save(`${safeTitle}_${timestamp}.pdf`);
+};
+
 export const exportConversation = (
   messages: Message[], 
-  format: 'markdown' | 'text' | 'json',
+  format: 'markdown' | 'text' | 'json' | 'pdf',
   title?: string
 ) => {
   const timestamp = new Date().toISOString().split('T')[0];
@@ -100,6 +186,9 @@ export const exportConversation = (
         `${safeTitle}_${timestamp}.json`,
         'application/json'
       );
+      break;
+    case 'pdf':
+      exportAsPDF(messages, title);
       break;
   }
 };

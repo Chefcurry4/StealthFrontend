@@ -76,6 +76,7 @@ import {
   FileText,
   FileJson,
   FileDown,
+  FileType,
   Square,
   Mail,
   BookOpen,
@@ -1224,7 +1225,7 @@ const Workbench = () => {
 
 
   // Handle export
-  const handleExport = (format: 'markdown' | 'text' | 'json') => {
+  const handleExport = (format: 'markdown' | 'text' | 'json' | 'pdf') => {
     if (messages.length === 0) {
       toast.error("No messages to export");
       return;
@@ -1998,6 +1999,10 @@ const Workbench = () => {
                 <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
                   <FileJson className="h-4 w-4 mr-2" />
                   JSON (.json)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer">
+                  <FileType className="h-4 w-4 mr-2" />
+                  PDF (.pdf)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
