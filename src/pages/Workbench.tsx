@@ -53,6 +53,7 @@ import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeI
 import { WorkbenchSemesterPlanner } from "@/components/workbench/WorkbenchSemesterPlanner";
 import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
 import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
+import { EditableMessage } from "@/components/workbench/EditableMessage";
 import { 
   Send, 
   Loader2, 
@@ -243,6 +244,7 @@ const Workbench = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -1176,6 +1178,48 @@ const Workbench = () => {
     }
   };
 
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    // Find the message and its index
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+    
+    // Update the message content
+    const updatedMessages = messages.map((m, idx) => 
+      idx === messageIndex ? { ...m, content: newContent } : m
+    );
+    
+    // Remove all messages after the edited one (they'll be regenerated)
+    const messagesToKeep = updatedMessages.slice(0, messageIndex + 1);
+    setMessages(messagesToKeep);
+    setEditingMessageId(null);
+    
+    // If it's a user message, regenerate the response
+    if (messages[messageIndex].role === "user") {
+      toast.success("Message edited. Regenerating response...");
+      await handleRegenerate(messageIndex);
+    } else {
+      toast.success("Message updated");
+    }
+  };
+
+  const handleContinue = async () => {
+    if (isStreaming || messages.length === 0) return;
+    
+    // Add a user message asking to continue
+    const userMessage: Message = {
+      id: generateId(),
+      role: "user",
+      content: "Please continue your previous response.",
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    
+    // Then send it like a normal message
+    setTimeout(() => handleSend(), 100);
+  };
+
   const selectedModelData = models.find(m => m.id === selectedModel)!;
 
 
@@ -1601,11 +1645,32 @@ const Workbench = () => {
                             <AIResultCards content={message.content} />
                           </>
                         ) : (
-                          <p className="whitespace-pre-wrap text-left leading-relaxed">{message.content}</p>
+                          <EditableMessage
+                            content={message.content}
+                            isEditing={editingMessageId === message.id}
+                            onSave={(newContent) => handleEditMessage(message.id, newContent)}
+                            onCancel={() => setEditingMessageId(null)}
+                          />
                         )}
                       </div>
 
-                      {/* Message Actions */}
+                      {/* Message Actions - User */}
+                      {message.role === "user" && message.content && !editingMessageId && (
+                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={() => setEditingMessageId(message.id)}
+                            disabled={isStreaming}
+                            title="Edit message"
+                          >
+                            <Edit3 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Message Actions - Assistant */}
                       {message.role === "assistant" && message.content && (
                         <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
@@ -1626,9 +1691,24 @@ const Workbench = () => {
                             className="h-8 w-8 rounded-lg hover:bg-accent/50"
                             onClick={() => handleRegenerate(idx)}
                             disabled={isStreaming}
+                            title="Regenerate response"
                           >
                             <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
+                          {/* Continue button - show if message is the last one and might be incomplete */}
+                          {idx === messages.length - 1 && message.content.length > 200 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 rounded-lg hover:bg-accent/50"
+                              onClick={handleContinue}
+                              disabled={isStreaming}
+                              title="Continue generation"
+                            >
+                              <ArrowDown className="h-3.5 w-3.5 mr-1" />
+                              <span className="text-xs">Continue</span>
+                            </Button>
+                          )}
                           {/* Save to Email Drafts - show if message looks like an email */}
                           {(message.content.toLowerCase().includes('subject:') || 
                             message.content.toLowerCase().includes('dear ') ||
