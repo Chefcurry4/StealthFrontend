@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAIConversations, useDeleteConversation, useUpdateConversation } from "@/hooks/useAIConversations";
+import { useAIConversations, useDeleteConversation, useUpdateConversation, useTogglePinConversation } from "@/hooks/useAIConversations";
 import { useSavedCourses, useSavedLabs } from "@/hooks/useSavedItems";
 import { useEmailDrafts, useDeleteEmailDraft } from "@/hooks/useEmailDrafts";
 import { useUserDocuments } from "@/hooks/useUserDocuments";
@@ -31,6 +31,8 @@ import {
   X,
   Search,
   GripVertical,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -112,6 +114,7 @@ export const WorkbenchSidebar = ({
   const { data: userDocuments } = useUserDocuments();
   const deleteConversation = useDeleteConversation();
   const updateConversation = useUpdateConversation();
+  const togglePinConversation = useTogglePinConversation();
   const deleteEmailDraft = useDeleteEmailDraft();
 
   // Focus input when editing starts
@@ -191,6 +194,161 @@ export const WorkbenchSidebar = ({
   const filteredConversations = query 
     ? conversations?.filter(c => (c.title || '').toLowerCase().includes(query))
     : conversations;
+  
+  // Group conversations by date
+  const groupConversationsByDate = (convs: typeof conversations) => {
+    if (!convs) return { pinned: [], today: [], yesterday: [], thisWeek: [], thisMonth: [], older: [] };
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const thisWeekStart = new Date(today);
+    thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const groups = {
+      pinned: [] as typeof convs,
+      today: [] as typeof convs,
+      yesterday: [] as typeof convs,
+      thisWeek: [] as typeof convs,
+      thisMonth: [] as typeof convs,
+      older: [] as typeof convs,
+    };
+    
+    convs.forEach(conv => {
+      if (conv.pinned) {
+        groups.pinned.push(conv);
+        return;
+      }
+      
+      const convDate = new Date(conv.updated_at);
+      if (convDate >= today) {
+        groups.today.push(conv);
+      } else if (convDate >= yesterday) {
+        groups.yesterday.push(conv);
+      } else if (convDate >= thisWeekStart) {
+        groups.thisWeek.push(conv);
+      } else if (convDate >= thisMonthStart) {
+        groups.thisMonth.push(conv);
+      } else {
+        groups.older.push(conv);
+      }
+    });
+    
+    return groups;
+  };
+  
+  const groupedConversations = groupConversationsByDate(filteredConversations);
+  
+  // Render a single conversation item
+  const renderConversation = (conv: NonNullable<typeof conversations>[0]) => (
+    <div
+      key={conv.id}
+      className={cn(
+        "group flex items-center gap-2 p-2 rounded-lg text-sm transition-colors relative",
+        editingConvId === conv.id ? "" : "cursor-pointer",
+        currentConversationId === conv.id
+          ? "bg-primary/10 text-primary"
+          : "hover:bg-accent/50"
+      )}
+      onClick={() => {
+        if (editingConvId !== conv.id) {
+          onSelectConversation?.(conv.id);
+          if (isMobile) onToggle();
+        }
+      }}
+    >
+      <MessageSquare className="h-3 w-3 shrink-0" />
+      
+      {editingConvId === conv.id ? (
+        <div className="flex-1 flex items-center gap-1 min-w-0">
+          <Input
+            ref={editInputRef}
+            value={editingTitle}
+            onChange={(e) => setEditingTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveTitle();
+              if (e.key === "Escape") cancelEditing();
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-6 text-xs px-1 flex-1 min-w-0"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 shrink-0"
+            onClick={(e) => { e.stopPropagation(); saveTitle(); }}
+          >
+            <Check className="h-3 w-3 text-primary" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 shrink-0"
+            onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
+          >
+            <X className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <span 
+            className="flex-1 truncate cursor-text min-w-0 pr-20"
+            onDoubleClick={(e) => { 
+              e.stopPropagation(); 
+              startEditing(conv.id, conv.title); 
+            }}
+            title="Double-click to rename"
+          >
+            {conv.title && conv.title.split(' ').length > 4 
+              ? conv.title.split(' ').slice(0, 4).join(' ') + '...'
+              : conv.title}
+          </span>
+          <div className="absolute right-1 flex items-center gap-0.5 bg-inherit">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePinConversation.mutate({ id: conv.id, pinned: !conv.pinned });
+              }}
+              title={conv.pinned ? "Unpin" : "Pin"}
+            >
+              {conv.pinned ? (
+                <PinOff className="h-3 w-3 text-amber-500" />
+              ) : (
+                <Pin className="h-3 w-3 text-muted-foreground" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                startEditing(conv.id, conv.title);
+              }}
+            >
+              <Pencil className="h-3 w-3 text-muted-foreground" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteConversation.mutate(conv.id);
+              }}
+            >
+              <Trash2 className="h-3 w-3 text-destructive" />
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
     
   const filteredCourses = query 
     ? savedCourses?.filter(item => {
@@ -297,104 +455,64 @@ export const WorkbenchSidebar = ({
                 />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1 space-y-1">
+            <CollapsibleContent className="mt-1 space-y-2">
               {filteredConversations?.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-2 py-1">
                   {searchQuery ? "No matching chats" : "No conversations yet"}
                 </p>
               ) : (
-                filteredConversations?.slice(0, 10).map((conv) => (
-                  <div
-                    key={conv.id}
-                    className={cn(
-                      "group flex items-center gap-2 p-2 rounded-lg text-sm transition-colors relative",
-                      editingConvId === conv.id ? "" : "cursor-pointer",
-                      currentConversationId === conv.id
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-accent/50"
-                    )}
-                    onClick={() => {
-                      if (editingConvId !== conv.id) {
-                        onSelectConversation?.(conv.id);
-                        if (isMobile) onToggle();
-                      }
-                    }}
-                  >
-                    <MessageSquare className="h-3 w-3 shrink-0" />
-                    
-                    {editingConvId === conv.id ? (
-                      <div className="flex-1 flex items-center gap-1 min-w-0">
-                        <Input
-                          ref={editInputRef}
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveTitle();
-                            if (e.key === "Escape") cancelEditing();
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-6 text-xs px-1 flex-1 min-w-0"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 shrink-0"
-                          onClick={(e) => { e.stopPropagation(); saveTitle(); }}
-                        >
-                          <Check className="h-3 w-3 text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 shrink-0"
-                          onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
-                        >
-                          <X className="h-3 w-3 text-muted-foreground" />
-                        </Button>
+                <>
+                  {/* Pinned Conversations */}
+                  {groupedConversations.pinned.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground px-2 pt-1 pb-0.5 font-medium flex items-center gap-1">
+                        <Pin className="h-3 w-3" />
+                        Pinned
                       </div>
-                    ) : (
-                      <>
-                        <span 
-                          className="flex-1 truncate cursor-text min-w-0 pr-14"
-                          onDoubleClick={(e) => { 
-                            e.stopPropagation(); 
-                            startEditing(conv.id, conv.title); 
-                          }}
-                          title="Double-click to rename"
-                        >
-                          {/* Truncate to ~4 words with ellipsis */}
-                          {conv.title && conv.title.split(' ').length > 4 
-                            ? conv.title.split(' ').slice(0, 4).join(' ') + '...'
-                            : conv.title}
-                        </span>
-                        <div className="absolute right-1 flex items-center gap-0.5 bg-inherit">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditing(conv.id, conv.title);
-                            }}
-                          >
-                            <Pencil className="h-3 w-3 text-muted-foreground" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteConversation.mutate(conv.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))
+                      {groupedConversations.pinned.map((conv) => renderConversation(conv))}
+                    </div>
+                  )}
+                  
+                  {/* Today */}
+                  {groupedConversations.today.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground px-2 pt-1 pb-0.5 font-medium">Today</div>
+                      {groupedConversations.today.map((conv) => renderConversation(conv))}
+                    </div>
+                  )}
+                  
+                  {/* Yesterday */}
+                  {groupedConversations.yesterday.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground px-2 pt-1 pb-0.5 font-medium">Yesterday</div>
+                      {groupedConversations.yesterday.map((conv) => renderConversation(conv))}
+                    </div>
+                  )}
+                  
+                  {/* This Week */}
+                  {groupedConversations.thisWeek.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground px-2 pt-1 pb-0.5 font-medium">This Week</div>
+                      {groupedConversations.thisWeek.map((conv) => renderConversation(conv))}
+                    </div>
+                  )}
+                  
+                  {/* This Month */}
+                  {groupedConversations.thisMonth.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground px-2 pt-1 pb-0.5 font-medium">This Month</div>
+                      {groupedConversations.thisMonth.map((conv) => renderConversation(conv))}
+                    </div>
+                  )}
+                  
+                  {/* Older */}
+                  {groupedConversations.older.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground px-2 pt-1 pb-0.5 font-medium">Older</div>
+                      {groupedConversations.older.map((conv) => renderConversation(conv))}
+                    </div>
+                  )}
+                </>
               )}
             </CollapsibleContent>
           </Collapsible>

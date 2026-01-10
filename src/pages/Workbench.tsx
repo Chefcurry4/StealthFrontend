@@ -15,6 +15,7 @@ import {
   useSaveMessage, 
   useUpdateConversation,
   useAIConversations,
+  useMessageFeedback,
   type AIMessageAttachment,
   type AIMessageReferencedItem
 } from "@/hooks/useAIConversations";
@@ -50,6 +51,9 @@ import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
 import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
 import { WorkbenchSemesterPlanner } from "@/components/workbench/WorkbenchSemesterPlanner";
+import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
+import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
+import { EditableMessage } from "@/components/workbench/EditableMessage";
 import { 
   Send, 
   Loader2, 
@@ -72,6 +76,7 @@ import {
   FileText,
   FileJson,
   FileDown,
+  FileType,
   Square,
   Mail,
   BookOpen,
@@ -239,11 +244,13 @@ const Workbench = () => {
   const [refinePopupPosition, setRefinePopupPosition] = useState({ x: 0, y: 0 });
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
   
   // Semester planner hooks
@@ -317,6 +324,55 @@ const Workbench = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [sidebarOpen, messages.length, isSearchOpen, openSearch, closeSearch]);
   
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      const scrollHeight = inputRef.current.scrollHeight;
+      // Max 6 lines (roughly 150px)
+      const maxHeight = 150;
+      inputRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [input]);
+  
+  // Handle paste events for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            toast.info("Processing pasted image...");
+            try {
+              const text = await extractTextFromImage(file);
+              const newAttachment: Attachment = {
+                id: crypto.randomUUID(),
+                name: `Pasted Image ${new Date().toLocaleTimeString()}`,
+                type: 'image',
+                content: text,
+              };
+              setAttachments(prev => [...prev, newAttachment]);
+              toast.success("Image pasted and processed");
+            } catch (error) {
+              console.error("Error processing pasted image:", error);
+              toast.error("Failed to process pasted image");
+            }
+          }
+        }
+      }
+    };
+    
+    const inputElement = inputRef.current;
+    if (inputElement) {
+      inputElement.addEventListener('paste', handlePaste as any);
+      return () => inputElement.removeEventListener('paste', handlePaste as any);
+    }
+  }, []);
+  
   // Data hooks for comprehensive AI context
   const { data: savedCourses } = useSavedCourses();
   const { data: savedLabs } = useSavedLabs();
@@ -333,6 +389,7 @@ const Workbench = () => {
   const saveMessage = useSaveMessage();
   const updateConversation = useUpdateConversation();
   const { data: loadedMessages } = useAIMessages(currentConversationId || null);
+  const messageFeedback = useMessageFeedback();
 
   // Track if user explicitly started a new chat - default to true so we always start fresh
   const [isNewChatMode, setIsNewChatMode] = useState(true);
@@ -1122,11 +1179,53 @@ const Workbench = () => {
     }
   };
 
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    // Find the message and its index
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+    
+    // Update the message content
+    const updatedMessages = messages.map((m, idx) => 
+      idx === messageIndex ? { ...m, content: newContent } : m
+    );
+    
+    // Remove all messages after the edited one (they'll be regenerated)
+    const messagesToKeep = updatedMessages.slice(0, messageIndex + 1);
+    setMessages(messagesToKeep);
+    setEditingMessageId(null);
+    
+    // If it's a user message, regenerate the response
+    if (messages[messageIndex].role === "user") {
+      toast.success("Message edited. Regenerating response...");
+      await handleRegenerate(messageIndex);
+    } else {
+      toast.success("Message updated");
+    }
+  };
+
+  const handleContinue = async () => {
+    if (isStreaming || messages.length === 0) return;
+    
+    // Add a user message asking to continue
+    const userMessage: Message = {
+      id: generateId(),
+      role: "user",
+      content: "Please continue your previous response.",
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    
+    // Then send it like a normal message
+    setTimeout(() => handleSend(), 100);
+  };
+
   const selectedModelData = models.find(m => m.id === selectedModel)!;
 
 
   // Handle export
-  const handleExport = (format: 'markdown' | 'text' | 'json') => {
+  const handleExport = (format: 'markdown' | 'text' | 'json' | 'pdf') => {
     if (messages.length === 0) {
       toast.error("No messages to export");
       return;
@@ -1495,21 +1594,12 @@ const Workbench = () => {
                         {message.attachments && message.attachments.length > 0 && (
                           <div className="space-y-2 mb-3">
                             {message.attachments.map((a) => (
-                              <div
+                              <AttachmentPreview
                                 key={a.id}
-                                className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2"
-                              >
-                                <div className="h-9 w-9 rounded-lg bg-accent/40 flex items-center justify-center">
-                                  <FileText className="h-4 w-4 text-foreground" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-sm font-medium truncate">{a.name}</div>
-                                  <div className="text-xs text-muted-foreground truncate">
-                                    {(a.type || "file").toString().toUpperCase()}
-                                  </div>
-                                </div>
-                                <Paperclip className="h-4 w-4 text-muted-foreground" />
-                              </div>
+                                name={a.name}
+                                type={a.type}
+                                content={a.content}
+                              />
                             ))}
                           </div>
                         )}
@@ -1559,11 +1649,32 @@ const Workbench = () => {
                             <AIResultCards content={message.content} />
                           </>
                         ) : (
-                          <p className="whitespace-pre-wrap text-left leading-relaxed">{message.content}</p>
+                          <EditableMessage
+                            content={message.content}
+                            isEditing={editingMessageId === message.id}
+                            onSave={(newContent) => handleEditMessage(message.id, newContent)}
+                            onCancel={() => setEditingMessageId(null)}
+                          />
                         )}
                       </div>
 
-                      {/* Message Actions */}
+                      {/* Message Actions - User */}
+                      {message.role === "user" && message.content && !editingMessageId && (
+                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={() => setEditingMessageId(message.id)}
+                            disabled={isStreaming}
+                            title="Edit message"
+                          >
+                            <Edit3 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Message Actions - Assistant */}
                       {message.role === "assistant" && message.content && (
                         <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
@@ -1584,9 +1695,24 @@ const Workbench = () => {
                             className="h-8 w-8 rounded-lg hover:bg-accent/50"
                             onClick={() => handleRegenerate(idx)}
                             disabled={isStreaming}
+                            title="Regenerate response"
                           >
                             <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
+                          {/* Continue button - show if message is the last one and might be incomplete */}
+                          {idx === messages.length - 1 && message.content.length > 200 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 rounded-lg hover:bg-accent/50"
+                              onClick={handleContinue}
+                              disabled={isStreaming}
+                              title="Continue generation"
+                            >
+                              <ArrowDown className="h-3.5 w-3.5 mr-1" />
+                              <span className="text-xs">Continue</span>
+                            </Button>
+                          )}
                           {/* Save to Email Drafts - show if message looks like an email */}
                           {(message.content.toLowerCase().includes('subject:') || 
                             message.content.toLowerCase().includes('dear ') ||
@@ -1644,11 +1770,37 @@ const Workbench = () => {
                               </Button>
                             </>
                           )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
-                            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={async () => {
+                              await messageFeedback.mutateAsync({ 
+                                messageId: message.id, 
+                                feedback: "positive" 
+                              });
+                              toast.success("Thanks for your feedback!");
+                            }}
+                          >
+                            <ThumbsUp 
+                              className={`h-4 w-4 ${message.feedback === "positive" ? "text-emerald-500 fill-emerald-500" : "text-muted-foreground"}`} 
+                            />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent/50">
-                            <ThumbsDown className="h-4 w-4 text-muted-foreground" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={async () => {
+                              await messageFeedback.mutateAsync({ 
+                                messageId: message.id, 
+                                feedback: "negative" 
+                              });
+                              toast.success("Thanks for your feedback!");
+                            }}
+                          >
+                            <ThumbsDown 
+                              className={`h-4 w-4 ${message.feedback === "negative" ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} 
+                            />
                           </Button>
                         </div>
                       )}
@@ -1659,75 +1811,31 @@ const Workbench = () => {
               
               {/* Thinking Indicator (before any streaming starts) */}
               {/* Only show if thinking AND no empty assistant message is already displayed */}
-              {isThinking && !isSearchingDatabase && !messages.some(m => m.role === "assistant" && !m.content) && (
-                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      <Sparkles className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">Thinking…</span>
-                  </div>
-                </div>
+              {isThinking && !isSearchingDatabase && !isPlanningDeep && !messages.some(m => m.role === "assistant" && !m.content) && (
+                <ThinkingIndicator 
+                  mode="thinking"
+                />
               )}
 
               {/* Database Searching Indicator */}
               {isSearchingDatabase && !isPlanningDeep && (
-                <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      <Sparkles className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-card border border-border/50 shadow-sm">
-                    <Database className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-sm text-muted-foreground">
-                      {activeSearchTools.length > 0 
-                        ? `Searching ${activeSearchTools.map(formatToolName).join(', ')}...`
-                        : 'Searching database...'}
-                    </span>
-                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                  </div>
-                </div>
+                <ThinkingIndicator 
+                  mode="searching"
+                  searchTools={activeSearchTools}
+                  isCollapsible={true}
+                  isExpanded={thinkingExpanded}
+                  onToggleExpand={() => setThinkingExpanded(!thinkingExpanded)}
+                />
               )}
               
               {/* Deep Planning Indicator (like ChatGPT deep think) */}
               {isPlanningDeep && (
-                <div className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                  <Avatar className="h-9 w-9 shrink-0 ring-2 ring-amber-400/30 shadow-sm">
-                    <AvatarFallback className="bg-gradient-to-br from-amber-400/20 to-orange-500/20 text-amber-600 dark:text-amber-400">
-                      <Brain className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col gap-2 rounded-2xl px-4 py-3 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200/50 dark:border-amber-700/30 shadow-sm min-w-[280px]">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                      </div>
-                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Creating Semester Plan</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span>Analyzing your requirements...</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" style={{ animationDelay: '0.3s' }} />
-                        <span>Searching matching courses...</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" style={{ animationDelay: '0.6s' }} />
-                        <span>Optimizing ECTS balance...</span>
-                      </div>
-                    </div>
-                    <div className="h-1 bg-amber-200/30 dark:bg-amber-800/30 rounded-full overflow-hidden mt-1">
-                      <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse" style={{ width: '60%' }} />
-                    </div>
-                  </div>
-                </div>
+                <ThinkingIndicator 
+                  mode="planning"
+                  isCollapsible={true}
+                  isExpanded={thinkingExpanded}
+                  onToggleExpand={() => setThinkingExpanded(!thinkingExpanded)}
+                />
               )}
             </>
           )}
@@ -1876,24 +1984,29 @@ const Workbench = () => {
                   className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
                   disabled={isStreaming}
                   title="Export conversation"
+                  aria-label="Export conversation in different formats"
                 >
                   <Download className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="start" aria-label="Export format options">
                 <DropdownMenuLabel>Export as</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleExport('markdown')} className="cursor-pointer">
-                  <FileText className="h-4 w-4 mr-2" />
+                  <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
                   Markdown (.md)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('text')} className="cursor-pointer">
-                  <FileDown className="h-4 w-4 mr-2" />
+                  <FileDown className="h-4 w-4 mr-2" aria-hidden="true" />
                   Plain Text (.txt)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
-                  <FileJson className="h-4 w-4 mr-2" />
+                  <FileJson className="h-4 w-4 mr-2" aria-hidden="true" />
                   JSON (.json)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer">
+                  <FileType className="h-4 w-4 mr-2" aria-hidden="true" />
+                  PDF (.pdf)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1936,21 +2049,23 @@ const Workbench = () => {
               <Button
                 size="icon"
                 variant="destructive"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleStop}
                 title="Stop generating"
+                aria-label="Stop generating response"
               >
-                <Square className="h-4 w-4" />
+                <Square className="h-4 w-4" aria-hidden="true" />
               </Button>
             ) : (
               <Button
                 size="icon"
                 data-send-button
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg transition-colors"
+                className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
                 onClick={handleSend}
                 disabled={!input.trim() && attachments.length === 0}
+                aria-label="Send message"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4" aria-hidden="true" />
               </Button>
             )}
           </div>

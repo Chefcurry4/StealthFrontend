@@ -98,13 +98,44 @@ export default {
 				'100%': {
 					boxShadow: '0 10px 40px -10px hsl(var(--primary) / 0.4)'
 				}
+			},
+			'slide-in-bottom': {
+				'0%': {
+					transform: 'translateY(8px)',
+					opacity: '0'
+				},
+				'100%': {
+					transform: 'translateY(0)',
+					opacity: '1'
+				}
+			},
+			'fade-in': {
+				'0%': {
+					opacity: '0'
+				},
+				'100%': {
+					opacity: '1'
+				}
+			},
+			'bounce-gentle': {
+				'0%, 100%': {
+					transform: 'translateY(-5%)',
+					animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)'
+				},
+				'50%': {
+					transform: 'translateY(0)',
+					animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)'
+				}
 			}
 		},
 		animation: {
 			'accordion-down': 'accordion-down 0.2s ease-out',
 			'accordion-up': 'accordion-up 0.2s ease-out',
 			'hover-lift': 'hover-lift 0.3s ease-out forwards',
-			'hover-glow': 'hover-glow 0.3s ease-out forwards'
+			'hover-glow': 'hover-glow 0.3s ease-out forwards',
+			'slide-in-bottom': 'slide-in-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+			'fade-in': 'fade-in 0.3s ease-out',
+			'bounce-gentle': 'bounce-gentle 1s infinite'
 		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',
