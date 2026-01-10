@@ -10,7 +10,7 @@ interface UniversityListCardProps {
   type: "program" | "lab";
 }
 
-export const UniversityListCard = ({ title, description, image, programSlug, type }: UniversityListCardProps) => {
+export const UniversityListCard = ({ title, image, programSlug, type }: UniversityListCardProps) => {
   const Icon = type === "program" ? GraduationCap : Microscope;
   const [logoError, setLogoError] = useState(false);
   
@@ -19,19 +19,8 @@ export const UniversityListCard = ({ title, description, image, programSlug, typ
   const displayImage = programLogoUrl && !logoError ? programLogoUrl : image;
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-2xl border bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
-      <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
-          {title}
-        </h3>
-        {description && (
-          <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-            {description}
-          </p>
-        )}
-      </div>
-      
-      <div className="flex-shrink-0 w-14 h-14 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+    <div className="flex items-center gap-3 px-3 py-2 rounded-xl border bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
         {displayImage ? (
           <img 
             src={displayImage} 
@@ -40,9 +29,13 @@ export const UniversityListCard = ({ title, description, image, programSlug, typ
             onError={() => setLogoError(true)}
           />
         ) : (
-          <Icon className="h-6 w-6 text-muted-foreground" />
+          <Icon className="h-5 w-5 text-muted-foreground" />
         )}
       </div>
+      
+      <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors flex-1 min-w-0">
+        {title}
+      </h3>
     </div>
   );
 };
