@@ -1,5 +1,4 @@
 import { Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -15,12 +14,16 @@ interface ModuleInfoPopupProps {
 export const ModuleInfoPopup = ({ title, description, tips }: ModuleInfoPopupProps) => {
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
-          <Info className="h-3 w-3" />
-        </Button>
+      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <span 
+          role="button"
+          tabIndex={0}
+          className="inline-flex items-center justify-center h-4 w-4 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors cursor-pointer"
+        >
+          <Info className="h-2.5 w-2.5" />
+        </span>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-3" align="start">
+      <PopoverContent className="w-64 sm:w-72 p-3" align="start" side="bottom">
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">{title}</h4>
           <p className="text-xs text-muted-foreground">{description}</p>
