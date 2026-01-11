@@ -15,6 +15,9 @@ export const TourMascot: React.FC<TourMascotProps> = ({
 }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
+  
+  // Skip typewriter effect for messages longer than this threshold
+  const TYPEWRITER_SKIP_THRESHOLD = 60;
 
   // Typewriter effect for speech bubble - skip if message is too long
   useEffect(() => {
@@ -22,7 +25,7 @@ export const TourMascot: React.FC<TourMascotProps> = ({
     setIsTyping(true);
     
     // Skip typewriter effect for long messages
-    if (message.length > 60) {
+    if (message.length > TYPEWRITER_SKIP_THRESHOLD) {
       setDisplayedText(message);
       setIsTyping(false);
       return;
@@ -91,7 +94,8 @@ export const TourMascot: React.FC<TourMascotProps> = ({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`absolute ${getSpeechBubblePosition()} w-64 md:w-80 max-w-[80vw]`}
+            className={`absolute ${getSpeechBubblePosition()} w-64 md:w-80`}
+            style={{ maxWidth: '80vw' }}
           >
             <div className="relative bg-card border-2 border-primary/20 rounded-2xl shadow-xl p-4">
               <p className="text-sm leading-relaxed text-foreground">

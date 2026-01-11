@@ -87,7 +87,7 @@ export const TourTooltip: React.FC<TourTooltipProps> = ({
         // Fallback to center if no good position
         newPlacement = 'bottom';
         newPosition = {
-          top: window.innerHeight / 2,
+          top: window.innerHeight / 2 - tooltipHeight / 2,
           left: window.innerWidth / 2
         };
       }

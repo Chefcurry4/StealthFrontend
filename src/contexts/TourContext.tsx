@@ -43,17 +43,20 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
   
   // Total steps from tour definitions (simplified to 5 steps)
   const totalSteps = 5;
+  
+  // Minimum screen width for tour (1024px for tablet/desktop)
+  const MIN_TOUR_SCREEN_WIDTH = 1024;
 
   // Check screen size on mount and resize
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsScreenTooSmall(window.innerWidth < 1024);
+      setIsScreenTooSmall(window.innerWidth < MIN_TOUR_SCREEN_WIDTH);
     };
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  }, [MIN_TOUR_SCREEN_WIDTH]);
 
   // Load tour progress on mount
   useEffect(() => {
@@ -128,8 +131,8 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
 
   const startTour = useCallback(() => {
     // Check if screen is too small
-    if (window.innerWidth < 1024) {
-      console.warn('Tour is not available on screens smaller than 1024px');
+    if (window.innerWidth < MIN_TOUR_SCREEN_WIDTH) {
+      console.warn(`Tour is not available on screens smaller than ${MIN_TOUR_SCREEN_WIDTH}px`);
       return;
     }
     
@@ -137,7 +140,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
     setCurrentStepIndex(0);
     setIsPaused(false);
     saveTourProgress(0);
-  }, [saveTourProgress]);
+  }, [saveTourProgress, MIN_TOUR_SCREEN_WIDTH]);
 
   const nextStep = useCallback(() => {
     if (currentStepIndex < totalSteps - 1) {
