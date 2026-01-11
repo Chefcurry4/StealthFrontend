@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          pinned: boolean | null
           title: string | null
           updated_at: string
           user_id: string
@@ -25,6 +26,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          pinned?: boolean | null
           title?: string | null
           updated_at?: string
           user_id: string
@@ -32,6 +34,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          pinned?: boolean | null
           title?: string | null
           updated_at?: string
           user_id?: string
@@ -44,6 +47,8 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string
+          feedback: string | null
+          feedback_at: string | null
           id: string
           referenced_items: Json | null
           role: string
@@ -53,6 +58,8 @@ export type Database = {
           content: string
           conversation_id: string
           created_at?: string
+          feedback?: string | null
+          feedback_at?: string | null
           id?: string
           referenced_items?: Json | null
           role: string
@@ -62,6 +69,8 @@ export type Database = {
           content?: string
           conversation_id?: string
           created_at?: string
+          feedback?: string | null
+          feedback_at?: string | null
           id?: string
           referenced_items?: Json | null
           role?: string

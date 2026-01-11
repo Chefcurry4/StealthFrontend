@@ -205,7 +205,7 @@ export const useMessageFeedback = () => {
         .update({ 
           feedback,
           feedback_at: new Date().toISOString()
-        })
+        } as any)
         .eq("id", messageId);
 
       if (error) throw error;
@@ -224,7 +224,7 @@ export const useTogglePinConversation = () => {
     mutationFn: async ({ id, pinned }: { id: string; pinned: boolean }) => {
       const { error } = await supabase
         .from("ai_conversations")
-        .update({ pinned })
+        .update({ pinned } as any)
         .eq("id", id);
 
       if (error) throw error;
