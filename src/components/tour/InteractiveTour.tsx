@@ -81,7 +81,7 @@ export const InteractiveTour: React.FC = () => {
 
   // Special steps
   if (currentStep.id === 'welcome') {
-    return <WelcomeStep onAutoAdvance={nextStep} duration={currentStep.duration} />;
+    return <WelcomeStep onNext={nextStep} />;
   }
 
   if (currentStep.id === 'completion') {
@@ -90,22 +90,11 @@ export const InteractiveTour: React.FC = () => {
 
   const getMascotPosition = () => {
     if (currentStep.position) {
-      return currentStep.position as 'center' | 'bottom-left' | 'bottom-right' | 'top-right';
+      return currentStep.position as 'center' | 'bottom-right';
     }
     
-    // Default position based on target element position
-    if (!targetElement) {
-      return 'bottom-right';
-    }
-
-    const rect = targetElement.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    
-    if (rect.top < viewportHeight / 2) {
-      return 'bottom-right';
-    } else {
-      return 'top-right';
-    }
+    // Default position: always bottom-right
+    return 'bottom-right';
   };
 
   const handleTogglePause = () => {
@@ -144,7 +133,6 @@ export const InteractiveTour: React.FC = () => {
       <TourMascot
         message={currentStep.mascotMessage}
         position={getMascotPosition()}
-        isExcited={currentStep.id === 'workbench-drag-demo'}
       />
 
       {/* Tooltip with navigation */}

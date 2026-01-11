@@ -255,7 +255,7 @@ const Index = () => {
             <Button 
               onClick={startTour}
               size="lg"
-              className="bg-background/60 backdrop-blur-xl border border-primary/30 text-foreground hover:bg-background/80 hover:border-primary/50 shadow-lg hover:shadow-xl transition-all group"
+              className="hidden lg:inline-flex bg-background/60 backdrop-blur-xl border border-primary/30 text-foreground hover:bg-background/80 hover:border-primary/50 shadow-lg hover:shadow-xl transition-all group"
             >
               <Compass className="h-5 w-5 mr-2 text-primary group-hover:rotate-45 transition-transform" />
               Take Interactive Tour

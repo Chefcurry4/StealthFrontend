@@ -8,6 +8,7 @@ interface TourContextValue {
   totalSteps: number;
   isPaused: boolean;
   hasCompleted: boolean;
+  isScreenTooSmall: boolean;
   startTour: () => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -38,9 +39,21 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
+  const [isScreenTooSmall, setIsScreenTooSmall] = useState(false);
   
-  // Total steps from tour definitions
-  const totalSteps = 13;
+  // Total steps from tour definitions (simplified to 5 steps)
+  const totalSteps = 5;
+
+  // Check screen size on mount and resize
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsScreenTooSmall(window.innerWidth < 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Load tour progress on mount
   useEffect(() => {
@@ -114,6 +127,12 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
   }, [isActive, isPaused, currentStepIndex]);
 
   const startTour = useCallback(() => {
+    // Check if screen is too small
+    if (window.innerWidth < 1024) {
+      console.warn('Tour is not available on screens smaller than 1024px');
+      return;
+    }
+    
     setIsActive(true);
     setCurrentStepIndex(0);
     setIsPaused(false);
@@ -183,6 +202,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
     totalSteps,
     isPaused,
     hasCompleted,
+    isScreenTooSmall,
     startTour,
     nextStep,
     prevStep,
