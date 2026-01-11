@@ -120,8 +120,11 @@ const Profile = () => {
   const touchEndX = useRef<number>(0);
   const touchEndY = useRef<number>(0);
 
-  // Define swipeable sections (only main content sections)
-  const swipeableSections: SectionId[] = ["profile", "saved", "diary"];
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const tabTouchStartX = useRef<number>(0);
+
+  // Define swipeable sections (main content sections only)
+  const swipeableSections: SectionId[] = ["profile", "saved", "diary", "preferences"];
 
   // Update activeSection when URL params change
   useEffect(() => {
@@ -678,23 +681,52 @@ const Profile = () => {
             isMobile && "mb-4"
           )}>
             {isMobile ? (
-              // Mobile: Horizontal scrollable pills
-              <ScrollArea className="w-full">
-                <div className="flex gap-2 pb-2">
-                  {navSections.map((section) => (
-                    <Button
-                      key={section.id}
-                      variant={activeSection === section.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setActiveSection(section.id)}
-                      className="flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <section.icon className="h-4 w-4" />
-                      {section.label}
-                    </Button>
-                  ))}
+              // Mobile: Horizontal scrollable pills that can be swiped
+              <div 
+                ref={tabsContainerRef}
+                className="overflow-x-auto pb-2 -mx-4 px-4"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                onTouchStart={(e) => {
+                  tabTouchStartX.current = e.touches[0].clientX;
+                }}
+                onTouchEnd={(e) => {
+                  const deltaX = e.changedTouches[0].clientX - tabTouchStartX.current;
+                  const minSwipeDistance = 50;
+                  
+                  if (Math.abs(deltaX) > minSwipeDistance) {
+                    const currentIndex = swipeableSections.indexOf(activeSection);
+                    if (currentIndex === -1) return;
+                    
+                    if (deltaX > 0 && currentIndex > 0) {
+                      setActiveSection(swipeableSections[currentIndex - 1]);
+                    } else if (deltaX < 0 && currentIndex < swipeableSections.length - 1) {
+                      setActiveSection(swipeableSections[currentIndex + 1]);
+                    }
+                  }
+                }}
+              >
+                <div className="flex gap-2 min-w-max">
+                  {swipeableSections.map((sectionId) => {
+                    const section = navSections.find(s => s.id === sectionId);
+                    if (!section) return null;
+                    return (
+                      <Button
+                        key={section.id}
+                        variant={activeSection === section.id ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setActiveSection(section.id)}
+                        className={cn(
+                          "flex items-center gap-2 whitespace-nowrap transition-all",
+                          activeSection === section.id && "scale-105"
+                        )}
+                      >
+                        <section.icon className="h-4 w-4" />
+                        {section.label}
+                      </Button>
+                    );
+                  })}
                 </div>
-              </ScrollArea>
+              </div>
             ) : (
               // Desktop: Sidebar with grouped sections
               <Card className="bg-background/50 backdrop-blur-sm border-border/50 sticky top-20">

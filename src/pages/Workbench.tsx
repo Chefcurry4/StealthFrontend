@@ -55,6 +55,7 @@ import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
 import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
 import { EditableMessage } from "@/components/workbench/EditableMessage";
 import { PandaIcon } from "@/components/icons/PandaIcon";
+import { PandaIconSimple } from "@/components/icons/PandaIconSimple";
 import { 
   Send, 
   Loader2, 
@@ -1332,8 +1333,8 @@ const Workbench = () => {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Bar - Thin, transparent like Gemini */}
         <div className="flex-shrink-0 flex items-center justify-between gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-background/40 backdrop-blur-sm z-10">
-          {/* Left side - sidebar toggle on mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Left side - Panda AI branding + model selector */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {isMobile && (
               <Button
                 variant="ghost"
@@ -1345,91 +1346,88 @@ const Workbench = () => {
                 <PanelLeft className="h-4 w-4 text-foreground/70" />
               </Button>
             )}
-          </div>
+            
+            {/* Panda AI Logo + Name */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <PandaIconSimple size={isMobile ? 22 : 26} className="text-primary" />
+              <span className="font-semibold text-sm sm:text-base text-foreground/90 hidden sm:inline">pandanAI</span>
+            </div>
 
-          {/* Center - Model Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="gap-1.5 sm:gap-2 border-border/50 bg-card/80 backdrop-blur-md shadow-lg hover:bg-accent/50 transition-all text-foreground/70 dark:text-foreground px-2 sm:px-4 h-8 sm:h-9"
-                data-tour="model-selector"
-              >
-                <span className="text-primary">{selectedModelData.icon}</span>
-                <span className="hidden sm:inline text-sm">{selectedModelData.name}</span>
-                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-72">
-              {/* Google Gemini Models */}
-              <DropdownMenuLabel className="flex items-center gap-2">
-                <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
-                {providerInfo.gemini.name}
-              </DropdownMenuLabel>
-              {models.filter(m => m.provider === "gemini").map(model => (
-                <DropdownMenuItem
-                  key={model.id}
-                  onClick={() => setSelectedModel(model.id)}
-                  className="flex items-start gap-3 p-3 cursor-pointer"
+            {/* Model Selector - minimal liquid glass style */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="gap-1 sm:gap-1.5 bg-accent/30 hover:bg-accent/50 backdrop-blur-md rounded-full px-2 sm:px-3 h-7 sm:h-8 border-0 shadow-sm"
+                  data-tour="model-selector"
                 >
-                  <div className="mt-0.5 text-primary">{model.icon}</div>
-                  <div className="flex-1">
-                    <div className="font-medium">{model.name}</div>
-                    <div className="text-xs opacity-70">{model.description}</div>
-                  </div>
-                  {selectedModel === model.id && (
-                    <Check className="h-4 w-4 text-primary mt-0.5" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-              
-              {/* OpenAI Models */}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center gap-2">
-                <img src={providerInfo.openai.logo} alt="OpenAI" className="h-4 w-4" />
-                {providerInfo.openai.name}
-              </DropdownMenuLabel>
-              {models.filter(m => m.provider === "openai").map(model => (
-                <DropdownMenuItem
-                  key={model.id}
-                  onClick={() => setSelectedModel(model.id)}
-                  className="flex items-start gap-3 p-3 cursor-pointer"
-                >
-                  <div className="mt-0.5 text-primary">{model.icon}</div>
-                  <div className="flex-1">
-                    <div className="font-medium">{model.name}</div>
-                    <div className="text-xs opacity-70">{model.description}</div>
-                  </div>
-                  {selectedModel === model.id && (
-                    <Check className="h-4 w-4 text-primary mt-0.5" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-              
-              {/* Perplexity Models */}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center gap-2">
-                <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
-                {providerInfo.perplexity.name}
-              </DropdownMenuLabel>
-              {models.filter(m => m.provider === "perplexity").map(model => (
-                <DropdownMenuItem
-                  key={model.id}
-                  onClick={() => setSelectedModel(model.id)}
-                  className="flex items-start gap-3 p-3 cursor-pointer"
-                >
-                  <div className="mt-0.5 text-primary">{model.icon}</div>
-                  <div className="flex-1">
-                    <div className="font-medium">{model.name}</div>
-                    <div className="text-xs opacity-70">{model.description}</div>
-                  </div>
-                  {selectedModel === model.id && (
-                    <Check className="h-4 w-4 text-primary mt-0.5" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <span className="text-primary">{selectedModelData.icon}</span>
+                  <span className="text-xs sm:text-sm text-foreground/70">{selectedModelData.name}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border/50">
+                {/* Google Gemini Models */}
+                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <img src={providerInfo.gemini.logo} alt="Gemini" className="h-3.5 w-3.5" />
+                  {providerInfo.gemini.name}
+                </DropdownMenuLabel>
+                {models.filter(m => m.provider === "gemini").map(model => (
+                  <DropdownMenuItem
+                    key={model.id}
+                    onClick={() => setSelectedModel(model.id)}
+                    className="flex items-center gap-2 p-2 cursor-pointer"
+                  >
+                    <div className="text-primary">{model.icon}</div>
+                    <span className="flex-1 text-sm">{model.name}</span>
+                    {selectedModel === model.id && (
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                
+                {/* OpenAI Models */}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <img src={providerInfo.openai.logo} alt="OpenAI" className="h-3.5 w-3.5" />
+                  {providerInfo.openai.name}
+                </DropdownMenuLabel>
+                {models.filter(m => m.provider === "openai").map(model => (
+                  <DropdownMenuItem
+                    key={model.id}
+                    onClick={() => setSelectedModel(model.id)}
+                    className="flex items-center gap-2 p-2 cursor-pointer"
+                  >
+                    <div className="text-primary">{model.icon}</div>
+                    <span className="flex-1 text-sm">{model.name}</span>
+                    {selectedModel === model.id && (
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                
+                {/* Perplexity Models */}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-3.5 w-3.5" />
+                  {providerInfo.perplexity.name}
+                </DropdownMenuLabel>
+                {models.filter(m => m.provider === "perplexity").map(model => (
+                  <DropdownMenuItem
+                    key={model.id}
+                    onClick={() => setSelectedModel(model.id)}
+                    className="flex items-center gap-2 p-2 cursor-pointer"
+                  >
+                    <div className="text-primary">{model.icon}</div>
+                    <span className="flex-1 text-sm">{model.name}</span>
+                    {selectedModel === model.id && (
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           {/* Right side - action buttons */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -1469,7 +1467,7 @@ const Workbench = () => {
               data-tour="compose-email-btn"
             >
               <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline text-sm">Compose Email</span>
+              <span className="hidden sm:inline text-sm">Compose</span>
             </Button>
             
             {/* Document Context Indicator - hide on mobile */}
@@ -1575,9 +1573,9 @@ const Workbench = () => {
                     {/* Avatar - only on mobile for user, always for assistant */}
                     {(message.role === "assistant" || isMobile) && (
                       message.role === "assistant" ? (
-                        <Avatar className={`h-8 w-8 shrink-0 ${isMobile ? '' : 'mt-1'}`}>
+                        <Avatar className={`h-9 w-9 shrink-0 ${isMobile ? '' : 'mt-1'}`}>
                           <AvatarFallback className="bg-primary/10 text-primary">
-                            <PandaIcon size={16} />
+                            <PandaIconSimple size={20} />
                           </AvatarFallback>
                         </Avatar>
                       ) : isMobile ? (
