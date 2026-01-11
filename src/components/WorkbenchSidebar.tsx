@@ -294,7 +294,7 @@ export const WorkbenchSidebar = ({
       ) : (
         <>
           <span 
-            className="flex-1 truncate cursor-text min-w-0 pr-20"
+            className="flex-1 truncate cursor-text min-w-0"
             onDoubleClick={(e) => { 
               e.stopPropagation(); 
               startEditing(conv.id, conv.title); 
@@ -305,11 +305,11 @@ export const WorkbenchSidebar = ({
               ? conv.title.split(' ').slice(0, 4).join(' ') + '...'
               : conv.title}
           </span>
-          <div className="absolute right-1 flex items-center gap-0.5 bg-inherit">
+          <div className="flex items-center gap-0.5 ml-auto rounded-md bg-background/80 backdrop-blur-sm px-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-5 w-5"
               onClick={(e) => {
                 e.stopPropagation();
                 togglePinConversation.mutate({ id: conv.id, pinned: !conv.pinned });
@@ -317,32 +317,32 @@ export const WorkbenchSidebar = ({
               title={conv.pinned ? "Unpin" : "Pin"}
             >
               {conv.pinned ? (
-                <PinOff className="h-3 w-3 text-amber-500" />
+                <PinOff className="h-2.5 w-2.5 text-muted-foreground" />
               ) : (
-                <Pin className="h-3 w-3 text-muted-foreground" />
+                <Pin className="h-2.5 w-2.5 text-muted-foreground" />
               )}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-5 w-5"
               onClick={(e) => {
                 e.stopPropagation();
                 startEditing(conv.id, conv.title);
               }}
             >
-              <Pencil className="h-3 w-3 text-muted-foreground" />
+              <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-5 w-5"
               onClick={(e) => {
                 e.stopPropagation();
                 deleteConversation.mutate(conv.id);
               }}
             >
-              <Trash2 className="h-3 w-3 text-destructive" />
+              <Trash2 className="h-2.5 w-2.5 text-muted-foreground" />
             </Button>
           </div>
         </>
@@ -894,7 +894,7 @@ export const WorkbenchSidebar = ({
   // Desktop: Fixed sidebar - wider for better readability
   return (
     <div 
-      className="w-80 border-r border-border/30 bg-background/50 flex flex-col"
+      className="w-80 lg:w-[360px] xl:w-[400px] border-r border-border/30 bg-background/50 flex flex-col transition-all duration-200"
     >
       <SidebarContent />
     </div>

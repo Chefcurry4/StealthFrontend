@@ -78,9 +78,6 @@ export const streamAIStudyAdvisor = async ({
 
   if (!resp.body) throw new Error("No response body");
 
-  // Notify that database search might be starting
-  onSearchingDatabase?.(true);
-
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let textBuffer = "";
@@ -123,6 +120,9 @@ export const streamAIStudyAdvisor = async ({
             // Check if generate_semester_plan is being used
             if (parsed.tools_used.includes('generate_semester_plan')) {
               onDeepPlanning?.(true);
+            } else {
+              // Other tools means database searching
+              onSearchingDatabase?.(true);
             }
             continue;
           }
