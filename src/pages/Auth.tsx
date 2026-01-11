@@ -607,7 +607,7 @@ const Auth = () => {
                 </div>
               </div>
             </div>
-            <CardTitle className="text-xl">Students Hub</CardTitle>
+            <CardTitle className="text-xl">UniPandan</CardTitle>
             <CardDescription className="text-sm">
               Join to save courses, labs, and build your learning agreement
             </CardDescription>

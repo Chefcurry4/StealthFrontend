@@ -1330,8 +1330,8 @@ const Workbench = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between gap-2 px-2 sm:px-4 py-2 sm:py-3 border-b border-border/30 bg-background/80 backdrop-blur-sm z-10">
+        {/* Top Bar - Thin, transparent like Gemini */}
+        <div className="flex-shrink-0 flex items-center justify-between gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-background/40 backdrop-blur-sm z-10">
           {/* Left side - sidebar toggle on mobile */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {isMobile && (
@@ -1497,9 +1497,9 @@ const Workbench = () => {
         onResultClick={scrollToMessage}
       />
 
-      {/* Chat Area - Only this scrolls */}
-      <ScrollArea className="flex-1 min-h-0 px-4 relative" ref={scrollRef}>
-        <div className="py-4 sm:py-8 space-y-6">
+      {/* Chat Area - Only this scrolls, centered content like ChatGPT */}
+      <ScrollArea className="flex-1 min-h-0 relative [&>div>div]:!block" ref={scrollRef}>
+        <div className="py-6 sm:py-10 space-y-6 mx-auto w-full max-w-3xl px-4 sm:px-6">
           {/* Email Compose Form - shows when composing email */}
           {showEmailCompose && messages.length === 0 && (
             <EmailComposeInChat
@@ -1561,32 +1561,54 @@ const Workbench = () => {
                 <div 
                   key={message.id} 
                   data-message-index={idx}
-                  className="group animate-in fade-in-0 slide-in-from-bottom-2 duration-300 transition-all rounded-lg"
+                  className={`group animate-in fade-in-0 slide-in-from-bottom-2 duration-300 transition-all ${
+                    isMobile ? '' : ''
+                  }`}
                 >
-                  <div className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
-                    {/* Avatar */}
-                    {message.role === "assistant" ? (
-                      <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          <PandaIcon size={18} />
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <Avatar className="h-9 w-9 shrink-0 ring-2 ring-border shadow-sm">
-                        <AvatarImage src={userProfile?.profile_photo_url || ""} />
-                        <AvatarFallback className="bg-secondary text-secondary-foreground text-sm font-medium">
-                          {userProfile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
+                  {/* Desktop: ChatGPT-style document reading layout */}
+                  {/* Mobile: WhatsApp-style bubbles */}
+                  <div className={`flex gap-3 ${
+                    isMobile 
+                      ? (message.role === "user" ? "flex-row-reverse" : "") 
+                      : ""
+                  }`}>
+                    {/* Avatar - only on mobile for user, always for assistant */}
+                    {(message.role === "assistant" || isMobile) && (
+                      message.role === "assistant" ? (
+                        <Avatar className={`h-8 w-8 shrink-0 ${isMobile ? '' : 'mt-1'}`}>
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            <PandaIcon size={16} />
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : isMobile ? (
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={userProfile?.profile_photo_url || ""} />
+                          <AvatarFallback className="bg-secondary text-secondary-foreground text-sm font-medium">
+                            {userProfile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : null
                     )}
 
                     {/* Message Content */}
-                    <div className={`flex-1 min-w-0 max-w-[calc(100%-3rem)] sm:max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
+                    <div className={`flex-1 min-w-0 ${
+                      isMobile 
+                        ? `max-w-[80%] ${message.role === "user" ? "text-right" : ""}` 
+                        : "max-w-none"
+                    }`}>
                       <div
-                        className={`group/bubble relative inline-block rounded-2xl px-4 py-3 shadow-sm ${
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-tr-md"
-                            : "bg-card border border-border/50 text-foreground rounded-tl-md"
+                        className={`group/bubble relative ${
+                          isMobile 
+                            ? `inline-block rounded-2xl px-4 py-2.5 ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground rounded-tr-sm"
+                                  : "bg-card border border-border/30 text-foreground rounded-tl-sm"
+                              }`
+                            : `${
+                                message.role === "user"
+                                  ? "bg-accent/30 rounded-xl px-4 py-3 border border-border/20"
+                                  : "py-2"
+                              }`
                         }`}
                       >
                         {/* Attachments indicator */}
@@ -1854,16 +1876,16 @@ const Workbench = () => {
         )}
       </ScrollArea>
 
-      {/* Input Area - Fixed at bottom, never scrolls */}
+      {/* Input Area - Fixed at bottom, centered like ChatGPT */}
       <div 
         ref={inputAreaRef}
-        className={`flex-shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-3 sm:p-4 transition-all duration-300 ${
+        className={`flex-shrink-0 bg-transparent p-3 sm:p-4 transition-all duration-300 ${
           isDragOver 
-            ? 'bg-primary/10 border-primary shadow-[0_-4px_24px_-4px_rgba(var(--primary),0.25)]' 
+            ? 'bg-primary/5' 
             : ''
         }`}
         style={{ 
-          paddingBottom: `max(env(safe-area-inset-bottom), 12px)`,
+          paddingBottom: `max(env(safe-area-inset-bottom), 16px)`,
           position: 'sticky',
           bottom: 0
         }}
@@ -1871,6 +1893,7 @@ const Workbench = () => {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        <div className="mx-auto max-w-3xl">
         {/* Animated drop zone indicator */}
         {isDragOver && (
           <div className="mb-3 p-4 border-2 border-dashed border-primary rounded-xl bg-primary/10 text-center animate-pulse">
@@ -1950,8 +1973,9 @@ const Workbench = () => {
           </div>
         )}
 
-        <div className="flex items-end gap-2">
-          {/* Attachment Button */}
+        {/* ChatGPT-style pill input */}
+        <div className="relative bg-card/80 dark:bg-card/60 backdrop-blur-md rounded-3xl border border-border/40 shadow-lg">
+          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -1960,57 +1984,9 @@ const Workbench = () => {
             onChange={handleFileSelect}
             className="hidden"
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isStreaming}
-          >
-            <Paperclip className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
-          </Button>
-
-
-          {/* Export Button */}
-          {messages.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 h-11 w-11 rounded-xl bg-transparent hover:bg-accent/30 transition-colors"
-                  disabled={isStreaming}
-                  title="Export conversation"
-                  aria-label="Export conversation in different formats"
-                >
-                  <Download className="h-5 w-5 text-foreground/50 dark:text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" aria-label="Export format options">
-                <DropdownMenuLabel>Export as</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleExport('markdown')} className="cursor-pointer">
-                  <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Markdown (.md)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('text')} className="cursor-pointer">
-                  <FileDown className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Plain Text (.txt)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
-                  <FileJson className="h-4 w-4 mr-2" aria-hidden="true" />
-                  JSON (.json)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer">
-                  <FileType className="h-4 w-4 mr-2" aria-hidden="true" />
-                  PDF (.pdf)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Text Input */}
-          <div className="flex-1 relative">
+          
+          {/* Main input area */}
+          <div className="relative">
             {/* Mention Popup */}
             <MentionPopup
               isOpen={showMentionPopup}
@@ -2023,7 +1999,7 @@ const Workbench = () => {
             
             <Textarea
               ref={inputRef}
-              placeholder="Message hubAI... (type @ to mention courses/labs)"
+              placeholder="Fai una domanda"
               value={input}
               onChange={handleInputChange}
               onKeyDown={(e) => {
@@ -2036,18 +2012,20 @@ const Workbench = () => {
                 }
               }}
               disabled={isStreaming}
-              className="pr-14 py-3 min-h-[50px] max-h-[150px] resize-none rounded-xl border bg-transparent focus:border-primary/50 transition-all placeholder:text-foreground/40 dark:placeholder:text-muted-foreground border-foreground/20 dark:border-border overflow-y-auto"
+              className="w-full bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[52px] max-h-[200px] py-4 px-4 pr-14 text-base placeholder:text-muted-foreground/60 overflow-y-auto"
               rows={1}
               aria-label="Message input"
               aria-describedby="input-hint"
               data-tour="chat-input"
             />
-            <div className="absolute right-2 bottom-0 top-0 flex items-center">
+            
+            {/* Send button - inside input on right */}
+            <div className="absolute right-3 bottom-2 flex items-center">
               {isStreaming ? (
                 <Button
                   size="icon"
-                  variant="destructive"
-                  className="h-9 w-9 rounded-lg transition-colors"
+                  variant="ghost"
+                  className="h-9 w-9 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive"
                   onClick={handleStop}
                   title="Stop generating"
                   aria-label="Stop generating response"
@@ -2058,7 +2036,7 @@ const Workbench = () => {
                 <Button
                   size="icon"
                   data-send-button
-                  className="h-9 w-9 rounded-lg transition-colors"
+                  className="h-9 w-9 rounded-full transition-all"
                   onClick={handleSend}
                   disabled={!input.trim() && attachments.length === 0}
                   aria-label="Send message"
@@ -2068,34 +2046,59 @@ const Workbench = () => {
               )}
             </div>
           </div>
-        </div>
-
-
-        <div className="flex flex-col items-center gap-1 mt-2">
-          <p className="text-[10px] sm:text-xs text-foreground/40 dark:text-muted-foreground/70">
-            hubAI can make mistakes. Consider checking important information.
-          </p>
           
-          {/* Powered By Section - Hidden on mobile for space */}
-          <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground/60">
-            <span>Powered by</span>
-            <div className="flex items-center gap-1.5">
-              <img src={providerInfo.gemini.logo} alt="Gemini" className="h-4 w-4" />
-              <span className="font-medium">Gemini</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <img src={providerInfo.openai.logo} alt="ChatGPT" className="h-4 w-4" />
-              <span className="font-medium">ChatGPT</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-4 w-4" />
-              <span className="font-medium">Perplexity</span>
-            </div>
+          {/* Bottom toolbar inside pill */}
+          <div className="flex items-center gap-1 px-3 pb-3 pt-0">
+            {/* Plus button with dropdown for attach/export */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-accent/50"
+                  disabled={isStreaming}
+                >
+                  <span className="text-xl font-light text-muted-foreground">+</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="cursor-pointer">
+                  <Paperclip className="h-4 w-4 mr-2" />
+                  Attach file
+                </DropdownMenuItem>
+                {messages.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs">Export conversation</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => handleExport('markdown')} className="cursor-pointer">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Markdown (.md)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('text')} className="cursor-pointer">
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Plain Text (.txt)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
+                      <FileJson className="h-4 w-4 mr-2" />
+                      JSON (.json)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer">
+                      <FileType className="h-4 w-4 mr-2" />
+                      PDF (.pdf)
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+
+        <p className="text-[10px] sm:text-xs text-center text-foreground/40 dark:text-muted-foreground/60 mt-2">
+          AI can make mistakes. Consider checking important information.
+        </p>
+        </div>
       </div>
       </div>
-      
       {/* Semester Planner Panel */}
       <WorkbenchSemesterPlanner
         isOpen={isPlannerOpen}
