@@ -215,8 +215,8 @@ const providerInfo: Record<ProviderType, { name: string; logo: string }> = {
   }
 };
 
-// Models to display in UI (filter out Gemini and OpenAI for now)
-const displayModels = models.filter(m => m.provider === "perplexity");
+// Models to display in UI (show OpenAI and Perplexity, filter out Gemini for now)
+const displayModels = models.filter(m => m.provider === "perplexity" || m.provider === "openai");
 
 // Helper to format tool names for display
 const formatToolName = (toolName: string): string => {
