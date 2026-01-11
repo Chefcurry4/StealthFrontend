@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark, Book } from "lucide-react";
+import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark, Book, Panda } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -78,8 +78,7 @@ export const Header = () => {
           onClick={() => handleSectionNavClick("/")}
           className="flex items-center gap-2 cursor-pointer"
         >
-          <GraduationCap className="h-4 w-8" />
-          <span className="text-xl font-bold">Student Hub</span>
+          <Panda className="h-4 w-8" />
         </button>
 
         {/* Desktop Navigation */}
