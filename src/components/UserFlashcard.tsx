@@ -251,7 +251,7 @@ const UserFlashcard = ({
           </div>
 
           {/* Username */}
-          <h3 className={`mt-4 text-xl font-bold ${isEpicPink ? 'text-pink-700' : 'text-white'} text-center truncate max-w-full px-2`}>
+          <h3 className={`mt-4 text-xl font-bold ${isEpicPink ? 'text-pink-700' : 'text-white'} text-center truncate max-w-full px-2 transition-all duration-300`}>
             {username || (
               <span className={`${isEpicPink ? 'text-pink-600/50' : 'text-white/50'} italic flex items-center gap-2`}>
                 <User className="h-4 w-4" />
@@ -283,13 +283,13 @@ const UserFlashcard = ({
           } to-transparent`} />
           
           {/* University */}
-          <div className={`flex items-center gap-2 ${isEpicPink ? 'text-pink-700/90' : 'text-white/90'}`}>
+          <div className={`flex items-center gap-2 ${isEpicPink ? 'text-pink-700/90' : 'text-white/90'} transition-all duration-300`}>
             {universityLogo ? (
-              <img src={universityLogo} alt="" className="h-5 w-5 rounded object-cover" />
+              <img src={universityLogo} alt="" className="h-5 w-5 rounded object-cover transition-all duration-300" />
             ) : (
               <Building className={`h-4 w-4 ${isEpicPink ? 'text-pink-600/70' : 'text-white/70'}`} />
             )}
-            <span className="text-sm truncate flex-1">
+            <span className="text-sm truncate flex-1 transition-all duration-300">
               {universityName || (
                 <span className={`${isEpicPink ? 'text-pink-600/50' : 'text-white/50'} italic`}>Select university</span>
               )}
@@ -297,9 +297,9 @@ const UserFlashcard = ({
           </div>
 
           {/* Student level indicator (visual) */}
-          <div className={`flex items-center gap-2 ${isEpicPink ? 'text-pink-700/90' : 'text-white/90'}`}>
+          <div className={`flex items-center gap-2 ${isEpicPink ? 'text-pink-700/90' : 'text-white/90'} transition-all duration-300`}>
             <GraduationCap className={`h-4 w-4 ${isEpicPink ? 'text-pink-600/70' : 'text-white/70'}`} />
-            <span className="text-sm">
+            <span className="text-sm transition-all duration-300">
               {studentLevel ? `${studentLevel} Student` : (
                 <span className={`${isEpicPink ? 'text-pink-600/50' : 'text-white/50'} italic`}>Select level</span>
               )}

@@ -397,22 +397,10 @@ export const WorkbenchSidebar = ({
 
       {/* New Chat Button */}
       <div className="p-3 space-y-2">
-        <div className="flex gap-2">
-          <Button onClick={() => { onNewChat(); if (isMobile) onToggle(); }} className="flex-1 gap-2" variant="outline">
-            <Plus className="h-4 w-4" />
-            New Chat
-          </Button>
-          {onComposeEmail && (
-            <Button 
-              onClick={() => { onComposeEmail(); if (isMobile) onToggle(); }} 
-              className="gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20" 
-              variant="outline"
-              title="Compose Email with AI"
-            >
-              <Mail className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <Button onClick={() => { onNewChat(); if (isMobile) onToggle(); }} className="w-full gap-2" variant="outline">
+          <Plus className="h-4 w-4" />
+          New Chat
+        </Button>
         
         {/* Search Input */}
         <div className="relative">

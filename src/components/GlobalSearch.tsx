@@ -89,10 +89,9 @@ export const GlobalSearch = ({
       <div className="relative">
         <Search 
           className={cn(
-            "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
+            "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground",
             variant === "hero" ? "h-5 w-5 left-4" : ""
           )} 
-          style={{ color: modeConfig.textColor, opacity: 0.5 }}
         />
         <Input
           ref={inputRef}
@@ -119,10 +118,9 @@ export const GlobalSearch = ({
           <button
             onClick={handleClear}
             className={cn(
-              "absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity",
+              "absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors",
               variant === "hero" ? "right-4" : ""
             )}
-            style={{ color: modeConfig.textColor }}
           >
             <X className={cn("h-4 w-4", variant === "hero" ? "h-5 w-5" : "")} />
           </button>
@@ -130,11 +128,10 @@ export const GlobalSearch = ({
         {(isLoading || isTyping) && (
           <Loader2 
             className={cn(
-              "absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
+              "absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground",
               variant === "hero" ? "right-4 h-5 w-5" : "",
               isTyping && !isLoading ? "opacity-40" : "opacity-70"
             )} 
-            style={{ color: modeConfig.textColor }}
           />
         )}
       </div>
