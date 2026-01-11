@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Users, MessageSquare, Bookmark, Globe } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Users, MessageSquare, Bookmark, Globe, Panda } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTour } from "@/contexts/TourContext";
 import { useUniversities } from "@/hooks/useUniversities";
@@ -96,20 +96,20 @@ const Index = () => {
     },
     {
       icon: BookOpen,
-      title: "Discover",
-      description: "Filter by topic, read reviews",
+      title: "Interact",
+      description: "Filter, save and exchange reviews",
       color: "text-green-500 bg-green-500/20",
     },
     {
-      icon: Sparkles,
-      title: "AI Help",
-      description: "Get personalized recommendations",
+      icon: Panda,
+      title: "AI integration",
+      description: "Get personalized recommendations on every university doubt",
       color: "text-orange-500 bg-orange-500/20",
     },
     {
       icon: FileText,
       title: "Plan",
-      description: "Organize your semester & labs",
+      description: "Create your semester & contact labs",
       color: "text-rose-500 bg-rose-500/20",
     },
   ];
@@ -127,7 +127,7 @@ const Index = () => {
     <>
       <SEO 
         description="Plan your international study semester with AI-powered course recommendations. Explore universities, discover courses, find research labs, and build learning agreements."
-        keywords={["study abroad", "exchange semester", "university courses", "learning agreement", "AI advisor"]}
+        keywords={["study at EPFL", "semester", "university courses", "EPFL courses", "EPFL AI advisor", "ETH courses"]}
       />
       <div className="min-h-screen flex flex-col">
       {/* Hero Section with Central Search */}
@@ -135,10 +135,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-2xl xs:text-3xl md:text-4xl lg:text-6xl font-bold mb-4">
-              Student Hub
+              UniPandan
             </h1>
             <p className="text-lg md:text-xl opacity-80 mb-8">
-              Plan your international study semester with AI-powered guidance
+              AI-powered guidance for students & universities
             </p>
 
             {/* Central Search */}
@@ -162,7 +162,7 @@ const Index = () => {
             {/* Beta notice */}
             <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-center max-w-2xl mx-auto">
               <p className="text-sm text-foreground">
-                <strong>Beta Version:</strong> This is the Beta version of Student Hub. For now only EPFL is covered, but more universities and features to come in next versions!
+                <strong>Beta Version:</strong> This is the Beta version of UniPandan. For now only EPFL is covered, but more universities and features to come in next versions (ETHZ is loading...)!
               </p>
             </div>
 
@@ -217,7 +217,7 @@ const Index = () => {
               How does UniPandax work?
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Your journey to the perfect exchange semester
+              Your journey to the perfect semester
             </p>
           </div>
 
