@@ -78,7 +78,7 @@ export const ThinkingIndicator = ({
             <span className="text-sm font-medium text-foreground/90">
               {searchTools.length > 0 
                 ? `Accessing database: ${searchTools.map(formatToolName).join(', ')}…`
-                : 'Searching database…'}
+                : 'Accessing database…'}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export const ThinkingIndicator = ({
               <CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 animate-ping" />
             </div>
-            <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Building your semester plan…</span>
+            <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Building your semester plan…</span>
           </div>
           
           {isCollapsible && (
