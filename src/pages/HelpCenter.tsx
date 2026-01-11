@@ -92,7 +92,7 @@ const faqs = [
       },
       {
         question: "How does the AI know about courses and labs?",
-        answer: "hubAI has direct access to the entire Students Hub database. It can search through 1400+ courses and 420+ labs, look up professor information, find courses by topic, ECTS, or exam type, and provide recommendations based on actual platform data - not generic information."
+        answer: "hubAI has direct access to the entire UniPandan database. It can search through 1400+ courses and 420+ labs, look up professor information, find courses by topic, ECTS, or exam type, and provide recommendations based on actual platform data - not generic information."
       },
       {
         question: "Can I attach documents to my AI conversations?",
@@ -319,7 +319,7 @@ const HelpCenter = () => {
     <>
       <SEO 
         title="Help Center"
-        description="Find answers to common questions about Students Hub. Learn how to use the AI Workbench with multiple AI models, draft emails, manage saved courses and labs, and more."
+        description="Find answers to common questions about UniPandan. Learn how to use the AI Workbench with multiple AI models, draft emails, manage saved courses and labs, and more."
         keywords={["help", "FAQ", "support", "how to", "student help", "AI workbench", "hubAI", "email drafting", "course reviews", "semester planning"]}
         structuredData={faqSchema}
       />
@@ -332,7 +332,7 @@ const HelpCenter = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Help Center</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Find answers to common questions and learn how to make the most of Students Hub
+            Find answers to common questions and learn how to make the most of UniPandan
           </p>
 
           {/* Search */}

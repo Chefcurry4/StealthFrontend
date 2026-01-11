@@ -24,8 +24,8 @@ const NotFound = () => {
   return (
     <>
       <SEO
-        title="Page Not Found | Students Hub"
-        description="The page you're looking for doesn't exist. Find universities, courses, and research labs on Students Hub."
+        title="Page Not Found | UniPandan"
+        description="The page you're looking for doesn't exist. Find universities, courses, and research labs on UniPandan."
       />
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
         <div className="max-w-2xl w-full text-center space-y-8">
