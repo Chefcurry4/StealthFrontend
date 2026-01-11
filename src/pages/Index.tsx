@@ -14,6 +14,7 @@ import { AuthRequiredDialog } from "@/components/AuthRequiredDialog";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import noisyGradientBg from "@/assets/noisy-gradient-bg.webp";
 
 const Index = () => {
   const { user } = useAuth();
@@ -195,14 +196,19 @@ const Index = () => {
       {/* Recently Viewed Section */}
       <RecentlyViewed />
 
-      {/* How It Works Section - Redesigned with dynamic background */}
+      {/* How It Works Section - Redesigned with noisy gradient background */}
       <section className="py-12 relative overflow-hidden">
-        {/* Dynamic animated background */}
+        {/* Noisy gradient background image with theme overlays */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+          <img 
+            src={noisyGradientBg} 
+            alt="" 
+            className="w-full h-full object-cover opacity-30 dark:opacity-20"
+          />
+          {/* Theme-coherent overlay for light/dark mode */}
+          <div className="absolute inset-0 bg-background/70 dark:bg-background/80" />
+          {/* Additional gradient blend for smoothness */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
         </div>
 
         <div className="container mx-auto px-4">
