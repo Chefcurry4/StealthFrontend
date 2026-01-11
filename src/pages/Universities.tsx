@@ -120,7 +120,7 @@ const Universities = () => {
                     {/* Beta notice */}
                     <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
                       <p className="text-sm text-foreground">
-                        <strong>Beta Version:</strong> This is the Beta version of Student Hub. For now only EPFL is covered, but more universities and features to come in next versions!
+                        <strong>Beta Version:</strong> This is the Beta version of UniPandan. For now only EPFL is covered, but more universities and features to come in next versions!
                       </p>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">

@@ -229,7 +229,7 @@ export const WorkbenchSemesterPlanner = ({
     ]);
     
     // Add header row with plan info
-    const titleRow = [`created by  Student Hub`, "", "", "", "", "", "", "", ""];
+    const titleRow = [`Created by UniPandan`, "", "", "", "", "", "", "", ""];
     const emptyRow = ["", "", "", "", "", "", "", "", ""];
     
     const csv = [titleRow.map(cell => `"${cell}"`).join(","), emptyRow.map(cell => `"${cell}"`).join(","), headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
@@ -282,7 +282,7 @@ export const WorkbenchSemesterPlanner = ({
         : '#888888';
       ctx.font = '20px system-ui, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText('📚 Student Hub', finalCanvas.width - 20, finalCanvas.height - 12);
+      ctx.fillText('🐼 UniPandan', finalCanvas.width - 20, finalCanvas.height - 12);
       
       const url = finalCanvas.toDataURL("image/png");
       const a = document.createElement("a");
@@ -310,7 +310,7 @@ export const WorkbenchSemesterPlanner = ({
       idx === 0 ? totalEcts.toString() : ""
     ]);
     
-    const titleRow = [`created by  Student Hub`, "", "", "", "", "", "", "", ""];
+    const titleRow = [`Created by UniPandan`, "", "", "", "", "", "", "", ""];
     const emptyRow = ["", "", "", "", "", "", "", "", ""];
     
     const csv = [titleRow.map(cell => `"${cell}"`).join(","), emptyRow.map(cell => `"${cell}"`).join(","), headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");

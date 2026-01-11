@@ -14,10 +14,10 @@ interface SEOProps {
   structuredData?: object;
 }
 
-const DEFAULT_TITLE = "Students Hub";
+const DEFAULT_TITLE = "UniPandan";
 const DEFAULT_DESCRIPTION = "Plan your studies smartly with AI-powered course recommendations, university exploration, research labs discovery, and learning agreement management.";
 const DEFAULT_IMAGE = "https://lovable.dev/opengraph-image-p98pqg.png";
-const SITE_NAME = "Students Hub";
+const SITE_NAME = "UniPandan";
 
 export const SEO = ({
   title,
@@ -26,7 +26,7 @@ export const SEO = ({
   image = DEFAULT_IMAGE,
   url,
   keywords = [],
-  author = "Students Hub",
+  author = "UniPandan",
   publishedTime,
   modifiedTime,
   structuredData,

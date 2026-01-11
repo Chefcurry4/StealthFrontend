@@ -8,7 +8,7 @@ const PrivacyPolicy = () => {
     <>
       <SEO 
         title="Privacy Policy"
-        description="Learn how Student Hub collects, uses, and protects your personal information. Read our privacy policy for details on data security and your rights."
+        description="Learn how UniPandan collects, uses, and protects your personal information. Read our privacy policy for details on data security and your rights."
         keywords={["privacy policy", "data protection", "student data", "personal information", "study abroad", "AI advisor"]}
       />
       <div className="flex-1">
@@ -24,7 +24,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
               <p className="opacity-80 leading-relaxed">
-                Welcome to Student Hub, an international study planning platform that helps students discover universities, 
+                Welcome to UniPandan, an international study planning platform that helps students discover universities, 
                 explore courses and research labs, and build learning agreements with AI-powered guidance. We are committed 
                 to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, 
                 use, disclose, and safeguard your information when you use our platform.
@@ -158,7 +158,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">9. Children's Privacy</h2>
               <p className="opacity-80 leading-relaxed">
-                Student Hub is designed for university and higher education students. We do not knowingly collect 
+                UniPandan is designed for university and higher education students. We do not knowingly collect 
                 personal information from children under 16. If you believe we have collected information from a 
                 child under 16, please contact us immediately.
               </p>
@@ -169,7 +169,7 @@ const PrivacyPolicy = () => {
               <p className="opacity-80 leading-relaxed">
                 We may update this Privacy Policy from time to time to reflect changes in our practices or for 
                 legal and regulatory reasons. We will notify you of significant changes by posting a notice on 
-                the platform. Your continued use of Student Hub after changes constitutes acceptance of the updated policy.
+                the platform. Your continued use of UniPandan after changes constitutes acceptance of the updated policy.
               </p>
             </section>
 
@@ -177,7 +177,7 @@ const PrivacyPolicy = () => {
               <h2 className="text-2xl font-semibold mb-4">11. Contact Us</h2>
               <p className="opacity-80 leading-relaxed">
                 If you have any questions about this Privacy Policy or our data practices, please contact us at: 
-                <span className="font-medium"> privacy@studenthub.com</span>
+                <span className="font-medium"> privacy@unipandan.com</span>
               </p>
             </section>
           </div>

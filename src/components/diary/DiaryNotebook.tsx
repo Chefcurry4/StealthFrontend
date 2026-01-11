@@ -406,10 +406,10 @@ export const DiaryNotebook = ({
               />
             )}
 
-            {/* Student Hub logo on top right */}
+            {/* UniPandan logo on top right */}
             <div className="absolute top-2 right-3 flex items-center gap-2 z-10 opacity-70">
-              <GraduationCap className="h-5 w-5 text-gray-600" />
-              <span className="text-xs font-semibold text-gray-600 tracking-wide">Students Hub</span>
+              <span className="text-base">🐼</span>
+              <span className="text-xs font-semibold text-gray-600 tracking-wide">UniPandan</span>
             </div>
 
             {/* Page content area */}

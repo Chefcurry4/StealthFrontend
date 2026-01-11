@@ -13,16 +13,16 @@ const faqs = [
     icon: BookOpen,
     questions: [
       {
-        question: "What is Students Hub?",
-        answer: "Students Hub is a comprehensive platform designed for university students to explore courses, discover research labs, find universities, and plan their academic journey. It features an advanced AI-powered Workbench with multiple AI models, email drafting tools, document management, semester planning, and saved items organization."
+        question: "What is UniPandan?",
+        answer: "UniPandan is a comprehensive platform designed for university students to explore courses, discover research labs, find universities, and plan their academic journey. It features an advanced AI-powered Workbench with multiple AI models, email drafting tools, document management, semester planning, and saved items organization."
       },
       {
         question: "How do I create an account?",
         answer: "Click the 'Sign In' button in the header, then select 'Sign Up'. Enter your email address and create a password. You'll receive a confirmation email to verify your account."
       },
       {
-        question: "Is Students Hub free to use?",
-        answer: "Yes! Students Hub is completely free for all students. You can browse universities, courses, and labs without an account. Create an account to save items, use the AI Workbench, and draft emails."
+        question: "Is UniPandan free to use?",
+        answer: "Yes! UniPandan is completely free for all students. You can browse universities, courses, and labs without an account. Create an account to save items, use the AI Workbench, and draft emails."
       },
       {
         question: "What features are available?",

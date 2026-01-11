@@ -8,7 +8,7 @@ const CookiePolicy = () => {
     <>
       <SEO 
         title="Cookie Policy"
-        description="Learn about how Student Hub uses cookies and similar technologies. Understand what data is stored and how to manage your preferences."
+        description="Learn about how UniPandan uses cookies and similar technologies. Understand what data is stored and how to manage your preferences."
         keywords={["cookie policy", "cookies", "local storage", "data storage", "privacy"]}
       />
       <div className="flex-1">
@@ -26,7 +26,7 @@ const CookiePolicy = () => {
                 <p className="opacity-80 leading-relaxed">
                   Cookies are small text files that are stored on your device when you visit a website. 
                   They help websites remember your preferences and improve your browsing experience. 
-                  Student Hub uses cookies and similar technologies (including local storage) to provide 
+                  UniPandan uses cookies and similar technologies (including local storage) to provide 
                   and improve our academic planning services.
                 </p>
               </section>
@@ -38,7 +38,7 @@ const CookiePolicy = () => {
                   <div>
                     <h3 className="text-xl font-medium mb-2">Essential Cookies (Required)</h3>
                     <p className="opacity-80 leading-relaxed">
-                      These cookies are necessary for Student Hub to function properly. They enable core functionality 
+                      These cookies are necessary for UniPandan to function properly. They enable core functionality 
                       including user authentication, session management, and security features. Without these cookies, 
                       you cannot log in, save items, or use the AI Study Advisor. These cookies cannot be disabled.
                     </p>
@@ -52,7 +52,7 @@ const CookiePolicy = () => {
                   <div>
                     <h3 className="text-xl font-medium mb-2">Preference Cookies</h3>
                     <p className="opacity-80 leading-relaxed">
-                      These cookies remember your preferences and settings to personalize your experience on Student Hub:
+                      These cookies remember your preferences and settings to personalize your experience on UniPandan:
                     </p>
                     <ul className="list-disc pl-6 space-y-1 opacity-80 mt-2">
                       <li><strong>Theme Preference:</strong> Remembers your selected theme (light mode, dark mode, or system preference)</li>
@@ -78,7 +78,7 @@ const CookiePolicy = () => {
                   <div>
                     <h3 className="text-xl font-medium mb-2">Performance Cookies</h3>
                     <p className="opacity-80 leading-relaxed">
-                      These cookies help us understand how visitors interact with Student Hub so we can improve our platform:
+                      These cookies help us understand how visitors interact with UniPandan so we can improve our platform:
                     </p>
                     <ul className="list-disc pl-6 space-y-1 opacity-80 mt-2">
                       <li><strong>Page Load Metrics:</strong> Measures page loading performance to optimize speed</li>
@@ -115,7 +115,7 @@ const CookiePolicy = () => {
                   <li><strong>Persistent cookies:</strong> Remain on your device for a set period or until you delete them.</li>
                 </ul>
                 <p className="opacity-80 leading-relaxed mt-4">
-                  Specific cookie durations for Student Hub:
+                  Specific cookie durations for UniPandan:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 opacity-80 mt-2">
                   <li><strong>Authentication tokens:</strong> Up to 7 days (refresh tokens up to 30 days)</li>
@@ -128,7 +128,7 @@ const CookiePolicy = () => {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">5. Local Storage</h2>
                 <p className="opacity-80 leading-relaxed mb-4">
-                  In addition to cookies, Student Hub uses browser local storage to store data locally on your device:
+                  In addition to cookies, UniPandan uses browser local storage to store data locally on your device:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 opacity-80">
                   <li><strong>Theme Settings:</strong> Your light/dark mode preference and background theme selection</li>
@@ -149,13 +149,13 @@ const CookiePolicy = () => {
                 </p>
                 <ul className="list-disc pl-6 space-y-2 opacity-80">
                   <li><strong>Browser settings:</strong> Most browsers allow you to block or delete cookies through settings. Look for "Privacy" or "Cookies" in your browser's settings menu.</li>
-                  <li><strong>Clear on sign out:</strong> Signing out of Student Hub will clear your authentication cookies.</li>
+                  <li><strong>Clear on sign out:</strong> Signing out of UniPandan will clear your authentication cookies.</li>
                   <li><strong>Incognito/Private mode:</strong> Using private browsing will prevent cookies from being stored permanently.</li>
                   <li><strong>Clear local storage:</strong> You can clear local storage through your browser's developer tools or by clearing site data.</li>
                 </ul>
                 <p className="opacity-80 leading-relaxed mt-4">
                   <strong>Important:</strong> Blocking essential cookies will prevent you from logging in and using core 
-                  features of Student Hub. Preference and functional cookies enhance your experience but are not 
+                  features of UniPandan. Preference and functional cookies enhance your experience but are not 
                   strictly required.
                 </p>
               </section>
@@ -173,7 +173,7 @@ const CookiePolicy = () => {
                 <h2 className="text-2xl font-semibold mb-4">8. Contact Us</h2>
                 <p className="opacity-80 leading-relaxed">
                   If you have any questions about our use of cookies or this Cookie Policy, please contact us at: 
-                  <span className="font-medium"> privacy@studenthub.com</span>
+                  <span className="font-medium"> privacy@unipandan.com</span>
                 </p>
               </section>
             </div>

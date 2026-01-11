@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { GraduationCap } from "lucide-react";
+import { PandaIcon } from "@/components/icons/PandaIcon";
 import { useBackgroundTheme } from "@/contexts/BackgroundThemeContext";
 
 export const Footer = () => {
@@ -38,8 +38,8 @@ export const Footer = () => {
           {/* Brand */}
           <div className="flex flex-col gap-4 md:col-span-1 col-span-1">
             <Link to="/" className="flex items-center gap-2">
-              <GraduationCap className="h-8 w-8" />
-              <span className="text-xl font-bold">Student Hub</span>
+              <PandaIcon size={32} />
+              <span className="text-xl font-bold">UniPandan</span>
             </Link>
             <p className="text-sm opacity-70">
               Plan your international study semester with AI-powered guidance
@@ -102,7 +102,7 @@ export const Footer = () => {
           className="mt-8 pt-8 border-t text-center text-sm opacity-70"
           style={{ borderColor: modeConfig.ui.cardBorder }}
         >
-          © 2025 Students Hub. All rights reserved.
+          © 2025 UniPandan. All rights reserved.
         </div>
       </div>
     </footer>

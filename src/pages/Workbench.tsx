@@ -54,6 +54,7 @@ import { WorkbenchSemesterPlanner } from "@/components/workbench/WorkbenchSemest
 import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
 import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
 import { EditableMessage } from "@/components/workbench/EditableMessage";
+import { PandaIcon } from "@/components/icons/PandaIcon";
 import { 
   Send, 
   Loader2, 
@@ -1567,7 +1568,7 @@ const Workbench = () => {
                     {message.role === "assistant" ? (
                       <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20 shadow-sm">
                         <AvatarFallback className="bg-primary/10 text-primary">
-                          <Sparkles className="h-4 w-4" />
+                          <PandaIcon size={18} />
                         </AvatarFallback>
                       </Avatar>
                     ) : (

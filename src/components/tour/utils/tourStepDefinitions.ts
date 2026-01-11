@@ -21,7 +21,7 @@ export const tourSteps: TourStep[] = [
   // Step 1: Welcome
   {
     id: 'welcome',
-    title: 'Welcome to Student Hub!',
+    title: 'Welcome to UniPandan!',
     description: 'Your AI-powered study abroad companion',
     mascotMessage: "Hey there! 👋 I'm your study advisor panda. Let me show you around!",
     position: 'center',

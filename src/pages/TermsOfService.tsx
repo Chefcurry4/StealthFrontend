@@ -8,7 +8,7 @@ const TermsOfService = () => {
     <>
       <SEO 
         title="Terms of Service"
-        description="Read the Terms of Service for Student Hub. Understand your rights and responsibilities when using our academic planning platform."
+        description="Read the Terms of Service for UniPandan. Understand your rights and responsibilities when using our academic planning platform."
         keywords={["terms of service", "user agreement", "legal terms", "study abroad", "academic planning"]}
       />
       <div className="flex-1">
@@ -24,8 +24,8 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
               <p className="opacity-80 leading-relaxed">
-                By accessing or using Student Hub, you agree to be bound by these Terms of Service. 
-                If you do not agree to these terms, please do not use our platform. Student Hub is 
+                By accessing or using UniPandan, you agree to be bound by these Terms of Service. 
+                If you do not agree to these terms, please do not use our platform. UniPandan is 
                 an international study planning platform designed to help students discover universities, 
                 explore courses and research labs, and build learning agreements with AI-powered guidance.
               </p>
@@ -34,7 +34,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
               <p className="opacity-80 leading-relaxed mb-4">
-                Student Hub provides the following services:
+                UniPandan provides the following services:
               </p>
               <ul className="list-disc pl-6 space-y-2 opacity-80 mb-4">
                 <li><strong>University & Course Discovery:</strong> Browse and search universities, courses, and academic programs</li>
@@ -48,7 +48,7 @@ const TermsOfService = () => {
                 <li><strong>Reviews & Ratings:</strong> Read and submit reviews for courses and research labs</li>
               </ul>
               <p className="opacity-80 leading-relaxed">
-                <strong>Important:</strong> Student Hub is a planning and discovery tool. We do not guarantee admission, 
+                <strong>Important:</strong> UniPandan is a planning and discovery tool. We do not guarantee admission, 
                 enrollment, or acceptance at any university, course, or research lab. All academic decisions should be 
                 verified with your home and host institutions.
               </p>
@@ -99,7 +99,7 @@ const TermsOfService = () => {
                 <li>Profile information and photos</li>
               </ul>
               <p className="opacity-80 leading-relaxed">
-                By submitting content, you grant Student Hub a non-exclusive, worldwide, royalty-free license to use, 
+                By submitting content, you grant UniPandan a non-exclusive, worldwide, royalty-free license to use, 
                 display, and distribute that content in connection with our services. Reviews you submit are visible 
                 to other users. You are responsible for ensuring your content is accurate, does not violate any 
                 third-party rights, and complies with these terms.
@@ -109,7 +109,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">6. AI-Generated Content & Disclaimer</h2>
               <p className="opacity-80 leading-relaxed mb-4">
-                Student Hub uses multiple AI services (Gemini API, Perplexity API, and OpenAI API via Lovable Gateway) to power several features. Important disclaimers:
+                UniPandan uses multiple AI services (Gemini API, Perplexity API, and OpenAI API via Lovable Gateway) to power several features. Important disclaimers:
               </p>
               <ul className="list-disc pl-6 space-y-2 opacity-80">
                 <li><strong>AI Study Advisor:</strong> Provides general academic guidance based on available data. Responses are for informational purposes only and should not replace advice from academic advisors, professors, or institutional staff.</li>
@@ -123,7 +123,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">7. Academic Information Disclaimer</h2>
               <p className="opacity-80 leading-relaxed mb-4">
-                Student Hub aggregates information about universities, courses, research labs, and faculty from various sources:
+                UniPandan aggregates information about universities, courses, research labs, and faculty from various sources:
               </p>
               <ul className="list-disc pl-6 space-y-2 opacity-80">
                 <li>Course information, credits, schedules, and prerequisites are subject to change without notice</li>
@@ -140,7 +140,7 @@ const TermsOfService = () => {
               <h2 className="text-2xl font-semibold mb-4">8. Learning Agreements</h2>
               <p className="opacity-80 leading-relaxed">
                 The Learning Agreement feature helps you organize course selections for exchange semesters. 
-                Learning agreements created on Student Hub are planning tools and do not constitute official 
+                Learning agreements created on UniPandan are planning tools and do not constitute official 
                 agreements with any institution. You must follow your home and host institution's official 
                 processes for submitting and approving learning agreements. Credit transfers are subject 
                 to institutional approval.
@@ -150,10 +150,10 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">9. Intellectual Property</h2>
               <p className="opacity-80 leading-relaxed">
-                The Student Hub platform, including its design, user interface, features, code, and original content 
-                (excluding user-generated content), is owned by Student Hub and protected by intellectual property laws. 
+                The UniPandan platform, including its design, user interface, features, code, and original content 
+                (excluding user-generated content), is owned by UniPandan and protected by intellectual property laws. 
                 You may not copy, modify, distribute, sell, or lease any part of our platform or proprietary content 
-                without written permission. The Student Hub name, logo, and branding are our trademarks.
+                without written permission. The UniPandan name, logo, and branding are our trademarks.
               </p>
             </section>
 
@@ -170,7 +170,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">11. Limitation of Liability</h2>
               <p className="opacity-80 leading-relaxed">
-                To the fullest extent permitted by law, Student Hub and its team shall not be liable for any indirect, 
+                To the fullest extent permitted by law, UniPandan and its team shall not be liable for any indirect, 
                 incidental, consequential, special, or punitive damages arising from your use of the platform, including 
                 but not limited to: decisions made based on AI recommendations or course information; failed course 
                 enrollments or credit transfers; communications sent using AI-generated email drafts; loss of data, 
@@ -191,7 +191,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">13. Beta Service</h2>
               <p className="opacity-80 leading-relaxed">
-                Student Hub is currently in beta. Features may change, be added, or removed without notice. 
+                UniPandan is currently in beta. Features may change, be added, or removed without notice. 
                 We appreciate your feedback as we continue to improve the platform. Beta status means some 
                 features may be incomplete or experimental.
               </p>
@@ -210,7 +210,7 @@ const TermsOfService = () => {
               <h2 className="text-2xl font-semibold mb-4">15. Contact Us</h2>
               <p className="opacity-80 leading-relaxed">
                 If you have any questions about these Terms of Service, please contact us at: 
-                <span className="font-medium"> legal@studenthub.com</span>
+                <span className="font-medium"> legal@unipandan.com</span>
               </p>
             </section>
           </div>
