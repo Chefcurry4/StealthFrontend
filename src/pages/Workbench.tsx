@@ -1709,7 +1709,7 @@ const Workbench = () => {
 
                       {/* User Message Actions - Edit and Copy (outside bubble) */}
                       {message.role === "user" && message.content && !editingMessageId && (
-                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <Button
                             variant="ghost"
                             size="icon"
