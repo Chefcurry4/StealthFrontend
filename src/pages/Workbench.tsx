@@ -1705,36 +1705,36 @@ const Workbench = () => {
                             onCancel={() => setEditingMessageId(null)}
                           />
                         )}
-                        
-                        {/* User Message Actions - Edit and Copy */}
-                        {message.role === "user" && message.content && !editingMessageId && (
-                          <div className="absolute -bottom-1 -left-1 flex items-center gap-1 opacity-0 group-hover/bubble:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm"
-                              onClick={() => setEditingMessageId(message.id)}
-                              disabled={isStreaming}
-                              title="Edit message"
-                            >
-                              <Edit3 className="h-3 w-3 text-muted-foreground" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm"
-                              onClick={() => handleCopy(message.content, message.id)}
-                              title="Copy message"
-                            >
-                              {copiedId === message.id ? (
-                                <Check className="h-3 w-3 text-emerald-500" />
-                              ) : (
-                                <Copy className="h-3 w-3 text-muted-foreground" />
-                              )}
-                            </Button>
-                          </div>
-                        )}
                       </div>
+
+                      {/* User Message Actions - Edit and Copy (outside bubble) */}
+                      {message.role === "user" && message.content && !editingMessageId && (
+                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={() => setEditingMessageId(message.id)}
+                            disabled={isStreaming}
+                            title="Edit message"
+                          >
+                            <Edit3 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            onClick={() => handleCopy(message.content, message.id)}
+                            title="Copy message"
+                          >
+                            {copiedId === message.id ? (
+                              <Check className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
 
                       {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
