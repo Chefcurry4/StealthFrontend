@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark, Book } from "lucide-react";
+import { Menu, X, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark, Book } from "lucide-react";
 import { PandaIcon } from "@/components/icons/PandaIcon";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,7 +30,6 @@ export const Header = () => {
   const navigate = useNavigate();
 
   const navigation = [
-    { name: "Home", href: "/" },
     { name: "Universities", href: "/universities" },
     { name: "Courses", href: "/courses" },
     { name: "Labs", href: "/labs" },
@@ -82,42 +81,46 @@ export const Header = () => {
           <PandaIcon size={24} />
         </button>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-4">
-          {navigation.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => handleSectionNavClick(item.href)}
-              className="relative text-sm font-medium opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              {item.name}
-              {hasNestedRoute(item.href) && (
-                <span 
-                  className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
-                  title="You'll return to a subpage"
-                />
-              )}
-            </button>
-          ))}
-          {userNavigation.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => handleProtectedNavClick(item.name, item.href)}
-              className="relative text-sm font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1"
-            >
-              <item.icon className="h-4 w-4" />
-              {item.name}
-              {(hasNestedRoute(item.href) || (item.href === '/workbench' && hasWorkbenchState())) && (
-                <span 
-                  className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
-                  title="You'll return to a subpage"
-                />
-              )}
-            </button>
-          ))}
+        {/* Desktop Navigation - items spread evenly */}
+        <div className="hidden md:flex items-center justify-between flex-1 ml-8 mr-4">
+          <div className="flex items-center gap-6 lg:gap-10">
+            {navigation.map((item) => (
+              <button
+                key={item.name}
+                onClick={() => handleSectionNavClick(item.href)}
+                className="relative text-sm font-medium opacity-70 hover:opacity-100 transition-opacity cursor-pointer whitespace-nowrap"
+              >
+                {item.name}
+                {hasNestedRoute(item.href) && (
+                  <span 
+                    className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
+                    title="You'll return to a subpage"
+                  />
+                )}
+              </button>
+            ))}
+            {userNavigation.map((item) => (
+              <button
+                key={item.name}
+                onClick={() => handleProtectedNavClick(item.name, item.href)}
+                className="relative text-sm font-medium opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <item.icon className="h-4 w-4" />
+                {item.name}
+                {(hasNestedRoute(item.href) || (item.href === '/workbench' && hasWorkbenchState())) && (
+                  <span 
+                    className="absolute -top-0.5 -right-2 w-1.5 h-1.5 rounded-full bg-current opacity-60"
+                    title="You'll return to a subpage"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
           
-          {/* Global Search */}
-          <GlobalSearch className="w-48 lg:w-64" />
+          {/* Right side items */}
+          <div className="flex items-center gap-3 lg:gap-4">
+            {/* Global Search */}
+            <GlobalSearch className="w-40 lg:w-56 xl:w-64" />
           
           {/* Day/Night Toggle */}
           <Button 
@@ -179,10 +182,11 @@ export const Header = () => {
                   color: modeConfig.ui.buttonPrimaryText
                 }}
               >
-                Sign In
-              </Button>
-            </Link>
+              Sign In
+            </Button>
+          </Link>
           )}
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
