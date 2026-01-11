@@ -1782,6 +1782,19 @@ const Workbench = () => {
                           >
                             <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg hover:bg-accent/50"
+                            onClick={() => handleCopy(message.content, message.id)}
+                            title="Copy message"
+                          >
+                            {copiedId === message.id ? (
+                              <Check className="h-3.5 w-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                          </Button>
                         </div>
                       )}
 
