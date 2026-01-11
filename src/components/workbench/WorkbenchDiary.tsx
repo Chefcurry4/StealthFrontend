@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { 
   X, 
-  GraduationCap, 
   Snowflake, 
   Sun, 
   FileText, 
@@ -12,15 +11,16 @@ import {
   ChevronRight,
   ChevronLeft,
   Trash2,
-  Plus,
   Edit2,
   Check,
   Image,
   FileJson,
   BookMarked,
+  Loader2,
+  Lightbulb,
   Mail,
-  Info,
-  Loader2
+  Sparkles,
+  Clock
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -164,7 +164,7 @@ export const WorkbenchDiary = ({
   onRemoveCourseFromPlan,
   savedCourses
 }: WorkbenchDiaryProps) => {
-  const [activeTab, setActiveTab] = useState<"planner" | "emails">("planner");
+  const [activeTab, setActiveTab] = useState<"pandamester" | "pandamail">("pandamester");
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [savePlanName, setSavePlanName] = useState("");
@@ -511,14 +511,15 @@ export const WorkbenchDiary = ({
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "planner" | "emails")} className="flex-1 flex flex-col">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pandamester" | "pandamail")} className="flex-1 flex flex-col">
         <div className="px-2.5 pt-2">
-          <TabsList className="w-full h-8">
-            <TabsTrigger value="planner" className="flex-1 text-xs gap-1.5">
-              <GraduationCap className="h-3.5 w-3.5" />
-              Planner
+          <TabsList className="w-full h-9 sm:h-8 grid grid-cols-2 gap-1">
+            <TabsTrigger value="pandamester" className="flex-1 text-xs gap-1.5 px-2 sm:px-3">
+              <span className="text-sm">🎓</span>
+              <span className="hidden sm:inline">Pandamester</span>
+              <span className="sm:hidden">Planner</span>
               <ModuleInfoPopup
-                title="Semester Planner"
+                title="Pandamester"
                 description="Plan your semester by organizing courses into winter and summer terms. The AI can suggest course combinations based on your interests."
                 tips={[
                   "Ask the AI to create a semester plan for you",
@@ -527,11 +528,12 @@ export const WorkbenchDiary = ({
                 ]}
               />
             </TabsTrigger>
-            <TabsTrigger value="emails" className="flex-1 text-xs gap-1.5">
-              <Mail className="h-3.5 w-3.5" />
-              Emails
+            <TabsTrigger value="pandamail" className="flex-1 text-xs gap-1.5 px-2 sm:px-3">
+              <span className="text-sm">📧</span>
+              <span className="hidden sm:inline">Pandamail</span>
+              <span className="sm:hidden">Emails</span>
               <ModuleInfoPopup
-                title="Email Tracker"
+                title="Pandamail"
                 description="Keep track of your thesis/lab outreach emails. Log when you contacted a lab, whether they replied, and any follow-up actions needed."
                 tips={[
                   "Perfect for managing multiple lab applications",
@@ -543,8 +545,8 @@ export const WorkbenchDiary = ({
           </TabsList>
         </div>
         
-        {/* Semester Planner Tab */}
-        <TabsContent value="planner" className="flex-1 m-0 overflow-hidden">
+        {/* Pandamester Tab */}
+        <TabsContent value="pandamester" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-3 space-y-3">
               {/* Temp Plan from AI - Show at TOP with NEW badge */}
@@ -713,7 +715,7 @@ export const WorkbenchDiary = ({
               {/* Saved Plans */}
               {savedPlans.length === 0 && !tempPlan ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                  <GraduationCap className="h-10 w-10 mb-3 opacity-30" />
+                  <span className="text-4xl mb-3 opacity-50">🎓</span>
                   <p className="text-xs font-medium mb-1">No Saved Plans</p>
                   <p className="text-[10px]">
                     Ask pandanAI to generate a semester plan, then save it here
@@ -757,11 +759,73 @@ export const WorkbenchDiary = ({
           </ScrollArea>
         </TabsContent>
 
-        {/* Email Tracker Tab */}
-        <TabsContent value="emails" className="flex-1 m-0 overflow-hidden">
+        {/* Pandamail Tab */}
+        <TabsContent value="pandamail" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-3">
-              <WorkbenchEmailTracker />
+            <div className="p-3 sm:p-4 space-y-4">
+              {/* Coming Soon Banner */}
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary">
+                    <Clock className="h-2.5 w-2.5 mr-1" />
+                    Coming Soon
+                  </Badge>
+                </div>
+                <h4 className="font-semibold text-sm mb-1">📧 Pandamail</h4>
+                <p className="text-xs text-muted-foreground mb-3 leading-relaxed max-w-xs mx-auto">
+                  Track your thesis and lab outreach emails. Know who you contacted, who replied, and who needs a follow-up.
+                </p>
+              </div>
+
+              {/* Feature Preview */}
+              <div className="space-y-2">
+                <h5 className="text-xs font-medium text-muted-foreground uppercase">What's coming</h5>
+                <div className="space-y-2">
+                  {[
+                    { icon: "📝", title: "Draft Tracking", desc: "Save and manage email drafts" },
+                    { icon: "📤", title: "Sent Status", desc: "Mark when emails are sent" },
+                    { icon: "✅", title: "Reply Tracking", desc: "Log responses and outcomes" },
+                    { icon: "🔔", title: "Follow-up Reminders", desc: "Never miss a follow-up" },
+                  ].map((feature) => (
+                    <div 
+                      key={feature.title}
+                      className="flex items-start gap-2.5 p-2.5 rounded-lg bg-background/50 border border-border/50"
+                    >
+                      <span className="text-sm shrink-0">{feature.icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium">{feature.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{feature.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Module Idea */}
+              <div className="border border-dashed border-border/60 rounded-xl p-3 sm:p-4 text-center bg-background/20">
+                <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                  <Lightbulb className="h-4 w-4 text-primary/70" />
+                  <span className="text-xs font-medium">Have a module idea?</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mb-2">
+                  Help us build tools that matter to students
+                </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    toast.success(
+                      "Thanks! Email your ideas to feedback@unipandan.com",
+                      { duration: 5000 }
+                    );
+                  }}
+                  className="text-xs text-primary hover:text-primary/80 h-7 px-3"
+                >
+                  <Mail className="h-3 w-3 mr-1.5" />
+                  Submit Idea
+                </Button>
+              </div>
             </div>
           </ScrollArea>
         </TabsContent>
