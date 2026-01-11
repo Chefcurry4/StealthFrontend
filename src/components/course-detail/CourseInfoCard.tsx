@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Wrench, Info, BookOpen, Users, GraduationCap } from "lucide-react";
+import { User, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeacherLink } from "@/components/TeacherLink";
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Course } from "@/hooks/useCourses";
 import { getProgramLogoUrl } from "@/lib/programLogosStorage";
-import { Link } from "react-router-dom";
 
 interface CourseInfoCardProps {
   course: Course;
@@ -191,10 +190,9 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
                 const hasFailed = failedLogos.has(program);
                 
                 return (
-                  <Link
+                  <div
                     key={idx}
-                    to={`/program/EPFL/${program}`}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors group"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50"
                   >
                     {logoUrl && !hasFailed ? (
                       <img
@@ -204,14 +202,14 @@ export const CourseInfoCard = ({ course }: CourseInfoCardProps) => {
                         onError={() => setFailedLogos(prev => new Set(prev).add(program))}
                       />
                     ) : (
-                      <div className="h-6 w-6 rounded bg-primary/15 flex items-center justify-center">
-                        <GraduationCap className="h-4 w-4 text-primary" />
+                      <div className="h-6 w-6 rounded bg-primary/15 flex items-center justify-center text-sm font-bold text-primary">
+                        {program.substring(0, 2)}
                       </div>
                     )}
-                    <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                    <span className="text-sm font-medium">
                       {program}
                     </span>
-                  </Link>
+                  </div>
                 );
               })}
             </div>
