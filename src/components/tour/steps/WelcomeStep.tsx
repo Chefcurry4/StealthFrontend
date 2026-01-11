@@ -43,7 +43,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
           transition={{ delay: 0.2 }}
           className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent"
         >
-          Welcome to Student Hub!
+          Welcome to UniPandan!
         </motion.h1>
 
         {/* Subtitle */}
