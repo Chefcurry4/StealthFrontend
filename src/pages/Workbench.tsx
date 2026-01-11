@@ -1667,7 +1667,7 @@ const Workbench = () => {
                             <Edit3 className="h-3 w-3 text-muted-foreground" />
                           </Button>
                         )}
-                      </div>                      </div>
+                      </div>
 
                       {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
