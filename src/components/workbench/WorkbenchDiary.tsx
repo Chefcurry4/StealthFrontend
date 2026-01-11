@@ -515,11 +515,9 @@ export const WorkbenchDiary = ({
         <div className="px-2.5 pt-2">
           <TabsList className="w-full h-9 sm:h-8 grid grid-cols-2 gap-1">
             <TabsTrigger value="pandamester" className="flex-1 text-xs gap-1.5 px-2 sm:px-3">
-              <span className="text-sm">🎓</span>
-              <span className="hidden sm:inline">Pandamester</span>
+              <span className="hidden sm:inline">Semester</span>
               <span className="sm:hidden">Planner</span>
               <ModuleInfoPopup
-                title="Pandamester"
                 description="Plan your semester by organizing courses into winter and summer terms. The AI can suggest course combinations based on your interests."
                 tips={[
                   "Ask the AI to create a semester plan for you",
@@ -529,11 +527,9 @@ export const WorkbenchDiary = ({
               />
             </TabsTrigger>
             <TabsTrigger value="pandamail" className="flex-1 text-xs gap-1.5 px-2 sm:px-3">
-              <span className="text-sm">📧</span>
-              <span className="hidden sm:inline">Pandamail</span>
+              <span className="hidden sm:inline">Emails</span>
               <span className="sm:hidden">Emails</span>
               <ModuleInfoPopup
-                title="Pandamail"
                 description="Keep track of your thesis/lab outreach emails. Log when you contacted a lab, whether they replied, and any follow-up actions needed."
                 tips={[
                   "Perfect for managing multiple lab applications",
@@ -555,7 +551,7 @@ export const WorkbenchDiary = ({
                   {/* NEW Badge */}
                   <div className="flex items-center justify-center">
                     <Badge className="bg-gradient-to-r from-primary to-purple-600 text-primary-foreground font-medium text-xs px-3 py-1 shadow-md animate-pulse">
-                      ✨ NEW PLAN
+                      NEW PLAN
                     </Badge>
                   </div>
                   
@@ -772,34 +768,10 @@ export const WorkbenchDiary = ({
                     Coming Soon
                   </Badge>
                 </div>
-                <h4 className="font-semibold text-sm mb-1">📧 Pandamail</h4>
+                <h4 className="font-semibold text-sm mb-1">Pandamail</h4>
                 <p className="text-xs text-muted-foreground mb-3 leading-relaxed max-w-xs mx-auto">
                   Track your thesis and lab outreach emails. Know who you contacted, who replied, and who needs a follow-up.
                 </p>
-              </div>
-
-              {/* Feature Preview */}
-              <div className="space-y-2">
-                <h5 className="text-xs font-medium text-muted-foreground uppercase">What's coming</h5>
-                <div className="space-y-2">
-                  {[
-                    { icon: "📝", title: "Draft Tracking", desc: "Save and manage email drafts" },
-                    { icon: "📤", title: "Sent Status", desc: "Mark when emails are sent" },
-                    { icon: "✅", title: "Reply Tracking", desc: "Log responses and outcomes" },
-                    { icon: "🔔", title: "Follow-up Reminders", desc: "Never miss a follow-up" },
-                  ].map((feature) => (
-                    <div 
-                      key={feature.title}
-                      className="flex items-start gap-2.5 p-2.5 rounded-lg bg-background/50 border border-border/50"
-                    >
-                      <span className="text-sm shrink-0">{feature.icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium">{feature.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{feature.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Submit Module Idea */}
