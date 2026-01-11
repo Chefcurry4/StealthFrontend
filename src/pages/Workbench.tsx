@@ -52,6 +52,7 @@ import { MentionPopup } from "@/components/MentionPopup";
 import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
 import { WorkbenchDiary } from "@/components/workbench/WorkbenchDiary";
 import { ThinkingIndicator, ThoughtDurationBadge } from "@/components/workbench/ThinkingIndicator";
+import { ThinkingHistory, ThinkingStep } from "@/components/workbench/ThinkingHistory";
 import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
 import { EditableMessage } from "@/components/workbench/EditableMessage";
 import { PandaIcon } from "@/components/icons/PandaIcon";
@@ -123,6 +124,8 @@ interface Message {
   feedback?: "positive" | "negative" | null;
   /** Duration in seconds the AI took to think (for assistant messages) */
   thoughtDurationSeconds?: number;
+  /** Thinking steps (tools used) for this message */
+  thinkingSteps?: ThinkingStep[];
 }
 
 type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar" | "sonar-pro" | "sonar-reasoning";
@@ -252,6 +255,8 @@ const Workbench = () => {
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [thinkingStartTime, setThinkingStartTime] = useState<number | null>(null);
+  const [currentThinkingSteps, setCurrentThinkingSteps] = useState<ThinkingStep[]>([]);
+  const toolStepTimesRef = useRef<Record<string, number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -854,6 +859,8 @@ const Workbench = () => {
     setIsStreaming(true);
     setAiState('thinking');
     setThinkingStartTime(Date.now());
+    setCurrentThinkingSteps([]);
+    toolStepTimesRef.current = {};
     
     try {
       // Build comprehensive user context for AI
@@ -935,24 +942,47 @@ const Workbench = () => {
         })(),
         onDone: () => {
           const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
+          
+          // Finalize any pending tool times
+          const now = Date.now();
+          const finalSteps: ThinkingStep[] = [];
+          for (const [tool, toolStartTime] of Object.entries(toolStepTimesRef.current)) {
+            finalSteps.push({
+              tool,
+              durationMs: now - toolStartTime
+            });
+          }
+          
           setIsStreaming(false);
           setAiState('idle');
           setActiveSearchTools([]);
           setThinkingStartTime(null);
+          setCurrentThinkingSteps([]);
+          toolStepTimesRef.current = {};
           
-          // Update assistant message with duration
-          if (durationSeconds > 0) {
-            setMessages(prev => prev.map(m => 
-              m.id === assistantMessageId 
-                ? { ...m, thoughtDurationSeconds: durationSeconds } 
-                : m
-            ));
-          }
+          // Update assistant message with duration and steps
+          setMessages(prev => prev.map(m => 
+            m.id === assistantMessageId 
+              ? { 
+                  ...m, 
+                  thoughtDurationSeconds: durationSeconds,
+                  thinkingSteps: finalSteps.length > 0 ? finalSteps : undefined
+                } 
+              : m
+          ));
         },
         onSearchingDatabase: (searching) => {
           if (searching) setAiState('searching');
         },
-        onToolsUsed: setActiveSearchTools,
+        onToolsUsed: (tools: string[]) => {
+          setActiveSearchTools(tools);
+          const now = Date.now();
+          for (const tool of tools) {
+            if (!toolStepTimesRef.current[tool]) {
+              toolStepTimesRef.current[tool] = now;
+            }
+          }
+        },
         onDeepPlanning: (planning) => {
           if (planning) setAiState('planning');
         }
@@ -987,6 +1017,8 @@ const Workbench = () => {
     setIsStreaming(true);
     setAiState('thinking');
     setThinkingStartTime(Date.now());
+    setCurrentThinkingSteps([]);
+    toolStepTimesRef.current = {};
     
     // Create abort controller for this request
     abortControllerRef.current = new AbortController();
@@ -1164,20 +1196,34 @@ const Workbench = () => {
             ? Math.floor((Date.now() - thinkingStartTime) / 1000)
             : 0;
           
+          // Finalize any pending tool times
+          const now = Date.now();
+          const finalSteps: ThinkingStep[] = [];
+          for (const [tool, startTime] of Object.entries(toolStepTimesRef.current)) {
+            finalSteps.push({
+              tool,
+              durationMs: now - startTime
+            });
+          }
+          
           setIsStreaming(false);
           setAiState('idle');
           setActiveSearchTools([]);
           setThinkingStartTime(null);
+          setCurrentThinkingSteps([]);
+          toolStepTimesRef.current = {};
           abortControllerRef.current = null;
           
-          // Update assistant message with duration
-          if (durationSeconds > 0) {
-            setMessages(prev => prev.map(m => 
-              m.id === assistantMessageId 
-                ? { ...m, thoughtDurationSeconds: durationSeconds } 
-                : m
-            ));
-          }
+          // Update assistant message with duration and thinking steps
+          setMessages(prev => prev.map(m => 
+            m.id === assistantMessageId 
+              ? { 
+                  ...m, 
+                  thoughtDurationSeconds: durationSeconds,
+                  thinkingSteps: finalSteps.length > 0 ? finalSteps : undefined
+                } 
+              : m
+          ));
           
           // Check for semester plan in response
           const parsedPlan = parseSemesterPlanFromResponse(assistantContent);
@@ -1198,7 +1244,16 @@ const Workbench = () => {
         onSearchingDatabase: (searching) => {
           if (searching) setAiState('searching');
         },
-        onToolsUsed: setActiveSearchTools,
+        onToolsUsed: (tools: string[]) => {
+          setActiveSearchTools(tools);
+          // Track timing for each tool
+          const now = Date.now();
+          for (const tool of tools) {
+            if (!toolStepTimesRef.current[tool]) {
+              toolStepTimesRef.current[tool] = now;
+            }
+          }
+        },
         onDeepPlanning: (planning) => {
           if (planning) setAiState('planning');
         }
@@ -1730,12 +1785,12 @@ const Workbench = () => {
 
                       {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
-                        <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
-                          {/* Thought duration badge - always visible */}
+                        <div className="flex flex-col gap-1 mt-2">
+                          {/* Thinking History with collapsible steps */}
                           {message.thoughtDurationSeconds && message.thoughtDurationSeconds > 0 && (
-                            <ThoughtDurationBadge 
-                              durationSeconds={message.thoughtDurationSeconds} 
-                              className="mr-2"
+                            <ThinkingHistory
+                              totalDurationSeconds={message.thoughtDurationSeconds}
+                              steps={message.thinkingSteps || []}
                             />
                           )}
                           
