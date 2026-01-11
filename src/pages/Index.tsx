@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Mail, Users, MessageSquare, Bookmark, Globe } from "lucide-react";
+import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Users, MessageSquare, Bookmark, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTour } from "@/contexts/TourContext";
 import { useUniversities } from "@/hooks/useUniversities";
@@ -90,30 +90,26 @@ const Index = () => {
     {
       icon: Search,
       title: "Explore",
-      description: "Browse universities, courses, and labs",
-      details: "Use our powerful search to find exactly what you need across 12+ universities and 1400+ courses.",
-      color: "bg-blue-500/10 text-blue-500",
+      description: "Browse courses, labs & universities",
+      color: "text-blue-500 bg-blue-500/20",
     },
     {
       icon: BookOpen,
       title: "Discover",
-      description: "Find courses that match your interests",
-      details: "Filter by topic, read student reviews, and compare options to build your perfect course list.",
-      color: "bg-green-500/10 text-green-500",
+      description: "Filter by topic, read reviews",
+      color: "text-green-500 bg-green-500/20",
     },
     {
       icon: Sparkles,
-      title: "Get AI Help",
-      description: "Personalized recommendations",
-      details: "Our AI advisor understands your goals and suggests the best courses, labs, and opportunities.",
-      color: "bg-orange-500/10 text-orange-500",
+      title: "AI Help",
+      description: "Get personalized recommendations",
+      color: "text-orange-500 bg-orange-500/20",
     },
     {
       icon: FileText,
       title: "Plan",
-      description: "Organize your semester",
-      details: "Use the diary to visually plan your courses, track lab communications, and stay organized.",
-      color: "bg-rose-500/10 text-rose-500",
+      description: "Organize your semester & labs",
+      color: "text-rose-500 bg-rose-500/20",
     },
   ];
 
@@ -199,30 +195,29 @@ const Index = () => {
       {/* Recently Viewed Section */}
       <RecentlyViewed />
 
-      {/* How It Works Section - Enhanced */}
-      <section className="py-16 backdrop-blur-sm theme-section">
+      {/* How It Works Section - Redesigned with dynamic background */}
+      <section className="py-12 relative overflow-hidden">
+        {/* Dynamic animated background */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        </div>
+
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">
-              How It Works
+          <div className="text-center mb-8">
+            <h2 className="text-xl md:text-2xl font-bold mb-2">
+              How does UniPandax work?
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-              Your journey to the perfect exchange semester in four simple steps
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Your journey to the perfect exchange semester
             </p>
-            <Button 
-              onClick={startTour}
-              variant="outline"
-              className="group"
-            >
-              <Compass className="h-4 w-4 mr-2 group-hover:rotate-45 transition-transform" />
-              Take the Interactive Tour
-              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
           </div>
 
-          {/* Journey Steps */}
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Compact Journey Steps */}
+          <div className="max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {journeySteps.map((step, index) => {
                 const Icon = step.icon;
                 return (
@@ -230,49 +225,36 @@ const Index = () => {
                     key={step.title}
                     className="group relative"
                   >
-                    {/* Connector line */}
-                    {index < journeySteps.length - 1 && (
-                      <div className="hidden lg:block absolute top-8 left-[60%] w-[80%] h-[2px] bg-gradient-to-r from-border to-transparent" />
-                    )}
-                    
-                    <Card className="h-full transition-all hover:shadow-lg hover:scale-[1.02] backdrop-blur-md">
-                      <CardContent className="p-6">
-                        {/* Step number */}
-                        <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg">
-                          {index + 1}
-                        </div>
+                    <div className="h-full p-3 rounded-xl bg-background/60 backdrop-blur-md border border-border/50 transition-all hover:shadow-lg hover:scale-[1.02] hover:bg-background/80">
+                      {/* Step number badge */}
+                      <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shadow-md">
+                        {index + 1}
+                      </div>
 
-                        <div className={`w-14 h-14 rounded-xl ${step.color} flex items-center justify-center mb-4`}>
-                          <Icon className="h-7 w-7" />
-                        </div>
+                      <div className={`w-10 h-10 rounded-lg ${step.color} flex items-center justify-center mb-2`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
 
-                        <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                        <p className="text-sm font-medium text-foreground mb-2">{step.description}</p>
-                        <p className="text-xs text-muted-foreground">{step.details}</p>
-                      </CardContent>
-                    </Card>
+                      <h3 className="font-semibold text-sm mb-0.5">{step.title}</h3>
+                      <p className="text-xs text-muted-foreground leading-tight">{step.description}</p>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Feature highlights */}
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {[
-              { icon: GraduationCap, label: "12+ Universities", color: "text-blue-500" },
-              { icon: BookOpen, label: "1400+ Courses", color: "text-green-500" },
-              { icon: Microscope, label: "400+ Labs", color: "text-purple-500" },
-              { icon: Mail, label: "AI Email Composer", color: "text-orange-500" },
-            ].map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div key={feature.label} className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 backdrop-blur">
-                  <Icon className={`h-5 w-5 ${feature.color}`} />
-                  <span className="text-sm font-medium">{feature.label}</span>
-                </div>
-              );
-            })}
+          {/* Glass Tour Button */}
+          <div className="mt-8 text-center">
+            <Button 
+              onClick={startTour}
+              size="lg"
+              className="bg-background/60 backdrop-blur-xl border border-primary/30 text-foreground hover:bg-background/80 hover:border-primary/50 shadow-lg hover:shadow-xl transition-all group"
+            >
+              <Compass className="h-5 w-5 mr-2 text-primary group-hover:rotate-45 transition-transform" />
+              Take Interactive Tour
+              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform text-primary" />
+            </Button>
           </div>
         </div>
       </section>

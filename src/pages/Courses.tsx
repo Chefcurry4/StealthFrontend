@@ -34,25 +34,19 @@ const Courses = () => {
   const itemsPerPage = displayPrefs.display_items_per_page;
   const queryClient = useQueryClient();
   
-  const { data: allCourses, isLoading, error, refetch } = useCourses(filters);
+  // Pass topics to the hook for proper server-side filtering
+  const { data: allCourses, isLoading, error, refetch } = useCourses({
+    ...filters,
+    topicNames: selectedTopics.length > 0 ? selectedTopics : undefined,
+  });
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["courses"] });
     await refetch();
   }, [queryClient, refetch]);
 
-  // Filter courses by selected topics
-  const filteredCourses = useMemo(() => {
-    if (!allCourses) return [];
-    if (selectedTopics.length === 0) return allCourses;
-    
-    return allCourses.filter(course => {
-      const courseTopics = course.topics?.toLowerCase() || '';
-      return selectedTopics.some(topic => 
-        courseTopics.includes(topic.toLowerCase())
-      );
-    });
-  }, [allCourses, selectedTopics]);
+  // No client-side topic filtering needed anymore - server handles it
+  const filteredCourses = allCourses || [];
 
   const { courses, totalPages } = useMemo(() => {
     if (!filteredCourses.length) return { courses: [], totalPages: 0 };

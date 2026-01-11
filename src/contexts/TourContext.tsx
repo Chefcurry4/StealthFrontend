@@ -50,7 +50,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
       try {
         const { data, error } = await supabase
           .from('Users(US)')
-          .select('tour_progress, guide_completed')
+          .select('guide_completed')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -61,9 +61,6 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
 
         if (data) {
           setHasCompleted(data.guide_completed || false);
-          if (data.tour_progress && !data.guide_completed) {
-            setCurrentStepIndex(data.tour_progress);
-          }
         }
       } catch (err) {
         console.error('Error in loadTourProgress:', err);
@@ -73,15 +70,11 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
     loadTourProgress();
   }, [user]);
 
-  // Save tour progress to database
-  const saveTourProgress = useCallback(async (stepIndex: number) => {
+  // Save tour progress to local storage (no DB column exists)
+  const saveTourProgress = useCallback((stepIndex: number) => {
     if (!user) return;
-
     try {
-      await supabase
-        .from('Users(US)')
-        .update({ tour_progress: stepIndex })
-        .eq('id', user.id);
+      localStorage.setItem(`tour_progress_${user.id}`, String(stepIndex));
     } catch (err) {
       console.error('Error saving tour progress:', err);
     }
@@ -168,8 +161,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
         await supabase
           .from('Users(US)')
           .update({ 
-            guide_completed: true,
-            tour_progress: null 
+            guide_completed: true
           })
           .eq('id', user.id);
       } catch (err) {

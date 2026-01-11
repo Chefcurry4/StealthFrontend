@@ -118,6 +118,7 @@ interface Message {
   attachments?: Attachment[];
   referencedItems?: ReferencedItem[];
   timestamp: Date;
+  feedback?: "positive" | "negative" | null;
 }
 
 type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar" | "sonar-pro" | "sonar-reasoning";
@@ -518,9 +519,9 @@ const Workbench = () => {
   };
 
   // Handle @ mentions in input
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
-    const cursorPos = e.target.selectionStart || 0;
+    const cursorPos = (e.target as HTMLInputElement).selectionStart || 0;
     setInput(value);
     
     // Check if user typed @ and extract search query after @
