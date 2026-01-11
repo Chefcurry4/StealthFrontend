@@ -6,17 +6,133 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Tool definitions for database queries
+// ============================================================================
+// TOPIC SYNONYMS - Comprehensive dictionary for expanding search terms
+// ============================================================================
+const TOPIC_SYNONYMS: Record<string, string[]> = {
+  // Fluid Mechanics / CFD
+  'cfd': ['computational fluid dynamics', 'flow simulation', 'openfoam', 'ansys fluent', 'fluid simulation', 'navier-stokes', 'finite volume'],
+  'computational fluid dynamics': ['cfd', 'flow simulation', 'fluid mechanics', 'turbulence modeling'],
+  'fluid dynamics': ['fluid mechanics', 'cfd', 'flow', 'aerodynamics', 'hydrodynamics', 'turbulence', 'viscous flow'],
+  'fluid mechanics': ['fluid dynamics', 'hydraulics', 'aerodynamics', 'hydrodynamics', 'flow'],
+  'turbomachinery': ['turbomachines', 'turbines', 'pumps', 'compressors', 'fans', 'hydraulic machines', 'turbo', 'axial flow', 'centrifugal'],
+  'turbines': ['turbomachinery', 'gas turbine', 'steam turbine', 'wind turbine', 'hydraulic turbine'],
+  'aerodynamics': ['fluid dynamics', 'airflow', 'wind tunnel', 'drag', 'lift', 'flight mechanics'],
+  
+  // Electrical / Power Engineering
+  'electrical machines': ['electric motors', 'generators', 'motors', 'power electronics', 'electromechanical', 'transformers', 'induction motor', 'synchronous machine'],
+  'electric motors': ['electrical machines', 'motors', 'actuators', 'drives', 'servomotors'],
+  'power electronics': ['electrical machines', 'converters', 'inverters', 'rectifiers', 'power systems'],
+  'power systems': ['electrical grid', 'power electronics', 'energy systems', 'smart grid', 'transmission'],
+  
+  // AI / Machine Learning
+  'ai': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'intelligent systems'],
+  'artificial intelligence': ['ai', 'machine learning', 'deep learning', 'neural', 'cognitive'],
+  'ml': ['machine learning', 'deep learning', 'neural networks', 'supervised learning', 'classification'],
+  'machine learning': ['deep learning', 'neural networks', 'supervised learning', 'unsupervised learning', 'reinforcement learning', 'pattern recognition', 'ai', 'ml'],
+  'deep learning': ['neural networks', 'cnn', 'rnn', 'transformer', 'pytorch', 'tensorflow', 'machine learning'],
+  'nlp': ['natural language processing', 'text analysis', 'language models', 'transformers', 'text mining'],
+  'natural language processing': ['nlp', 'text analysis', 'computational linguistics', 'language model'],
+  'computer vision': ['image processing', 'object detection', 'image recognition', 'visual computing', 'pattern recognition'],
+  
+  // Robotics / Control
+  'robotics': ['robot', 'robots', 'automation', 'mechatronics', 'control systems', 'autonomous', 'manipulation', 'mobile robots'],
+  'control systems': ['control theory', 'automation', 'feedback', 'pid', 'state space', 'robust control'],
+  'autonomous systems': ['robotics', 'self-driving', 'autonomous vehicles', 'uav', 'drones'],
+  'mechatronics': ['robotics', 'electromechanical', 'embedded systems', 'actuators', 'sensors'],
+  
+  // Thermodynamics / Energy
+  'thermodynamics': ['heat transfer', 'thermal', 'heat engine', 'entropy', 'energy conversion', 'thermodynamic cycles'],
+  'heat transfer': ['thermodynamics', 'conduction', 'convection', 'radiation', 'thermal'],
+  'energy': ['energy systems', 'renewable energy', 'power generation', 'sustainability'],
+  'renewable energy': ['solar', 'wind', 'hydropower', 'sustainable energy', 'green energy'],
+  
+  // Materials / Mechanics
+  'materials': ['materials science', 'material properties', 'composites', 'metals', 'polymers', 'ceramics'],
+  'materials science': ['materials', 'material engineering', 'metallurgy', 'nanomaterials'],
+  'mechanics': ['mechanical', 'statics', 'dynamics', 'strength of materials', 'solid mechanics'],
+  'structural': ['structures', 'structural analysis', 'finite element', 'fem', 'stress analysis'],
+  'finite element': ['fem', 'fea', 'finite element method', 'structural analysis', 'simulation'],
+  
+  // Data Science / Analytics
+  'data science': ['statistics', 'data mining', 'analytics', 'visualization', 'big data', 'data analysis'],
+  'statistics': ['statistical', 'probability', 'regression', 'inference', 'hypothesis testing'],
+  'big data': ['data science', 'hadoop', 'spark', 'distributed computing', 'data engineering'],
+  
+  // Security / Networks
+  'cybersecurity': ['security', 'cryptography', 'network security', 'privacy', 'information security'],
+  'security': ['cybersecurity', 'cryptography', 'secure systems', 'authentication'],
+  'networks': ['networking', 'computer networks', 'distributed systems', 'protocols', 'tcp/ip'],
+  
+  // Physics / Math
+  'quantum': ['quantum mechanics', 'quantum computing', 'quantum physics', 'qubits'],
+  'quantum computing': ['quantum', 'qubits', 'quantum algorithms', 'quantum information'],
+  'optimization': ['mathematical optimization', 'linear programming', 'convex optimization', 'operations research'],
+  'numerical methods': ['numerical analysis', 'computational methods', 'numerical simulation', 'discretization'],
+  
+  // Software / Programming
+  'programming': ['coding', 'software development', 'software engineering', 'algorithms'],
+  'embedded systems': ['microcontrollers', 'firmware', 'real-time systems', 'iot'],
+  'databases': ['database systems', 'sql', 'data management', 'relational databases'],
+  
+  // Other Engineering
+  'biomedical': ['biomedical engineering', 'medical devices', 'biomechanics', 'bioengineering'],
+  'environmental': ['environmental engineering', 'sustainability', 'pollution', 'water treatment'],
+  'manufacturing': ['production', 'industrial engineering', 'process engineering', 'lean manufacturing'],
+  'signal processing': ['dsp', 'digital signal processing', 'filtering', 'fourier', 'frequency analysis'],
+};
+
+// ============================================================================
+// QUERY PREPROCESSING - Split and expand search queries
+// ============================================================================
+function preprocessQuery(query: string): string[] {
+  // Step 1: Remove SQL-style operators (OR, AND) and split
+  const terms = query
+    .replace(/\bOR\b/gi, '||')
+    .replace(/\bAND\b/gi, '&&')
+    .split(/\|\||&&|,/)
+    .map(t => t.trim().toLowerCase())
+    .filter(t => t.length > 1);
+  
+  // Step 2: Expand using synonym dictionary
+  const expandedTerms = new Set<string>();
+  
+  for (const term of terms) {
+    expandedTerms.add(term);
+    
+    // Direct lookup
+    if (TOPIC_SYNONYMS[term]) {
+      TOPIC_SYNONYMS[term].forEach(v => expandedTerms.add(v));
+    }
+    
+    // Partial match - if term contains a key or key contains term
+    for (const [key, values] of Object.entries(TOPIC_SYNONYMS)) {
+      if (term.includes(key) || key.includes(term)) {
+        expandedTerms.add(key);
+        values.forEach(v => expandedTerms.add(v));
+      }
+    }
+  }
+  
+  // Limit to avoid query explosion
+  const result = Array.from(expandedTerms).slice(0, 15);
+  console.log(`preprocessQuery: "${query}" -> [${result.join(', ')}]`);
+  return result;
+}
+
+// ============================================================================
+// TOOL DEFINITIONS - Database query and web search tools
+// ============================================================================
 const databaseTools = [
   {
     type: "function",
     function: {
       name: "search_courses",
-      description: "INTELLIGENT search for courses. Searches across ALL columns: name_course, code, description, topics, programs, ba_ma, professor_name, software_equipment, type_exam, language, term, mandatory_optional, ects. Use 'query' for general text search across all columns, or specific parameters for targeted filtering.",
+      description: "INTELLIGENT search for courses. Searches across ALL columns: name_course, code, description, topics, programs, ba_ma, professor_name, software_equipment, type_exam, language, term, mandatory_optional, ects. Use 'query' for general text search across all columns, or specific parameters for targeted filtering. The search automatically expands abbreviations and synonyms (e.g., 'CFD' expands to 'computational fluid dynamics', 'electrical machines' expands to 'motors', 'generators', etc.).",
       parameters: {
         type: "object",
         properties: {
-          query: { type: "string", description: "General search query - will search across name, description, topics, programs, code (e.g., 'life sciences', 'machine learning', 'robotics')" },
+          query: { type: "string", description: "General search query - will search across name, description, topics, programs, code. Use simple, specific terms. DO NOT use 'OR' or 'AND' - just provide the main search term." },
           professor_name: { type: "string", description: "Professor/teacher name to filter by (partial match)" },
           course_name: { type: "string", description: "Course name to search for (partial match)" },
           course_code: { type: "string", description: "Course code to search for (e.g., 'CS-101', 'MATH', partial match)" },
@@ -24,7 +140,7 @@ const databaseTools = [
           language: { type: "string", description: "Course language (English, French, German, etc.)" },
           level: { type: "string", description: "Ba for Bachelor, Ma for Master - also searches the programs column for bachelor/master keywords" },
           program: { type: "string", description: "Program name to filter by - searches the programs column (e.g., 'Life Sciences', 'Computer Science', 'Mechanical Engineering')" },
-          topic: { type: "string", description: "Topic or keyword to search in course topics/description/name (e.g., 'machine learning', 'thermodynamics', 'robotics')" },
+          topic: { type: "string", description: "Topic or keyword to search in course topics/description/name. Use simple terms like 'turbomachinery', 'CFD', 'electrical machines'." },
           software_equipment: { type: "string", description: "Software, programming language, or equipment required (e.g., 'C++', 'Python', 'MATLAB', 'CAD')" },
           exam_type: { type: "string", description: "Type of examination (e.g., 'oral', 'written', 'project', 'presentation')" },
           term: { type: "string", description: "Semester/term when course is offered (e.g., 'Fall', 'Spring', 'Winter', 'Summer')" },
@@ -228,10 +344,28 @@ const databaseTools = [
         required: ["semester_type", "target_ects"]
       }
     }
+  },
+  // NEW: Web search fallback tool
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description: "Search the web for information when the database doesn't have answers. Use this as a FALLBACK after trying database search first. Good for: current university requirements, admission processes, scholarship deadlines, general academic advice, course info not in our database, real-time information.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query (be specific, include university name if relevant)" },
+          context: { type: "string", description: "Brief context about what the user needs (e.g., 'looking for CFD courses at EPFL')" }
+        },
+        required: ["query"]
+      }
+    }
   }
 ];
 
-// Execute tool calls against the database
+// ============================================================================
+// TOOL EXECUTION - Execute tool calls against the database or web
+// ============================================================================
 async function executeToolCall(supabase: any, toolName: string, args: any): Promise<any> {
   console.log(`Executing tool: ${toolName} with args:`, args);
   
@@ -240,10 +374,21 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       // Select ALL columns from Courses table for comprehensive access
       let query = supabase.from("Courses(C)").select("*");
       
-      // SMART QUERY: searches across ALL relevant columns intelligently
+      // SMART QUERY with preprocessing: expands abbreviations and synonyms
       if (args.query) {
-        const q = args.query;
-        query = query.or(`name_course.ilike.%${q}%,description.ilike.%${q}%,topics.ilike.%${q}%,programs.ilike.%${q}%,code.ilike.%${q}%,professor_name.ilike.%${q}%,software_equipment.ilike.%${q}%,type_exam.ilike.%${q}%,language.ilike.%${q}%,term.ilike.%${q}%,mandatory_optional.ilike.%${q}%,ba_ma.ilike.%${q}%`);
+        const searchTerms = preprocessQuery(args.query);
+        
+        // Build OR conditions for EACH term across ALL columns
+        const conditions = searchTerms.flatMap(term => [
+          `name_course.ilike.%${term}%`,
+          `description.ilike.%${term}%`,
+          `topics.ilike.%${term}%`,
+          `programs.ilike.%${term}%`,
+          `code.ilike.%${term}%`,
+          `professor_name.ilike.%${term}%`
+        ]);
+        
+        query = query.or(conditions.join(','));
       }
       
       if (args.professor_name) {
@@ -273,9 +418,19 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       if (args.program) {
         query = query.ilike("programs", `%${args.program}%`);
       }
+      
+      // Topic filter with synonym expansion
       if (args.topic) {
-        query = query.or(`topics.ilike.%${args.topic}%,description.ilike.%${args.topic}%,name_course.ilike.%${args.topic}%,programs.ilike.%${args.topic}%`);
+        const topicTerms = preprocessQuery(args.topic);
+        const topicConditions = topicTerms.flatMap(t => [
+          `topics.ilike.%${t}%`,
+          `description.ilike.%${t}%`,
+          `name_course.ilike.%${t}%`,
+          `programs.ilike.%${t}%`
+        ]);
+        query = query.or(topicConditions.join(','));
       }
+      
       if (args.software_equipment) {
         query = query.ilike("software_equipment", `%${args.software_equipment}%`);
       }
@@ -314,7 +469,7 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         }
       }
       
-      const limit = Math.min(args.limit || 20, 50);
+      const limit = Math.min(args.limit || 30, 50);
       const { data, error } = await query.limit(limit);
       
       if (error) {
@@ -322,6 +477,7 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         return { error: error.message };
       }
       
+      console.log(`search_courses returned ${data?.length || 0} results`);
       return { results: data || [], count: data?.length || 0 };
     }
     
@@ -330,7 +486,14 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       let query = supabase.from("Labs(L)").select("*");
       
       if (args.topic) {
-        query = query.or(`topics.ilike.%${args.topic}%,description.ilike.%${args.topic}%,faculty_match.ilike.%${args.topic}%,name.ilike.%${args.topic}%`);
+        const topicTerms = preprocessQuery(args.topic);
+        const topicConditions = topicTerms.flatMap(t => [
+          `topics.ilike.%${t}%`,
+          `description.ilike.%${t}%`,
+          `faculty_match.ilike.%${t}%`,
+          `name.ilike.%${t}%`
+        ]);
+        query = query.or(topicConditions.join(','));
       }
       if (args.professor_name) {
         query = query.ilike("professors", `%${args.professor_name}%`);
@@ -509,7 +672,14 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         .in("id_lab", labIds.map((l: any) => l.id_lab));
       
       if (args.topic_filter) {
-        query = query.or(`topics.ilike.%${args.topic_filter}%,description.ilike.%${args.topic_filter}%,faculty_match.ilike.%${args.topic_filter}%,name.ilike.%${args.topic_filter}%`);
+        const topicTerms = preprocessQuery(args.topic_filter);
+        const conditions = topicTerms.flatMap(t => [
+          `topics.ilike.%${t}%`,
+          `description.ilike.%${t}%`,
+          `faculty_match.ilike.%${t}%`,
+          `name.ilike.%${t}%`
+        ]);
+        query = query.or(conditions.join(','));
       }
       
       const { data: labs, error } = await query.limit(50);
@@ -783,51 +953,28 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       if (ects_flexibility === "exact") ectsTolerance = 2;
       else if (ects_flexibility === "flexible") ectsTolerance = 10;
       
-      // First, expand topics using the Topics table to find related topics
-      const expandedTopics = new Set<string>(topics.map((t: string) => t.toLowerCase()));
-      
-      // Map user topics to related database topics using Topics(TOP) table
-      const topicMappings: Record<string, string[]> = {
-        'ai': ['machine learning', 'deep learning', 'artificial intelligence', 'neural', 'nlp', 'computer vision', 'reinforcement learning'],
-        'artificial intelligence': ['machine learning', 'deep learning', 'neural', 'nlp', 'computer vision'],
-        'robotics': ['robot', 'automation', 'mechatronics', 'control systems', 'autonomous', 'manipulation'],
-        'machine learning': ['deep learning', 'neural', 'supervised learning', 'unsupervised learning', 'reinforcement', 'pattern recognition'],
-        'deep learning': ['neural networks', 'cnn', 'rnn', 'transformer', 'pytorch', 'tensorflow'],
-        'data science': ['statistics', 'data mining', 'analytics', 'visualization', 'big data'],
-        'cybersecurity': ['security', 'cryptography', 'network security', 'privacy'],
-        'computer vision': ['image processing', 'object detection', 'image recognition', 'visual'],
-        'fluid dynamics': ['cfd', 'computational fluid', 'fluid mechanics', 'flow', 'aerodynamics', 'hydrodynamics', 'turbulence', 'navier-stokes'],
-        'cfd': ['computational fluid dynamics', 'fluid mechanics', 'flow simulation', 'openfoam', 'ansys fluent'],
-        'thermodynamics': ['heat transfer', 'thermal', 'heat engine', 'entropy'],
-        'mechanical engineering': ['mechanics', 'mechanical', 'materials', 'structural', 'dynamics'],
-      };
-      
-      // Expand topics based on mappings
+      // First, expand topics using preprocessQuery and TOPIC_SYNONYMS
+      const expandedTopics = new Set<string>();
       for (const topic of topics) {
-        const lowerTopic = topic.toLowerCase();
-        if (topicMappings[lowerTopic]) {
-          topicMappings[lowerTopic].forEach(t => expandedTopics.add(t));
-        }
+        const expanded = preprocessQuery(topic);
+        expanded.forEach(t => expandedTopics.add(t));
       }
       
       // ALSO expand priority_topics
-      const expandedPriorityTopics = new Set<string>(priority_topics.map((t: string) => t.toLowerCase()));
+      const expandedPriorityTopics = new Set<string>();
       for (const topic of priority_topics) {
-        const lowerTopic = topic.toLowerCase();
-        if (topicMappings[lowerTopic]) {
-          topicMappings[lowerTopic].forEach(t => expandedPriorityTopics.add(t));
-        }
-        // Add priority topics to the main search as well
-        expandedTopics.add(lowerTopic);
+        const expanded = preprocessQuery(topic);
+        expanded.forEach(t => {
+          expandedPriorityTopics.add(t);
+          expandedTopics.add(t); // Add priority topics to main search too
+        });
       }
       
       // Expand exclude_topics
-      const expandedExcludeTopics = new Set<string>(exclude_topics.map((t: string) => t.toLowerCase()));
+      const expandedExcludeTopics = new Set<string>();
       for (const topic of exclude_topics) {
-        const lowerTopic = topic.toLowerCase();
-        if (topicMappings[lowerTopic]) {
-          topicMappings[lowerTopic].forEach(t => expandedExcludeTopics.add(t));
-        }
+        const expanded = preprocessQuery(topic);
+        expanded.forEach(t => expandedExcludeTopics.add(t));
       }
       
       console.log(`Priority topics expanded: ${Array.from(expandedPriorityTopics).join(', ')}`);
@@ -858,29 +1005,7 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
         const selectedCourses: any[] = [];
         let currentEcts = 0;
         
-        // Add specific/must-have courses first
-        if (specific_courses.length > 0) {
-          for (const courseQuery of specific_courses) {
-            const { data: courses } = await supabase
-              .from("Courses(C)")
-              .select("id_course, name_course, code, ects, type_exam, ba_ma, professor_name, topics, term, description, programs")
-              .or(`name_course.ilike.%${courseQuery}%,code.ilike.%${courseQuery}%`)
-              .limit(1);
-            
-            if (courses && courses.length > 0) {
-              const course = courses[0];
-              if (!exclude_courses.some((ec: string) => 
-                course.name_course?.toLowerCase().includes(ec.toLowerCase()) ||
-                course.code?.toLowerCase().includes(ec.toLowerCase())
-              )) {
-                selectedCourses.push(course);
-                currentEcts += course.ects || 0;
-              }
-            }
-          }
-        }
-        
-        // Get university course IDs if university filter is specified
+        // If university is specified, get course IDs first
         let universityCourseIds: Set<string> | null = null;
         if (university_slug) {
           const { data: uniData } = await supabase
@@ -897,6 +1022,7 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
             
             if (courseIds?.length) {
               universityCourseIds = new Set(courseIds.map((c: any) => c.id_course));
+              console.log(`Found ${universityCourseIds.size} courses for university ${university_slug}`);
             }
           }
         }
@@ -1174,6 +1300,67 @@ async function executeToolCall(supabase: any, toolName: string, args: any): Prom
       };
     }
     
+    // NEW: Web search fallback tool using Perplexity
+    case "web_search": {
+      console.log(`Web search: ${args.query}`);
+      
+      const perplexityKey = Deno.env.get("PERPLEXITY_API_KEY");
+      if (!perplexityKey) {
+        return { 
+          error: "Web search not available (API key not configured)", 
+          suggestion: "Try more specific database searches or ask your question differently" 
+        };
+      }
+      
+      try {
+        const searchPrompt = args.context 
+          ? `Context: ${args.context}\n\nSearch: ${args.query}` 
+          : args.query;
+        
+        const response = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${perplexityKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              { 
+                role: "system", 
+                content: "You are a research assistant specializing in university courses and academic programs. Provide concise, factual answers about university courses, programs, admission requirements, and academic information. Include specific course names, codes, and links when available. Focus on EPFL, ETH Zurich, and other European technical universities." 
+              },
+              { role: "user", content: searchPrompt }
+            ],
+            max_tokens: 1000
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Perplexity API error:", response.status, errorText);
+          throw new Error(`Perplexity API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("Web search successful");
+        
+        return {
+          web_results: data.choices[0].message.content,
+          citations: data.citations || [],
+          source: "web_search",
+          note: "This information was found via web search and may be more current than our database."
+        };
+      } catch (error: any) {
+        console.error("Web search error:", error);
+        return { 
+          error: "Web search failed", 
+          details: error?.message || String(error),
+          suggestion: "Try rephrasing your question or searching for specific terms in our database"
+        };
+      }
+    }
+    
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
@@ -1349,130 +1536,100 @@ When a user asks about "my saved courses", "my CV", "my email drafts", etc., ref
 **Your Database Query Capabilities:**
 You have tools to query the complete database with 1,420+ courses, 424+ labs, 966+ teachers, and 33+ programs across multiple universities. USE THESE TOOLS when users ask specific questions.
 
+**🔍 SMART SEARCH WORKFLOW (CRITICAL - FOLLOW THIS):**
+
+1. **USE SIMPLE, SPECIFIC SEARCH TERMS** - Never use "OR" or "AND" in queries!
+   - ❌ WRONG: search_courses(query="machines OR electrical machines OR CFD")
+   - ✅ CORRECT: search_courses(topic="turbomachinery") 
+   - ✅ CORRECT: search_courses(topic="electrical machines")
+   - ✅ CORRECT: search_courses(topic="CFD")
+
+2. **SEARCH MULTIPLE TIMES** for complex queries:
+   - If user asks about "turbomachinery, electrical machines, and CFD"
+   - Call search_courses THREE times with different topic parameters
+   - Combine the results in your response
+
+3. **SYNONYM EXPANSION IS AUTOMATIC** - The search automatically expands:
+   - "CFD" → also searches "computational fluid dynamics", "flow simulation", "navier-stokes"
+   - "electrical machines" → also searches "motors", "generators", "power electronics"
+   - "turbomachinery" → also searches "turbines", "pumps", "compressors"
+   - "robotics" → also searches "robot", "automation", "mechatronics"
+   - "AI" → also searches "artificial intelligence", "machine learning", "deep learning"
+
+4. **SEARCH STRATEGY FOR HARD-TO-FIND TOPICS:**
+   a. First: Try exact term (e.g., topic="turbomachinery")
+   b. Second: Try related terms (e.g., topic="turbines", topic="pumps")
+   c. Third: Try broader category (e.g., topic="fluid mechanics", topic="energy")
+   d. Last resort: Use web_search tool
+
+5. **USE web_search AS FALLBACK** when:
+   - Database returns 0 results after trying multiple approaches
+   - User asks about current admission requirements or deadlines
+   - Information is time-sensitive (scholarship deadlines, application dates)
+   - Topic is very specific and not in our database
+
+6. **NEVER GIVE UP WITH 0 RESULTS:**
+   - Try at least 2-3 different search approaches
+   - Use web_search as fallback
+   - If still nothing, explain what you searched and suggest alternatives
+
 **FULL Course Data Access - You can retrieve ALL of these columns:**
 - id_course: Unique course identifier
 - name_course: Course name/title
 - code: Course code (e.g., "CS-101", "MATH-201")
-- description: Detailed course description (content, objectives, what students will learn)
+- description: Detailed course description
 - ects: Number of ECTS credits
-- language: Course language (English, French, German, Italian, etc.)
-- language_code: Language code
+- language: Course language
 - ba_ma: Bachelor (Ba) or Master (Ma) level
-- which_year: Which year of study
-- term: Semester/term when offered (Fall, Spring, etc.)
-- year: Academic year
+- term: Semester/term when offered
 - professor_name: Teaching professor(s)
-- topics: Course topics and subjects covered
-- type_exam: Type of examination (oral, written, project, etc.)
-- mandatory_optional: Whether course is mandatory or optional
+- topics: Course topics
+- type_exam: Type of examination
 - programs: Associated programs
-- software_equipment: Required software, programming languages, tools, and equipment (Python, MATLAB, CAD, etc.)
-- material_url: Link to course materials
-- media: Media resources
-- stats: Course statistics
+- software_equipment: Required software, tools
 
-**FULL Lab Data Access - You can retrieve ALL of these columns:**
-- id_lab: Unique lab identifier
-- name: Lab name
-- slug: URL-friendly lab identifier
-- description: Detailed lab description
-- topics: Research topics and areas
-- professors: Lab professors/directors
-- faculty_match: Faculty/department
-- link: Lab website
-- image: Lab image URL
-- created_at, updated_at: Timestamps
+**FULL Lab Data Access:**
+- id_lab, name, slug, description, topics, professors, faculty_match, link, image
 
 **Database Tools:**
-- search_courses: INTELLIGENT search across ALL columns
-- search_labs: Find research labs with ALL columns (id_lab, name, slug, description, topics, professors, faculty_match, link, image)
-- search_teachers: Find professors by name, research topics, or university
-- get_courses_by_teacher: Get ALL courses taught by a specific professor
-- get_labs_by_university: Get all labs at a specific university
-- get_programs_by_university: Get all programs offered by a university
-- search_universities: Find universities by name or country
-- get_document_content: **IMPORTANT** Fetch the content of a user's uploaded document (CV, resume, transcript). Use this when you need to extract the user's name, background, skills, or experiences from their uploaded documents. Call this tool when the user mentions "my CV", "my resume", or when generating personalized emails that reference their documents. Uses OCR for scanned PDFs.
-- generate_semester_plan: **SMART SEMESTER PLANNER** - Creates a custom study plan respecting ECTS targets, topics, level, and other constraints. The plan appears in the Semester Planner panel.
+- search_courses: INTELLIGENT search with automatic synonym expansion
+- search_labs: Find research labs
+- search_teachers: Find professors
+- get_courses_by_teacher: Get courses by professor
+- get_labs_by_university: Get labs at a university
+- get_programs_by_university: Get programs at a university
+- search_universities: Find universities
+- get_document_content: Fetch user's uploaded documents
+- generate_semester_plan: Create/modify semester plans
+- web_search: **FALLBACK** - Search the web when database doesn't have answers
 
-**University slugs for reference:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
+**University slugs:** epfl, eth-zurich, tu-munich, polimi, kth-royal-institute, etc.
 
 **User-Specific Context:**
 ${userSpecificContext || "No user-specific data available"}
 
 **General Guidelines:**
 - ALWAYS use database query tools when users ask about specific courses, professors, labs, or universities
-- When showing course information, include relevant details like description, ECTS, professor, language, exam type, required software
-- When showing lab information, include ALL details: name, description, topics, professors, faculty, website link
-- Reference the user's saved courses, labs, email drafts, and documents when they ask about "my" content
-- **SEMESTER PLANS**: The user may have saved semester plans. When they ask about "my winter semester", "my semester plan called X", or similar, refer to the User-Specific Context section. You can provide feedback on their plans like workload balance, exam distribution, or course suggestions.
-- **IMPORTANT**: When generating emails and the user has documents listed (like CV, resume), use the get_document_content tool to fetch their content and extract relevant personal information (name, background, skills)
+- When showing course information, include relevant details like description, ECTS, professor, language, exam type
+- Reference the user's saved content when they ask about "my" content
 
 **🎯 SEMESTER PLANNING - CRITICAL WORKFLOW:**
-When a user asks to plan their semester (e.g., "Plan my winter semester with 30 ECTS in robotics and AI"), you MUST:
+When a user asks to plan their semester, ASK CLARIFYING QUESTIONS first, then call generate_semester_plan with appropriate parameters.
 
-1. **FIRST, ASK CLARIFYING QUESTIONS** before calling generate_semester_plan. Ask things like:
-   - "Should I aim for exactly 30 ECTS or is around 30 ECTS okay? (e.g., 28-32)"
-   - "Can I choose courses from any program, or do you have specific requirements?"
-   - "Are you at Bachelor or Master level?"
-   - "Do you have any exam type preferences? (e.g., prefer projects over written exams)"
-   - "Any courses you've already taken that I should exclude?"
-   - "Which university are you at?" (if not obvious from context)
-
-2. **AFTER getting the user's answers**, call generate_semester_plan with the appropriate parameters:
-   - semester_type: "winter", "summer", or "both"
-   - target_ects: The ECTS target number
-   - ects_flexibility: "exact" (±2), "approximate" (±5), or "flexible" (±10)
-   - topics: Array of topics like ["robotics", "AI", "machine learning"]
-   - level: "Ba" for Bachelor, "Ma" for Master, "any" for both
-   - program: Specific program if mentioned
-   - university_slug: University slug if mentioned
-   - preferred_exam_types: Array like ["project", "oral"] if user prefers
-   - exclude_courses: Courses to skip
-   - specific_courses: Must-include courses
-   - plan_title: Descriptive title
-
-3. **PRESENT THE RESULT** with a summary of the plan, noting if ECTS targets were met.
-
-**🔄 MODIFYING EXISTING PLANS - CRITICAL:**
-When a user asks to MODIFY or FIX an existing semester plan (e.g., "add more fluid dynamics", "too much thermodynamics", "I want more AI courses", "fix this"), you MUST:
-
-1. **IMMEDIATELY CALL generate_semester_plan AGAIN** with:
-   - is_modification: true
-   - priority_topics: Topics the user wants MORE of (e.g., ["fluid dynamics", "CFD"])
-   - exclude_topics: Topics the user wants LESS of or to REMOVE (e.g., ["thermodynamics"])
-   - Keep the same semester_type, target_ects, level, university_slug from the previous plan
-   - topics: Combine original topics with priority_topics
-
-2. **DO NOT just respond with text** - you MUST call the tool again to regenerate the plan!
-
-Example modification flow:
-User: "There's not enough fluid dynamics! Why is there so much thermodynamics and no CFD?"
-You: [IMMEDIATELY call generate_semester_plan with is_modification=true, priority_topics=["fluid dynamics", "CFD", "computational fluid dynamics"], exclude_topics=["thermodynamics"], and keep original parameters]
-
-Example conversation flow:
-User: "Plan my winter semester with 30 ECTS in robotics and AI"
-You: "I'd be happy to help you plan a robotics and AI focused winter semester! A few quick questions:
-1. Should I aim for exactly 30 ECTS or is around 30 okay (e.g., 28-32)?
-2. Are you at Bachelor or Master level?
-3. Any specific university, or can I search across all?
-4. Any exam type preferences (written, oral, project)?"
-
-User: "Around 30 is fine, Master level, I'm at EPFL, and I prefer projects over written exams"
-You: [Now call generate_semester_plan with semester_type="winter", target_ects=30, ects_flexibility="approximate", topics=["robotics","AI","machine learning"], level="Ma", university_slug="epfl", preferred_exam_types=["project"]]
-
-- Be encouraging and supportive
-- Format responses clearly with bullet points when listing multiple items
-- If a query returns no results, try a broader search or suggest alternative search terms
+**🔄 MODIFYING EXISTING PLANS:**
+When a user asks to MODIFY a plan, IMMEDIATELY CALL generate_semester_plan AGAIN with:
+- is_modification: true
+- priority_topics: Topics the user wants MORE of
+- exclude_topics: Topics the user wants LESS of
 
 **EMAIL GENERATION:**
-When generating emails for the user, format them clearly with Subject, To, and Body sections. The user can save these as drafts.
+When generating emails, format with Subject, To, and Body sections.
 
 **CRITICAL OUTPUT FORMAT:**
-When you return courses or labs from database queries, you MUST append the raw data at the END of your response using these exact HTML comment formats (the user won't see these, but the app will parse them to show interactive cards):
+When you return courses or labs from database queries, append the raw data at the END using these HTML comment formats:
 - For courses: <!--COURSES:[{"id_course":"...","name_course":"...","code":"...","ects":...,"ba_ma":"...","professor_name":"...","language":"...","topics":"...","description":"...","software_equipment":"...","type_exam":"..."}]-->
 - For labs: <!--LABS:[{"id_lab":"...","name":"...","slug":"...","topics":"...","description":"...","professors":"...","faculty_match":"...","link":"..."}]-->
-- For semester plans: <!--SEMESTER_PLAN:{"winter":[...],"summer":[...],"title":"..."}-->
-Include ALL fields that are available. Place these at the very end of your response after all text content.`;
+- For semester plans: <!--SEMESTER_PLAN:{"winter":[...],"summer":[...],"title":"..."}-->`;
 
     console.log("Making initial AI call with tools...");
     
@@ -1662,8 +1819,8 @@ Include ALL fields that are available. Place these at the very end of your respo
 
       if (!streamResponse.ok) {
         const errorText = await streamResponse.text();
-        console.error(`Stream error from ${provider}:`, streamResponse.status, errorText);
-        throw new Error(`Stream error: ${streamResponse.status}`);
+        console.error("Stream error:", streamResponse.status, errorText);
+        throw new Error(`AI Gateway error: ${streamResponse.status}`);
       }
 
       return new Response(streamResponse.body, {
@@ -1671,16 +1828,16 @@ Include ALL fields that are available. Place these at the very end of your respo
       });
     }
 
-    // Non-streaming response
+    // Non-streaming, no tools
     return new Response(JSON.stringify({ 
       message: assistantMessage.content 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error: unknown) {
-    console.error("Error in ai-study-advisor:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+
+  } catch (error: any) {
+    console.error("Error in AI study advisor:", error);
+    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
