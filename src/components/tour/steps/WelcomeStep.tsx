@@ -1,22 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { celebrationVariants } from '../utils/tourAnimations';
+import { Button } from '@/components/ui/button';
 
 interface WelcomeStepProps {
-  onAutoAdvance: () => void;
-  duration?: number;
+  onNext: () => void;
 }
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ 
-  onAutoAdvance, 
-  duration = 5000 
+  onNext
 }) => {
-  useEffect(() => {
-    const timer = setTimeout(onAutoAdvance, duration);
-    return () => clearTimeout(timer);
-  }, [onAutoAdvance, duration]);
-
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-orange-500/20">
       <motion.div
@@ -28,8 +22,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
         {/* Animated icon */}
         <motion.div
           animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 5, -5, 0]
+            scale: [1, 1.1, 1],
           }}
           transition={{
             duration: 2,
@@ -63,20 +56,20 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
           Your AI-powered study abroad companion
         </motion.p>
 
-        {/* Loading indicator */}
+        {/* Start Tour Button */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
         >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          <Button 
+            onClick={onNext}
+            size="lg"
+            className="theme-btn-primary"
           >
-            <Sparkles className="h-4 w-4" />
-          </motion.div>
-          <span>Preparing your tour...</span>
+            Start Tour
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
         </motion.div>
       </motion.div>
 

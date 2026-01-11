@@ -8,6 +8,7 @@ interface TourContextValue {
   totalSteps: number;
   isPaused: boolean;
   hasCompleted: boolean;
+  isScreenTooSmall: boolean;
   startTour: () => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -38,9 +39,24 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
+  const [isScreenTooSmall, setIsScreenTooSmall] = useState(false);
   
-  // Total steps from tour definitions
-  const totalSteps = 13;
+  // Total steps from tour definitions (simplified to 5 steps)
+  const totalSteps = 5;
+  
+  // Minimum screen width for tour (1024px for tablet/desktop)
+  const MIN_TOUR_SCREEN_WIDTH = 1024;
+
+  // Check screen size on mount and resize
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsScreenTooSmall(window.innerWidth < MIN_TOUR_SCREEN_WIDTH);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, [MIN_TOUR_SCREEN_WIDTH]);
 
   // Load tour progress on mount
   useEffect(() => {
@@ -114,11 +130,17 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
   }, [isActive, isPaused, currentStepIndex]);
 
   const startTour = useCallback(() => {
+    // Check if screen is too small
+    if (window.innerWidth < MIN_TOUR_SCREEN_WIDTH) {
+      console.warn(`Tour is not available on screens smaller than ${MIN_TOUR_SCREEN_WIDTH}px`);
+      return;
+    }
+    
     setIsActive(true);
     setCurrentStepIndex(0);
     setIsPaused(false);
     saveTourProgress(0);
-  }, [saveTourProgress]);
+  }, [saveTourProgress, MIN_TOUR_SCREEN_WIDTH]);
 
   const nextStep = useCallback(() => {
     if (currentStepIndex < totalSteps - 1) {
@@ -183,6 +205,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
     totalSteps,
     isPaused,
     hasCompleted,
+    isScreenTooSmall,
     startTour,
     nextStep,
     prevStep,

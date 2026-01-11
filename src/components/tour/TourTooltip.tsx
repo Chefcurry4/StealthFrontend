@@ -48,6 +48,7 @@ export const TourTooltip: React.FC<TourTooltipProps> = ({
       const tooltipWidth = 320;
       const tooltipHeight = 200;
       const offset = 20;
+      const padding = 20; // Padding from viewport edges
 
       let newPlacement: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
       let newPosition = { top: 0, left: 0 };
@@ -58,30 +59,53 @@ export const TourTooltip: React.FC<TourTooltipProps> = ({
       const spaceRight = window.innerWidth - rect.right;
       const spaceLeft = rect.left;
 
-      if (spaceBelow >= tooltipHeight + offset) {
+      if (spaceBelow >= tooltipHeight + offset + padding) {
         newPlacement = 'bottom';
         newPosition = {
           top: rect.bottom + offset,
           left: rect.left + rect.width / 2
         };
-      } else if (spaceAbove >= tooltipHeight + offset) {
+      } else if (spaceAbove >= tooltipHeight + offset + padding) {
         newPlacement = 'top';
         newPosition = {
           top: rect.top - offset,
           left: rect.left + rect.width / 2
         };
-      } else if (spaceRight >= tooltipWidth + offset) {
+      } else if (spaceRight >= tooltipWidth + offset + padding) {
         newPlacement = 'right';
         newPosition = {
           top: rect.top + rect.height / 2,
           left: rect.right + offset
         };
-      } else {
+      } else if (spaceLeft >= tooltipWidth + offset + padding) {
         newPlacement = 'left';
         newPosition = {
           top: rect.top + rect.height / 2,
           left: rect.left - offset
         };
+      } else {
+        // Fallback to center if no good position
+        newPlacement = 'bottom';
+        newPosition = {
+          top: window.innerHeight / 2 - tooltipHeight / 2,
+          left: window.innerWidth / 2
+        };
+      }
+
+      // Clamp left position to keep within viewport
+      if (newPlacement === 'top' || newPlacement === 'bottom') {
+        newPosition.left = Math.max(
+          tooltipWidth / 2 + padding,
+          Math.min(newPosition.left, window.innerWidth - tooltipWidth / 2 - padding)
+        );
+      }
+
+      // Clamp top position to keep within viewport
+      if (newPlacement === 'left' || newPlacement === 'right') {
+        newPosition.top = Math.max(
+          tooltipHeight / 2 + padding,
+          Math.min(newPosition.top, window.innerHeight - tooltipHeight / 2 - padding)
+        );
       }
 
       setPlacement(newPlacement);

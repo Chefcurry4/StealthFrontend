@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot } from 'lucide-react';
 import { mascotVariants, tooltipVariants } from './utils/tourAnimations';
 
 interface TourMascotProps {
   message: string;
-  position?: 'center' | 'bottom-left' | 'bottom-right' | 'top-right';
+  position?: 'center' | 'bottom-right';
   isExcited?: boolean;
 }
 
@@ -16,13 +15,23 @@ export const TourMascot: React.FC<TourMascotProps> = ({
 }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
+  
+  // Skip typewriter effect for messages longer than this threshold
+  const TYPEWRITER_SKIP_THRESHOLD = 60;
 
-  // Typewriter effect for speech bubble
+  // Typewriter effect for speech bubble - skip if message is too long
   useEffect(() => {
     setDisplayedText('');
     setIsTyping(true);
-    let currentIndex = 0;
+    
+    // Skip typewriter effect for long messages
+    if (message.length > TYPEWRITER_SKIP_THRESHOLD) {
+      setDisplayedText(message);
+      setIsTyping(false);
+      return;
+    }
 
+    let currentIndex = 0;
     const typeInterval = setInterval(() => {
       if (currentIndex < message.length) {
         setDisplayedText(message.substring(0, currentIndex + 1));
@@ -31,7 +40,7 @@ export const TourMascot: React.FC<TourMascotProps> = ({
         setIsTyping(false);
         clearInterval(typeInterval);
       }
-    }, 30);
+    }, 40);
 
     return () => clearInterval(typeInterval);
   }, [message]);
@@ -40,12 +49,7 @@ export const TourMascot: React.FC<TourMascotProps> = ({
     switch (position) {
       case 'center':
         return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-      case 'bottom-left':
-        return 'bottom-8 left-8';
       case 'bottom-right':
-        return 'bottom-8 right-8';
-      case 'top-right':
-        return 'top-24 right-8';
       default:
         return 'bottom-8 right-8';
     }
@@ -55,11 +59,7 @@ export const TourMascot: React.FC<TourMascotProps> = ({
     switch (position) {
       case 'center':
         return 'bottom-full mb-4 left-1/2 -translate-x-1/2';
-      case 'bottom-left':
       case 'bottom-right':
-        return 'bottom-full mb-2';
-      case 'top-right':
-        return 'top-full mt-2';
       default:
         return 'bottom-full mb-2';
     }
@@ -69,11 +69,7 @@ export const TourMascot: React.FC<TourMascotProps> = ({
     switch (position) {
       case 'center':
         return 'absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-card';
-      case 'bottom-left':
       case 'bottom-right':
-        return 'absolute top-full left-8 -mt-1 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-card';
-      case 'top-right':
-        return 'absolute bottom-full left-8 mb-[-1px] w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-card';
       default:
         return 'absolute top-full left-8 -mt-1 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-card';
     }
@@ -82,9 +78,13 @@ export const TourMascot: React.FC<TourMascotProps> = ({
   return (
     <motion.div
       className={`fixed z-[10000] ${getPositionClasses()}`}
-      variants={mascotVariants}
       initial="hidden"
-      animate={isExcited ? 'bounce' : 'visible'}
+      animate="visible"
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+      }}
+      transition={{ duration: 0.3 }}
     >
       {/* Speech bubble */}
       <AnimatePresence>
@@ -95,6 +95,7 @@ export const TourMascot: React.FC<TourMascotProps> = ({
             animate="visible"
             exit="exit"
             className={`absolute ${getSpeechBubblePosition()} w-64 md:w-80`}
+            style={{ maxWidth: '80vw' }}
           >
             <div className="relative bg-card border-2 border-primary/20 rounded-2xl shadow-xl p-4">
               <p className="text-sm leading-relaxed text-foreground">
@@ -116,13 +117,14 @@ export const TourMascot: React.FC<TourMascotProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Mascot avatar */}
+      {/* Panda Mascot avatar */}
       <motion.div
         className="relative w-16 h-16 rounded-full bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-2xl cursor-pointer"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
-        <Bot className="h-8 w-8 text-primary-foreground" />
+        {/* Panda Emoji */}
+        <span className="text-3xl">🐼</span>
         
         {/* Glow effect */}
         <motion.div

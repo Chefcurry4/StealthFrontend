@@ -23,7 +23,7 @@ export const TourProgressBar: React.FC<TourProgressBarProps> = ({
       variants={progressBarVariants}
       initial="hidden"
       animate="visible"
-      className="fixed top-20 left-1/2 -translate-x-1/2 z-[10002] bg-card border-2 border-primary/30 rounded-full shadow-lg px-4 py-2 flex items-center gap-3"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[10002] bg-card border-2 border-primary/30 rounded-full shadow-lg px-4 py-2 flex items-center gap-3 max-w-[90vw]"
     >
       {/* Pause/Play button */}
       <button
@@ -39,7 +39,7 @@ export const TourProgressBar: React.FC<TourProgressBarProps> = ({
       </button>
 
       {/* Progress bar */}
-      <div className="w-32 md:w-48 h-2 bg-muted rounded-full overflow-hidden">
+      <div className="w-24 lg:w-48 h-2 bg-muted rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-primary to-orange-500"
           initial={{ width: 0 }}
