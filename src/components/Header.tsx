@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, GraduationCap, User, LogOut, Briefcase, Sun, Moon, Search, Bookmark, Book } from "lucide-react";
-import { PawPrint } from "@phosphor-icons/react";
+import { PandaIcon } from "@/components/icons/PandaIcon";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,7 @@ export const Header = () => {
           onClick={() => handleSectionNavClick("/")}
           className="flex items-center gap-2 cursor-pointer"
         >
-          <PawPrint size={24} />
+          <PandaIcon size={24} />
         </button>
 
         {/* Desktop Navigation */}

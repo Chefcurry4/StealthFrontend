@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap, BookOpen, Microscope, Bot, UserPlus, BookMarked, Compass, ArrowRight, Sparkles, Search, FileText, Users, MessageSquare, Bookmark, Globe } from "lucide-react";
-import { PawPrint } from "@phosphor-icons/react";
+import { PandaIcon } from "@/components/icons/PandaIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTour } from "@/contexts/TourContext";
 import { useUniversities } from "@/hooks/useUniversities";
@@ -102,7 +102,7 @@ const Index = () => {
       color: "text-green-500 bg-green-500/20",
     },
     {
-      icon: PawPrint,
+      icon: PandaIcon,
       title: "AI integration",
       description: "Get personalized recommendations on every university doubt",
       color: "text-orange-500 bg-orange-500/20",
@@ -215,7 +215,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-xl md:text-2xl font-bold mb-2">
-              How does UniPandax work?
+              How does UniPandan work?
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
               Your journey to the perfect semester

@@ -306,12 +306,17 @@ const UserFlashcard = ({
             </span>
           </div>
 
-          {/* Member since (only show when not preview) */}
-          {memberSince && !isPreview && (
-            <p className={`text-xs ${isEpicPink ? 'text-pink-600/60' : 'text-white/60'} text-center mt-2`}>
-              Member since {memberSince}
-            </p>
-          )}
+          {/* Member since and UniPandan branding */}
+          <div className="flex items-center justify-between mt-2">
+            {memberSince && !isPreview ? (
+              <p className={`text-xs ${isEpicPink ? 'text-pink-600/60' : 'text-white/60'}`}>
+                Member since {memberSince}
+              </p>
+            ) : (
+              <span />
+            )}
+            <span className={`text-sm ${isEpicPink ? 'text-pink-600/40' : 'text-white/40'}`}>🐼</span>
+          </div>
         </div>
       </div>
 

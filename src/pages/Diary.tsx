@@ -447,7 +447,7 @@ const Diary = () => {
   return (
     <>
       <SEO
-        title="Diary - Students Hub"
+        title="Diary - UniPandan"
         description="Plan your semester with an interactive notebook. Drag and drop courses, track lab communications, and visualize your academic journey."
       />
       
