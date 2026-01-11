@@ -331,14 +331,26 @@ export const WorkbenchDiary = ({
   const renderCourseCard = (course: SemesterPlanCourse, planId?: string) => {
     const examType = course.type_exam?.toLowerCase() || "";
     let examIcon = <CalendarClock className="h-2.5 w-2.5 text-orange-500" />;
-    if (examType.includes("written") || examType.includes("écrit")) {
+    let examText = "Project/Midterm";
+    
+    if (examType.includes("written") || examType.includes("écrit") || examType.includes("schriftlich")) {
       examIcon = <FileText className="h-2.5 w-2.5 text-blue-500" />;
-    } else if (examType.includes("oral")) {
+      examText = "Written";
+    } else if (examType.includes("oral") || examType.includes("presentation") || examType.includes("mündlich")) {
       examIcon = <Mic className="h-2.5 w-2.5 text-green-500" />;
+      examText = "Oral";
     }
 
     const levelLabel = course.ba_ma?.toLowerCase()?.includes("ba") ? "Ba" : 
                       course.ba_ma?.toLowerCase()?.includes("ma") ? "Ma" : null;
+
+    // Parse topics and count occurrences
+    const topicsList = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
+    const topicCounts: Record<string, number> = {};
+    topicsList.forEach(topic => {
+      topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+    });
+    const uniqueTopics = Object.entries(topicCounts);
 
     return (
       <div
@@ -353,26 +365,41 @@ export const WorkbenchDiary = ({
             <X className="h-2.5 w-2.5" />
           </button>
         )}
-        <div className="font-medium text-foreground line-clamp-1 text-[10px]">
+        <div className="font-medium text-foreground line-clamp-1 text-xs lg:text-sm">
           {course.name_course}
         </div>
         {course.code && (
-          <div className="text-[9px] text-muted-foreground">{course.code}</div>
+          <div className="text-[10px] lg:text-xs text-muted-foreground">{course.code}</div>
+        )}
+        {course.professor_name && (
+          <div className="text-[10px] lg:text-xs text-muted-foreground">Prof. {course.professor_name}</div>
         )}
         <div className="flex items-center gap-1.5 mt-1 text-muted-foreground flex-wrap">
           {course.ects && (
-            <span className="font-medium text-[9px]">{course.ects} ECTS</span>
+            <span className="font-medium text-[10px] lg:text-xs">{course.ects} ECTS</span>
           )}
-          {examIcon}
+          <span className="flex items-center gap-0.5 text-[10px] lg:text-xs">
+            {examIcon}
+            <span>{examText}</span>
+          </span>
           {levelLabel && (
             <span className={cn(
-              "px-1 rounded text-[8px] font-medium",
+              "px-1 rounded text-[9px] lg:text-[10px] font-medium",
               levelLabel === "Ba" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300" : "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300"
             )}>
               {levelLabel}
             </span>
           )}
         </div>
+        {uniqueTopics.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {uniqueTopics.map(([topic, count], idx) => (
+              <span key={idx} className="text-[9px] lg:text-[10px] text-muted-foreground">
+                {topic}{count > 1 ? ` x${count}` : ''}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -487,7 +514,7 @@ export const WorkbenchDiary = ({
         )}
         
         {/* Courses */}
-        <div className="space-y-1.5 max-h-48 overflow-y-auto scrollbar-thin">
+        <div className="space-y-1.5 max-h-64 lg:max-h-96 overflow-y-auto scrollbar-thin">
           {plan.courses.map((course) => renderCourseCard(course, plan.id))}
         </div>
       </div>
@@ -496,9 +523,9 @@ export const WorkbenchDiary = ({
 
   return (
     <TooltipProvider>
-    <div className="w-72 sm:w-80 border-l border-border bg-background/95 backdrop-blur-sm flex flex-col h-full">
+    <div className="w-72 sm:w-80 lg:w-96 xl:w-[420px] border-l border-border/30 bg-background/50 backdrop-blur-sm flex flex-col h-full transition-all duration-200">
       {/* Header */}
-      <div className="p-2.5 sm:p-3 border-b border-border flex items-center justify-between">
+      <div className="p-2.5 sm:p-3 lg:p-4 border-b border-border/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookMarked className="h-4 w-4 text-primary" />
           <h3 className="font-semibold text-xs sm:text-sm">Diary</h3>
@@ -515,7 +542,6 @@ export const WorkbenchDiary = ({
         <div className="px-2.5 pt-2">
           <TabsList className="w-full h-9 sm:h-8 grid grid-cols-2 gap-1">
             <TabsTrigger value="pandamester" className="flex-1 text-xs gap-1.5 px-2 sm:px-3">
-              <span className="text-sm">🎓</span>
               <span className="hidden sm:inline">Pandamester</span>
               <span className="sm:hidden">Planner</span>
               <ModuleInfoPopup
@@ -529,7 +555,6 @@ export const WorkbenchDiary = ({
               />
             </TabsTrigger>
             <TabsTrigger value="pandamail" className="flex-1 text-xs gap-1.5 px-2 sm:px-3">
-              <span className="text-sm">📧</span>
               <span className="hidden sm:inline">Pandamail</span>
               <span className="sm:hidden">Emails</span>
               <ModuleInfoPopup
@@ -548,13 +573,13 @@ export const WorkbenchDiary = ({
         {/* Pandamester Tab */}
         <TabsContent value="pandamester" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-3 space-y-3">
+            <div className="p-2.5 sm:p-3 lg:p-4 space-y-3">
               {/* Temp Plan from AI - Show at TOP with NEW badge */}
               {tempPlan && (
                 <div className="space-y-3 animate-in fade-in-0 slide-in-from-top-2 duration-300" ref={planCardRef}>
                   {/* NEW Badge */}
                   <div className="flex items-center justify-center">
-                    <Badge className="bg-gradient-to-r from-primary to-purple-600 text-primary-foreground font-medium text-xs px-3 py-1 shadow-md animate-pulse">
+                    <Badge className="bg-primary text-primary-foreground font-medium text-xs px-3 py-1">
                       ✨ NEW PLAN
                     </Badge>
                   </div>
@@ -618,7 +643,7 @@ export const WorkbenchDiary = ({
                             ))}
                           </div>
                         )}
-                        <div className="space-y-1.5 scrollbar-thin max-h-48 overflow-y-auto">
+                        <div className="space-y-1.5 scrollbar-thin max-h-64 lg:max-h-96 overflow-y-auto">
                           {tempPlan.winter.map((c) => renderCourseCard(c))}
                         </div>
                       </div>
@@ -675,7 +700,7 @@ export const WorkbenchDiary = ({
                             ))}
                           </div>
                         )}
-                        <div className="space-y-1.5 scrollbar-thin max-h-48 overflow-y-auto">
+                        <div className="space-y-1.5 scrollbar-thin max-h-64 lg:max-h-96 overflow-y-auto">
                           {tempPlan.summer.map((c) => renderCourseCard(c))}
                         </div>
                       </div>
@@ -762,7 +787,7 @@ export const WorkbenchDiary = ({
         {/* Pandamail Tab */}
         <TabsContent value="pandamail" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-3 sm:p-4 space-y-4">
+            <div className="p-2.5 sm:p-3 lg:p-4 space-y-4">
               {/* Coming Soon Banner */}
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -776,30 +801,6 @@ export const WorkbenchDiary = ({
                 <p className="text-xs text-muted-foreground mb-3 leading-relaxed max-w-xs mx-auto">
                   Track your thesis and lab outreach emails. Know who you contacted, who replied, and who needs a follow-up.
                 </p>
-              </div>
-
-              {/* Feature Preview */}
-              <div className="space-y-2">
-                <h5 className="text-xs font-medium text-muted-foreground uppercase">What's coming</h5>
-                <div className="space-y-2">
-                  {[
-                    { icon: "📝", title: "Draft Tracking", desc: "Save and manage email drafts" },
-                    { icon: "📤", title: "Sent Status", desc: "Mark when emails are sent" },
-                    { icon: "✅", title: "Reply Tracking", desc: "Log responses and outcomes" },
-                    { icon: "🔔", title: "Follow-up Reminders", desc: "Never miss a follow-up" },
-                  ].map((feature) => (
-                    <div 
-                      key={feature.title}
-                      className="flex items-start gap-2.5 p-2.5 rounded-lg bg-background/50 border border-border/50"
-                    >
-                      <span className="text-sm shrink-0">{feature.icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium">{feature.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{feature.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Submit Module Idea */}

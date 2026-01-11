@@ -8,7 +8,7 @@ import { toast } from "sonner";
 interface DiaryModule {
   id: string;
   name: string;
-  emoji: string;
+  emoji?: string;
   description: string;
   features: string[];
   isComingSoon?: boolean;
@@ -42,7 +42,7 @@ const ModuleCard = ({ module }: { module: DiaryModule }) => {
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <span className="text-2xl sm:text-3xl">{module.emoji}</span>
+            {module.emoji && <span className="text-2xl sm:text-3xl">{module.emoji}</span>}
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="font-semibold text-sm sm:text-base">{module.name}</h4>

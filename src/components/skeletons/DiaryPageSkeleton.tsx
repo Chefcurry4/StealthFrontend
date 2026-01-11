@@ -62,7 +62,7 @@ export const DiaryPageSkeleton = () => {
 
 export const DiarySidebarSkeleton = () => {
   return (
-    <div className="w-64 border-r border-border/30 p-4 space-y-4">
+    <div className="w-72 sm:w-80 lg:w-96 xl:w-[420px] border-r border-border/30 p-2.5 sm:p-3 lg:p-4 space-y-4">
       {/* Search skeleton */}
       <Skeleton className="h-9 w-full rounded-lg" />
       
