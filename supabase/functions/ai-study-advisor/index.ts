@@ -1717,6 +1717,19 @@ When you return courses or labs from database queries, append the raw data at th
       // Check if semester planning is being done - force premium model
       const isSemesterPlanning = toolNames.includes('generate_semester_plan');
       
+      // Truncate tool call IDs to 40 chars max (OpenAI limit)
+      // Some providers like Gemini generate longer IDs
+      const truncateId = (id: string) => id.length > 40 ? id.slice(0, 40) : id;
+      
+      // Create a sanitized version of assistant message with truncated IDs
+      const sanitizedAssistantMessage = {
+        ...assistantMessage,
+        tool_calls: assistantMessage.tool_calls.map((tc: any) => ({
+          ...tc,
+          id: truncateId(tc.id)
+        }))
+      };
+      
       const toolResults = [];
       
       for (const toolCall of assistantMessage.tool_calls) {
@@ -1727,9 +1740,10 @@ When you return courses or labs from database queries, append the raw data at th
         const result = await executeToolCall(supabase, toolName, toolArgs);
         console.log(`Tool result count: ${result.count || result.results?.length || 0}`);
         
+        // Use truncated ID for tool results too
         toolResults.push({
           role: "tool",
-          tool_call_id: toolCall.id,
+          tool_call_id: truncateId(toolCall.id),
           content: JSON.stringify(result)
         });
       }
@@ -1772,7 +1786,7 @@ When you return courses or labs from database queries, append the raw data at th
           messages: [
             { role: "system", content: systemPrompt },
             ...messages,
-            assistantMessage,
+            sanitizedAssistantMessage,
             ...toolResults
           ],
           stream,
