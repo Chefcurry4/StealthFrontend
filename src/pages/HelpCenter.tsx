@@ -145,10 +145,6 @@ const faqs = [
         answer: "Yes! In the 'Advanced Options' section of the email composer, select your uploaded documents (CV, transcripts, cover letters). The AI will extract your name, background, skills, and interests to create highly personalized outreach emails that highlight relevant experience."
       },
       {
-        question: "How do I refine parts of a generated email?",
-        answer: "After the AI generates an email, select any text portion and click 'Refine with AI' to improve that specific section. This allows you to polish individual paragraphs or adjust the tone without regenerating the entire email."
-      },
-      {
         question: "What can I do with generated emails?",
         answer: "Generated emails have multiple actions: Copy to clipboard, Open in your email client (Gmail, Outlook, etc.) via mailto link, Save to Email Drafts for later editing, or Regenerate for a different version. All options appear as icons below the email."
       },

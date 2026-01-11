@@ -197,6 +197,8 @@ const models: ModelInfo[] = [
   },
 ];
 
+import perplexityLogo from "@/assets/perplexity-logo.svg";
+
 // Provider logos and labels
 const providerInfo: Record<ProviderType, { name: string; logo: string }> = {
   gemini: {
@@ -209,9 +211,12 @@ const providerInfo: Record<ProviderType, { name: string; logo: string }> = {
   },
   perplexity: {
     name: "Perplexity",
-    logo: "https://pbs.twimg.com/profile_images/1798110641414443008/XP8gyBaY_400x400.jpg"
+    logo: perplexityLogo
   }
 };
+
+// Models to display in UI (filter out Gemini and OpenAI for now)
+const displayModels = models.filter(m => m.provider === "perplexity");
 
 // Helper to format tool names for display
 const formatToolName = (toolName: string): string => {
@@ -233,7 +238,7 @@ const Workbench = () => {
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-flash");
+  const [selectedModel, setSelectedModel] = useState<ModelType>("sonar");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -247,9 +252,6 @@ const Workbench = () => {
   const [mentionSearchQuery, setMentionSearchQuery] = useState("");
   const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
   const [showEmailCompose, setShowEmailCompose] = useState(false);
-  const [selectedText, setSelectedText] = useState("");
-  const [showRefinePopup, setShowRefinePopup] = useState(false);
-  const [refinePopupPosition, setRefinePopupPosition] = useState({ x: 0, y: 0 });
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
@@ -694,31 +696,6 @@ const Workbench = () => {
   }, [messages, isStreaming, scrollToBottom]);
 
   // Handle text selection for refinement - MUST be before early return
-  const handleTextSelection = useCallback(() => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim().length > 10) {
-      const text = selection.toString().trim();
-      setSelectedText(text);
-      
-      // Get position for popup
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      setRefinePopupPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
-      });
-      setShowRefinePopup(true);
-    } else {
-      setShowRefinePopup(false);
-      setSelectedText("");
-    }
-  }, []);
-
-  // Add mouseup listener for text selection - MUST be before early return
-  useEffect(() => {
-    document.addEventListener('mouseup', handleTextSelection);
-    return () => document.removeEventListener('mouseup', handleTextSelection);
-  }, [handleTextSelection]);
 
   if (!user) {
     navigate("/auth");
@@ -1388,18 +1365,6 @@ const Workbench = () => {
     }, 100);
   };
 
-  // Handle refine request (plain function - no hooks)
-  const handleRefineText = () => {
-    if (!selectedText) return;
-    
-    const refinePrompt = `Please refine this part of the email:\n\n"${selectedText}"\n\nMake it more professional and polished while keeping the same meaning.`;
-    setInput(refinePrompt);
-    setShowRefinePopup(false);
-    setSelectedText("");
-    
-    // Clear selection
-    window.getSelection()?.removeAllRanges();
-  };
 
   return (
     <div className="flex h-[100dvh] overflow-hidden">
@@ -1459,59 +1424,22 @@ const Workbench = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border/50">
-                {/* Google Gemini Models */}
-                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <img src={providerInfo.gemini.logo} alt="Gemini" className="h-3.5 w-3.5" />
-                  {providerInfo.gemini.name}
-                </DropdownMenuLabel>
-                {models.filter(m => m.provider === "gemini").map(model => (
-                  <DropdownMenuItem
-                    key={model.id}
-                    onClick={() => setSelectedModel(model.id)}
-                    className="flex items-center gap-2 p-2 cursor-pointer"
-                  >
-                    <div className="text-primary">{model.icon}</div>
-                    <span className="flex-1 text-sm">{model.name}</span>
-                    {selectedModel === model.id && (
-                      <Check className="h-3.5 w-3.5 text-primary" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-                
-                {/* OpenAI Models */}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <img src={providerInfo.openai.logo} alt="OpenAI" className="h-3.5 w-3.5" />
-                  {providerInfo.openai.name}
-                </DropdownMenuLabel>
-                {models.filter(m => m.provider === "openai").map(model => (
-                  <DropdownMenuItem
-                    key={model.id}
-                    onClick={() => setSelectedModel(model.id)}
-                    className="flex items-center gap-2 p-2 cursor-pointer"
-                  >
-                    <div className="text-primary">{model.icon}</div>
-                    <span className="flex-1 text-sm">{model.name}</span>
-                    {selectedModel === model.id && (
-                      <Check className="h-3.5 w-3.5 text-primary" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-                
-                {/* Perplexity Models */}
-                <DropdownMenuSeparator />
+                {/* Perplexity Models Only */}
                 <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
                   <img src={providerInfo.perplexity.logo} alt="Perplexity" className="h-3.5 w-3.5" />
                   {providerInfo.perplexity.name}
                 </DropdownMenuLabel>
-                {models.filter(m => m.provider === "perplexity").map(model => (
+                {displayModels.map(model => (
                   <DropdownMenuItem
                     key={model.id}
                     onClick={() => setSelectedModel(model.id)}
                     className="flex items-center gap-2 p-2 cursor-pointer"
                   >
                     <div className="text-primary">{model.icon}</div>
-                    <span className="flex-1 text-sm">{model.name}</span>
+                    <div className="flex-1">
+                      <span className="text-sm">{model.name}</span>
+                      <p className="text-xs text-muted-foreground">{model.description}</p>
+                    </div>
                     {selectedModel === model.id && (
                       <Check className="h-3.5 w-3.5 text-primary" />
                     )}
@@ -1598,26 +1526,6 @@ const Workbench = () => {
             />
           )}
           
-          {/* Text Selection Refine Popup */}
-          {showRefinePopup && selectedText && (
-            <div 
-              className="fixed z-50 animate-in fade-in-0 zoom-in-95 duration-150"
-              style={{ 
-                left: refinePopupPosition.x, 
-                top: refinePopupPosition.y,
-                transform: 'translate(-50%, -100%)'
-              }}
-            >
-              <Button
-                size="sm"
-                className="gap-1.5 shadow-lg"
-                onClick={handleRefineText}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Refine with AI
-              </Button>
-            </div>
-          )}
           
           {messages.length === 0 && !showEmailCompose ? (
             <div className="flex flex-col items-center justify-end min-h-[40vh] text-center px-4 pb-4">
@@ -1768,31 +1676,44 @@ const Workbench = () => {
                           />
                         )}
                         
-                        {/* Edit Button - Inside Message Bubble */}
+                        {/* User Message Actions - Edit and Copy */}
                         {message.role === "user" && message.content && !editingMessageId && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute -bottom-1 -left-1 h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm opacity-0 group-hover/bubble:opacity-100 transition-opacity"
-                            onClick={() => setEditingMessageId(message.id)}
-                            disabled={isStreaming}
-                            title="Edit message"
-                          >
-                            <Edit3 className="h-3 w-3 text-muted-foreground" />
-                          </Button>
+                          <div className="absolute -bottom-1 -left-1 flex items-center gap-1 opacity-0 group-hover/bubble:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm"
+                              onClick={() => setEditingMessageId(message.id)}
+                              disabled={isStreaming}
+                              title="Edit message"
+                            >
+                              <Edit3 className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm"
+                              onClick={() => handleCopy(message.content, message.id)}
+                              title="Copy message"
+                            >
+                              {copiedId === message.id ? (
+                                <Check className="h-3 w-3 text-emerald-500" />
+                              ) : (
+                                <Copy className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </div>
                         )}
                       </div>
 
                       {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
                         <div className="flex flex-col gap-1 mt-2">
-                          {/* Thinking History with collapsible steps */}
-                          {message.thoughtDurationSeconds && message.thoughtDurationSeconds > 0 && (
-                            <ThinkingHistory
-                              totalDurationSeconds={message.thoughtDurationSeconds}
-                              steps={message.thinkingSteps || []}
-                            />
-                          )}
+                          {/* Thinking History - always show for assistant messages */}
+                          <ThinkingHistory
+                            totalDurationSeconds={message.thoughtDurationSeconds || 0}
+                            steps={message.thinkingSteps || []}
+                          />
                           
                           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button

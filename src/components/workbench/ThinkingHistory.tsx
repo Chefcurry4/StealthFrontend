@@ -61,14 +61,13 @@ export const ThinkingHistory = ({
 }: ThinkingHistoryProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Don't render if no meaningful steps
-  if (steps.length === 0 || totalDurationSeconds <= 0) {
-    return null;
-  }
-
   // Calculate total from steps vs actual duration
   const stepsWithDuration = steps.filter(s => s.durationMs > 0);
   const hasDetailedSteps = stepsWithDuration.length > 0;
+  
+  // Always show the component with at least basic info
+  const displayDuration = totalDurationSeconds > 0 ? totalDurationSeconds : 0;
+  const toolCount = steps.length;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -79,58 +78,62 @@ export const ThinkingHistory = ({
         )}
       >
         <span className="text-xs">💭</span>
-        <span>thought for {totalDurationSeconds}s</span>
-        {hasDetailedSteps && (
+        <span>thought for {displayDuration}s</span>
+        {toolCount > 0 && (
           <>
             <span className="text-muted-foreground/50">•</span>
-            <span className="text-muted-foreground/60">{steps.length} tools</span>
-            {isOpen ? (
-              <ChevronDown className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
-            ) : (
-              <ChevronRight className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
-            )}
+            <span className="text-muted-foreground/60">{toolCount} {toolCount === 1 ? 'tool' : 'tools'}</span>
           </>
+        )}
+        {hasDetailedSteps && (
+          isOpen ? (
+            <ChevronDown className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+          ) : (
+            <ChevronRight className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+          )
         )}
       </CollapsibleTrigger>
 
-      <CollapsibleContent className="mt-2">
-        <div className="bg-muted/30 rounded-lg p-2.5 space-y-1.5 border border-border/30 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium mb-2">
-            <Clock className="h-3 w-3" />
-            <span>Thinking Process</span>
-          </div>
-          
-          {steps.map((step, index) => (
-            <div
-              key={`${step.tool}-${index}`}
-              className="flex items-center justify-between gap-2 text-xs"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-xs shrink-0">{getToolIcon(step.tool)}</span>
-                <span className="text-muted-foreground truncate">
-                  {formatToolName(step.tool)}
+      {hasDetailedSteps && (
+        <CollapsibleContent className="mt-2">
+          <div className="bg-muted/30 rounded-lg p-2.5 space-y-1.5 border border-border/30 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-medium mb-2">
+              <Clock className="h-3 w-3" />
+              <span>Thinking Process</span>
+            </div>
+            
+            {steps.map((step, index) => (
+              <div
+                key={`${step.tool}-${index}`}
+                className="flex items-center justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-xs shrink-0">{getToolIcon(step.tool)}</span>
+                  <span className="text-muted-foreground truncate">
+                    {formatToolName(step.tool)}
+                  </span>
+                </div>
+                <span className="text-muted-foreground/60 shrink-0 font-mono text-[10px]">
+                  {step.durationMs > 0 
+                    ? `${(step.durationMs / 1000).toFixed(1)}s`
+                    : "—"
+                  }
                 </span>
               </div>
-              <span className="text-muted-foreground/60 shrink-0 font-mono text-[10px]">
-                {step.durationMs > 0 
-                  ? `${(step.durationMs / 1000).toFixed(1)}s`
-                  : "—"
-                }
+            ))}
+
+            <div className="border-t border-border/30 pt-1.5 mt-1.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3 w-3 text-primary/60" />
+                <span className="text-muted-foreground font-medium">Total</span>
+              </div>
+              <span className="text-foreground font-mono text-[10px] font-medium">
+                {displayDuration}s
               </span>
             </div>
-          ))}
-
-          <div className="border-t border-border/30 pt-1.5 mt-1.5 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <Zap className="h-3 w-3 text-primary/60" />
-              <span className="text-muted-foreground font-medium">Total</span>
-            </div>
-            <span className="text-foreground font-mono text-[10px] font-medium">
-              {totalDurationSeconds}s
-            </span>
           </div>
-        </div>
-      </CollapsibleContent>
+        </CollapsibleContent>
+      )}
     </Collapsible>
   );
 };

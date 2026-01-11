@@ -36,7 +36,11 @@ const sanitizeUrl = (rawUrl: string): string => {
 export const MarkdownRenderer = memo(({ content, className }: MarkdownRendererProps) => {
   const renderMarkdown = (text: string): React.ReactNode[] => {
     // Remove hidden semester plan data (AI internal use only)
-    const cleanedText = text.replace(/<!--SEMESTERPLAN:.*?-->/gs, '').trim();
+    // Remove Perplexity citation references like [1], [2], etc.
+    const cleanedText = text
+      .replace(/<!--SEMESTERPLAN:.*?-->/gs, '')
+      .replace(/\[(\d+)\]/g, '') // Remove [1], [2], etc. citation markers
+      .trim();
     const lines = cleanedText.split("\n");
     const elements: React.ReactNode[] = [];
     let listItems: string[] = [];
