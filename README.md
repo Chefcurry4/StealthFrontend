@@ -1,4 +1,4 @@
-# Students Hub - Stealth Frontend Project 2026
+# UniPandan - Stealth Frontend Project 2026
 
 An international study planning platform that helps students discover universities, explore courses, and build learning agreements with AI-powered guidance.
 
