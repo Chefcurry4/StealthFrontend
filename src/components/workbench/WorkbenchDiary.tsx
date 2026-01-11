@@ -762,7 +762,6 @@ export const WorkbenchDiary = ({
               {/* Coming Soon Banner */}
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
                   <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary">
                     <Clock className="h-2.5 w-2.5 mr-1" />
                     Coming Soon
