@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUniversities } from "@/hooks/useUniversities";
 import UserFlashcard from "@/components/UserFlashcard";
+import { PandaIcon } from "@/components/icons/PandaIcon";
 
 const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -603,7 +604,7 @@ const Auth = () => {
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/40 rounded-full blur-xl animate-pulse" />
                 <div className="relative p-2.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full border border-primary/30 backdrop-blur-sm">
-                  <GraduationCap className="h-6 w-6 text-primary" />
+                  <PandaIcon size={24} />
                 </div>
               </div>
             </div>
@@ -810,19 +811,21 @@ const Auth = () => {
 
         {/* User Flashcard Preview - only visible on signup tab and desktop */}
         {activeAuthTab === 'signup' && (
-          <div className="hidden lg:flex flex-col items-center justify-center gap-3">
-            <p className="text-sm text-muted-foreground font-medium">Your Student Card</p>
-            <UserFlashcard
-              username={signUpData.username || undefined}
-              profilePhotoUrl={profilePicturePreview}
-              universityName={selectedUniversity?.name}
-              universityLogo={selectedUniversity?.logo_url}
-              studentLevel={signUpData.studentLevel}
-              isPreview
-              isPulsating
-            />
-            <p className="text-xs text-muted-foreground text-center max-w-[200px]">
-              Updates as you fill in details
+          <div className="hidden lg:flex flex-col items-center justify-center gap-3 transition-all duration-300">
+            <p className="text-sm text-muted-foreground font-medium animate-in fade-in-0 slide-in-from-top-2 duration-500">Your Student Card</p>
+            <div className="animate-in fade-in-0 slide-in-from-right-4 duration-700">
+              <UserFlashcard
+                username={signUpData.username || undefined}
+                profilePhotoUrl={profilePicturePreview}
+                universityName={selectedUniversity?.name}
+                universityLogo={selectedUniversity?.logo_url}
+                studentLevel={signUpData.studentLevel}
+                isPreview
+                isPulsating
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center max-w-[200px] animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-200">
+              Live preview · Updates as you type
             </p>
           </div>
         )}
