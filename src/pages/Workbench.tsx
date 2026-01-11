@@ -680,7 +680,7 @@ const Workbench = () => {
       // during streaming, keep it snappy
       scrollToBottom(isStreaming ? "auto" : "smooth");
     }
-  }, [messages, isStreaming, isThinking, scrollToBottom]);
+  }, [messages, isStreaming, scrollToBottom]);
 
   // Handle text selection for refinement - MUST be before early return
   const handleTextSelection = useCallback(() => {
@@ -1720,7 +1720,7 @@ const Workbench = () => {
                                 title="Copy email content"
                                 onClick={() => {
                                   // Extract just the email part (after Subject: line)
-                                  let emailContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  const emailContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
                                   navigator.clipboard.writeText(emailContent);
                                   toast.success("Email copied to clipboard");
                                 }}
@@ -1751,7 +1751,7 @@ const Workbench = () => {
                                 className="h-8 w-8 rounded-lg hover:bg-accent/50"
                                 title="Save to Email Drafts"
                                 onClick={async () => {
-                                  let content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  const content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
                                   const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
                                   await createEmailDraft.mutateAsync({
                                     subject: subjectMatch ? subjectMatch[1].trim() : "AI Generated Email",
