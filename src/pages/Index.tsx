@@ -135,7 +135,8 @@ const Index = () => {
       <section className="relative flex-1 flex items-center justify-center py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-2xl xs:text-3xl md:text-4xl lg:text-6xl font-bold mb-4">
+            <h1 className="text-2xl xs:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 flex items-center justify-center gap-3">
+              <PandaIcon size={48} className="inline-block" />
               UniPandan
             </h1>
             <p className="text-lg md:text-xl opacity-80 mb-8">
