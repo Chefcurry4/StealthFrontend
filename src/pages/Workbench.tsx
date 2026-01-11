@@ -918,7 +918,8 @@ const Workbench = () => {
           };
         })(),
         onDone: () => {
-          const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
+          const endTime = Date.now();
+          const durationSeconds = Math.max(1, Math.floor((endTime - startTime) / 1000));
           
           // Finalize any pending tool times
           const now = Date.now();
@@ -1168,10 +1169,12 @@ const Workbench = () => {
           };
         })(),
         onDone: async () => {
-          // Calculate thought duration
-          const durationSeconds = thinkingStartTime 
-            ? Math.floor((Date.now() - thinkingStartTime) / 1000)
-            : 0;
+          // Calculate thought duration using the captured start time
+          const endTime = Date.now();
+          const startTimeCapture = thinkingStartTime;
+          const durationSeconds = startTimeCapture 
+            ? Math.max(1, Math.floor((endTime - startTimeCapture) / 1000))
+            : 1;
           
           // Finalize any pending tool times
           const now = Date.now();
@@ -1239,12 +1242,39 @@ const Workbench = () => {
       setIsStreaming(false);
       setAiState('idle');
       setThinkingStartTime(null);
+      setCurrentThinkingSteps([]);
+      toolStepTimesRef.current = {};
       abortControllerRef.current = null;
+      
       if (err instanceof Error && err.name === 'AbortError') {
         // User stopped the request, don't show error
         return;
       }
-      toast.error("Failed to get response from hubAI");
+      
+      // Remove the last user message and any empty assistant message on error
+      setMessages(prev => {
+        const filtered = prev.filter(m => {
+          // Remove empty assistant messages (placeholder for streaming)
+          if (m.role === 'assistant' && !m.content) return false;
+          return true;
+        });
+        // Remove the last user message that caused the error
+        if (filtered.length > 0 && filtered[filtered.length - 1].role === 'user') {
+          return filtered.slice(0, -1);
+        }
+        return filtered;
+      });
+      
+      // Show error message
+      const errorMessage: Message = {
+        id: generateId(),
+        role: "assistant",
+        content: "⚠️ **Something went wrong**\n\nI couldn't process your request. Please try again with a different question or check your connection.\n\n*Your previous message has been removed so you can try a new prompt.*",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast.error("Failed to get response. Please try again.");
     }
   };
 
@@ -1849,9 +1879,10 @@ const Workbench = () => {
                 </div>
               ))}
               
-              {/* Thinking Indicator (before any streaming starts) */}
-              {/* Only show if thinking AND no empty assistant message is already displayed */}
-              {aiState === 'thinking' && !messages.some(m => m.role === "assistant" && !m.content) && (
+              {/* Thinking/Loading Indicators - show throughout AI processing until idle */}
+              {/* Show when: thinking, searching, planning, or streaming with empty content */}
+              {(aiState === 'thinking' || 
+                (aiState === 'streaming' && messages.some(m => m.role === "assistant" && !m.content))) && (
                 <ThinkingIndicator 
                   mode="thinking"
                   startTime={thinkingStartTime || undefined}
