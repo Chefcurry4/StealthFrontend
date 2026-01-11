@@ -333,10 +333,10 @@ export const WorkbenchDiary = ({
     let examIcon = <CalendarClock className="h-2.5 w-2.5 text-orange-500" />;
     let examText = "Project/Midterm";
     
-    if (examType.includes("written") || examType.includes("écrit") || examType.includes("exam")) {
+    if (examType.includes("written") || examType.includes("écrit") || examType.includes("schriftlich")) {
       examIcon = <FileText className="h-2.5 w-2.5 text-blue-500" />;
       examText = "Written";
-    } else if (examType.includes("oral") || examType.includes("presentation")) {
+    } else if (examType.includes("oral") || examType.includes("presentation") || examType.includes("mündlich")) {
       examIcon = <Mic className="h-2.5 w-2.5 text-green-500" />;
       examText = "Oral";
     }
@@ -344,8 +344,13 @@ export const WorkbenchDiary = ({
     const levelLabel = course.ba_ma?.toLowerCase()?.includes("ba") ? "Ba" : 
                       course.ba_ma?.toLowerCase()?.includes("ma") ? "Ma" : null;
 
-    // Parse topics to show with counts
+    // Parse topics and count occurrences
     const topicsList = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
+    const topicCounts: Record<string, number> = {};
+    topicsList.forEach(topic => {
+      topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+    });
+    const uniqueTopics = Object.entries(topicCounts);
 
     return (
       <div
@@ -386,11 +391,11 @@ export const WorkbenchDiary = ({
             </span>
           )}
         </div>
-        {topicsList.length > 0 && (
+        {uniqueTopics.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
-            {topicsList.map((topic, idx) => (
+            {uniqueTopics.map(([topic, count], idx) => (
               <span key={idx} className="text-[9px] lg:text-[10px] text-muted-foreground">
-                {topic}
+                {topic}{count > 1 ? ` x${count}` : ''}
               </span>
             ))}
           </div>
