@@ -331,14 +331,21 @@ export const WorkbenchDiary = ({
   const renderCourseCard = (course: SemesterPlanCourse, planId?: string) => {
     const examType = course.type_exam?.toLowerCase() || "";
     let examIcon = <CalendarClock className="h-2.5 w-2.5 text-orange-500" />;
-    if (examType.includes("written") || examType.includes("écrit")) {
+    let examText = "Project/Midterm";
+    
+    if (examType.includes("written") || examType.includes("écrit") || examType.includes("exam")) {
       examIcon = <FileText className="h-2.5 w-2.5 text-blue-500" />;
-    } else if (examType.includes("oral")) {
+      examText = "Written";
+    } else if (examType.includes("oral") || examType.includes("presentation")) {
       examIcon = <Mic className="h-2.5 w-2.5 text-green-500" />;
+      examText = "Oral";
     }
 
     const levelLabel = course.ba_ma?.toLowerCase()?.includes("ba") ? "Ba" : 
                       course.ba_ma?.toLowerCase()?.includes("ma") ? "Ma" : null;
+
+    // Parse topics to show with counts
+    const topicsList = course.topics?.split(',').map(t => t.trim()).filter(Boolean) || [];
 
     return (
       <div
@@ -359,11 +366,17 @@ export const WorkbenchDiary = ({
         {course.code && (
           <div className="text-[10px] lg:text-xs text-muted-foreground">{course.code}</div>
         )}
+        {course.professor_name && (
+          <div className="text-[10px] lg:text-xs text-muted-foreground">Prof. {course.professor_name}</div>
+        )}
         <div className="flex items-center gap-1.5 mt-1 text-muted-foreground flex-wrap">
           {course.ects && (
             <span className="font-medium text-[10px] lg:text-xs">{course.ects} ECTS</span>
           )}
-          {examIcon}
+          <span className="flex items-center gap-0.5 text-[10px] lg:text-xs">
+            {examIcon}
+            <span>{examText}</span>
+          </span>
           {levelLabel && (
             <span className={cn(
               "px-1 rounded text-[9px] lg:text-[10px] font-medium",
@@ -373,6 +386,15 @@ export const WorkbenchDiary = ({
             </span>
           )}
         </div>
+        {topicsList.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {topicsList.map((topic, idx) => (
+              <span key={idx} className="text-[9px] lg:text-[10px] text-muted-foreground">
+                {topic}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
