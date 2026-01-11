@@ -51,7 +51,7 @@ import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
 import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
 import { WorkbenchDiary } from "@/components/workbench/WorkbenchDiary";
-import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
+import { ThinkingIndicator, ThoughtDurationBadge } from "@/components/workbench/ThinkingIndicator";
 import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
 import { EditableMessage } from "@/components/workbench/EditableMessage";
 import { PandaIcon } from "@/components/icons/PandaIcon";
@@ -121,6 +121,8 @@ interface Message {
   referencedItems?: ReferencedItem[];
   timestamp: Date;
   feedback?: "positive" | "negative" | null;
+  /** Duration in seconds the AI took to think (for assistant messages) */
+  thoughtDurationSeconds?: number;
 }
 
 type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar" | "sonar-pro" | "sonar-reasoning";
@@ -249,6 +251,7 @@ const Workbench = () => {
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [thinkingStartTime, setThinkingStartTime] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -849,6 +852,8 @@ const Workbench = () => {
     const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
     setMessages(messagesToSend);
     setIsStreaming(true);
+    setAiState('thinking');
+    setThinkingStartTime(Date.now());
     
     try {
       // Build comprehensive user context for AI
@@ -882,6 +887,7 @@ const Workbench = () => {
 
       const assistantMessageId = generateId();
       let assistantContent = "";
+      const startTime = Date.now();
 
       // Add empty assistant message for streaming
       setMessages(prev => [...prev, {
@@ -913,6 +919,7 @@ const Workbench = () => {
           };
           
           return (delta: string) => {
+            if (aiState !== 'streaming') setAiState('streaming');
             assistantContent += delta;
             tokenBuffer += delta;
             
@@ -927,9 +934,20 @@ const Workbench = () => {
           };
         })(),
         onDone: () => {
+          const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
           setIsStreaming(false);
           setAiState('idle');
           setActiveSearchTools([]);
+          setThinkingStartTime(null);
+          
+          // Update assistant message with duration
+          if (durationSeconds > 0) {
+            setMessages(prev => prev.map(m => 
+              m.id === assistantMessageId 
+                ? { ...m, thoughtDurationSeconds: durationSeconds } 
+                : m
+            ));
+          }
         },
         onSearchingDatabase: (searching) => {
           if (searching) setAiState('searching');
@@ -941,6 +959,8 @@ const Workbench = () => {
       });
     } catch {
       setIsStreaming(false);
+      setAiState('idle');
+      setThinkingStartTime(null);
       toast.error("Failed to regenerate response");
     }
   };
@@ -966,6 +986,7 @@ const Workbench = () => {
     setReferencedItems([]);
     setIsStreaming(true);
     setAiState('thinking');
+    setThinkingStartTime(Date.now());
     
     // Create abort controller for this request
     abortControllerRef.current = new AbortController();
@@ -1138,10 +1159,25 @@ const Workbench = () => {
           };
         })(),
         onDone: async () => {
+          // Calculate thought duration
+          const durationSeconds = thinkingStartTime 
+            ? Math.floor((Date.now() - thinkingStartTime) / 1000)
+            : 0;
+          
           setIsStreaming(false);
           setAiState('idle');
           setActiveSearchTools([]);
+          setThinkingStartTime(null);
           abortControllerRef.current = null;
+          
+          // Update assistant message with duration
+          if (durationSeconds > 0) {
+            setMessages(prev => prev.map(m => 
+              m.id === assistantMessageId 
+                ? { ...m, thoughtDurationSeconds: durationSeconds } 
+                : m
+            ));
+          }
           
           // Check for semester plan in response
           const parsedPlan = parseSemesterPlanFromResponse(assistantContent);
@@ -1170,6 +1206,7 @@ const Workbench = () => {
     } catch (err) {
       setIsStreaming(false);
       setAiState('idle');
+      setThinkingStartTime(null);
       abortControllerRef.current = null;
       if (err instanceof Error && err.name === 'AbortError') {
         // User stopped the request, don't show error
@@ -1693,7 +1730,16 @@ const Workbench = () => {
 
                       {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
-                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
+                          {/* Thought duration badge - always visible */}
+                          {message.thoughtDurationSeconds && message.thoughtDurationSeconds > 0 && (
+                            <ThoughtDurationBadge 
+                              durationSeconds={message.thoughtDurationSeconds} 
+                              className="mr-2"
+                            />
+                          )}
+                          
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1819,6 +1865,7 @@ const Workbench = () => {
                               className={`h-4 w-4 ${message.feedback === "negative" ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} 
                             />
                           </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1831,6 +1878,7 @@ const Workbench = () => {
               {aiState === 'thinking' && !messages.some(m => m.role === "assistant" && !m.content) && (
                 <ThinkingIndicator 
                   mode="thinking"
+                  startTime={thinkingStartTime || undefined}
                 />
               )}
 
@@ -1842,6 +1890,7 @@ const Workbench = () => {
                   isCollapsible={true}
                   isExpanded={thinkingExpanded}
                   onToggleExpand={() => setThinkingExpanded(!thinkingExpanded)}
+                  startTime={thinkingStartTime || undefined}
                 />
               )}
               
@@ -1852,6 +1901,7 @@ const Workbench = () => {
                   isCollapsible={true}
                   isExpanded={thinkingExpanded}
                   onToggleExpand={() => setThinkingExpanded(!thinkingExpanded)}
+                  startTime={thinkingStartTime || undefined}
                 />
               )}
             </>
