@@ -1387,14 +1387,76 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
   "sonar-reasoning": { provider: "perplexity", model: "sonar-reasoning", name: "Perplexity Reasoning" },
 };
 
+// Normalize incoming chat messages to avoid provider 400s.
+// Providers like OpenAI/Perplexity require strict alternation: user/assistant/user/assistant...
+// This also protects against accidental duplicate user submits from the UI.
+function normalizeChatMessages(
+  raw: unknown,
+): Array<{ role: "user" | "assistant" | "tool"; content: string; [k: string]: unknown }> {
+  if (!Array.isArray(raw)) return [];
+
+  const allowedRoles = new Set(["user", "assistant", "tool"]);
+
+  const cleaned = raw
+    .filter((m) => m && typeof m === "object")
+    .map((m: any) => ({
+      ...m,
+      role: String(m.role),
+      content: typeof m.content === "string" ? m.content : "",
+    }))
+    .filter((m: any) => allowedRoles.has(m.role));
+
+  const out: any[] = [];
+  for (const msg of cleaned) {
+    const prev = out[out.length - 1];
+
+    // Allow multiple tool messages in a row (tool results), but never user/user or assistant/assistant.
+    if (prev && msg.role === prev.role && msg.role !== "tool") {
+      const same = String(msg.content).trim() === String(prev.content).trim();
+      if (!same) out[out.length - 1] = msg; // keep latest
+      continue;
+    }
+
+    out.push(msg);
+  }
+
+  // Ensure we start with a user message (we inject our own system prompt separately).
+  while (out.length && out[0].role !== "user") out.shift();
+
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, userContext, stream = false, model: requestedModel = "gemini-flash" } = await req.json();
-    console.log("Received request with messages:", messages?.length, "stream:", stream, "model:", requestedModel);
+    const {
+      messages: rawMessages,
+      userContext,
+      stream = false,
+      model: requestedModel = "gemini-flash",
+    } = await req.json();
+
+    const messages = normalizeChatMessages(rawMessages);
+    console.log(
+      "Received request with messages (normalized):",
+      messages?.length,
+      "raw:",
+      Array.isArray(rawMessages) ? rawMessages.length : 0,
+      "stream:",
+      stream,
+      "model:",
+      requestedModel,
+    );
+
+    if (!messages.length) {
+      return new Response(JSON.stringify({ error: "No valid chat messages provided" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const modelConfig = MODEL_CONFIGS[requestedModel] || MODEL_CONFIGS["gemini-flash"];
     const provider = modelConfig.provider;
