@@ -1767,21 +1767,23 @@ const Workbench = () => {
                             onCancel={() => setEditingMessageId(null)}
                           />
                         )}
-                        
-                        {/* Edit Button - Inside Message Bubble */}
-                        {message.role === "user" && message.content && !editingMessageId && (
+                      </div>
+                      
+                      {/* Edit Button - Outside Message Bubble for User Messages */}
+                      {message.role === "user" && message.content && !editingMessageId && (
+                        <div className="flex items-center gap-0.5 mt-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute -bottom-1 -left-1 h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm opacity-0 group-hover/bubble:opacity-100 transition-opacity"
+                            className="h-7 w-7 rounded-lg hover:bg-accent/50"
                             onClick={() => setEditingMessageId(message.id)}
                             disabled={isStreaming}
                             title="Edit message"
                           >
-                            <Edit3 className="h-3 w-3 text-muted-foreground" />
+                            <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
                           </Button>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
@@ -1817,20 +1819,6 @@ const Workbench = () => {
                           >
                             <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
-                          {/* Continue button - show if message is the last one and might be incomplete */}
-                          {idx === messages.length - 1 && message.content.length > 200 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 rounded-lg hover:bg-accent/50"
-                              onClick={handleContinue}
-                              disabled={isStreaming}
-                              title="Continue generation"
-                            >
-                              <ArrowDown className="h-3.5 w-3.5 mr-1" />
-                              <span className="text-xs">Continue</span>
-                            </Button>
-                          )}
                           {/* Save to Email Drafts - show if message looks like an email */}
                           {(message.content.toLowerCase().includes('subject:') || 
                             message.content.toLowerCase().includes('dear ') ||
