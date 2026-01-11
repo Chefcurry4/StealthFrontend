@@ -125,6 +125,8 @@ type ModelType = "gemini-flash" | "gemini-pro" | "gpt-5" | "gpt-5-mini" | "sonar
 
 type ProviderType = "gemini" | "openai" | "perplexity";
 
+type AIState = 'idle' | 'thinking' | 'searching' | 'planning' | 'streaming';
+
 interface ModelInfo {
   id: ModelType;
   name: string;
@@ -227,12 +229,10 @@ const Workbench = () => {
   const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-flash");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
-  const [isSearchingDatabase, setIsSearchingDatabase] = useState(false);
-  const [isPlanningDeep, setIsPlanningDeep] = useState(false);
+  const [aiState, setAiState] = useState<AIState>('idle');
   const [activeSearchTools, setActiveSearchTools] = useState<string[]>([]);
   const [referencedItems, setReferencedItems] = useState<Array<{ type: 'course' | 'lab'; data: any }>>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -642,8 +642,7 @@ const Workbench = () => {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsStreaming(false);
-      setIsThinking(false);
-      setIsSearchingDatabase(false);
+      setAiState('idle');
       setActiveSearchTools([]);
       toast.info("Response stopped");
     }
@@ -682,7 +681,7 @@ const Workbench = () => {
       // during streaming, keep it snappy
       scrollToBottom(isStreaming ? "auto" : "smooth");
     }
-  }, [messages, isStreaming, isThinking, scrollToBottom]);
+  }, [messages, isStreaming, scrollToBottom]);
 
   // Handle text selection for refinement - MUST be before early return
   const handleTextSelection = useCallback(() => {
@@ -927,11 +926,16 @@ const Workbench = () => {
         })(),
         onDone: () => {
           setIsStreaming(false);
-          setIsSearchingDatabase(false);
+          setAiState('idle');
           setActiveSearchTools([]);
         },
-        onSearchingDatabase: setIsSearchingDatabase,
-        onToolsUsed: setActiveSearchTools
+        onSearchingDatabase: (searching) => {
+          if (searching) setAiState('searching');
+        },
+        onToolsUsed: setActiveSearchTools,
+        onDeepPlanning: (planning) => {
+          if (planning) setAiState('planning');
+        }
       });
     } catch {
       setIsStreaming(false);
@@ -959,7 +963,7 @@ const Workbench = () => {
     const currentReferencedItems = [...referencedItems]; // Capture before clearing
     setReferencedItems([]);
     setIsStreaming(true);
-    setIsThinking(true);
+    setAiState('thinking');
     
     // Create abort controller for this request
     abortControllerRef.current = new AbortController();
@@ -1115,7 +1119,7 @@ const Workbench = () => {
           };
           
           return (delta: string) => {
-            setIsThinking(false);
+            if (aiState !== 'streaming') setAiState('streaming');
             assistantContent += delta;
             tokenBuffer += delta;
             
@@ -1133,8 +1137,7 @@ const Workbench = () => {
         })(),
         onDone: async () => {
           setIsStreaming(false);
-          setIsThinking(false);
-          setIsSearchingDatabase(false);
+          setAiState('idle');
           setActiveSearchTools([]);
           abortControllerRef.current = null;
           
@@ -1155,22 +1158,16 @@ const Workbench = () => {
           }
         },
         onSearchingDatabase: (searching) => {
-          setIsSearchingDatabase(searching);
-          if (searching) setIsThinking(false);
+          if (searching) setAiState('searching');
         },
         onToolsUsed: setActiveSearchTools,
         onDeepPlanning: (planning) => {
-          setIsPlanningDeep(planning);
-          if (planning) {
-            setIsThinking(false);
-            setIsSearchingDatabase(false);
-          }
+          if (planning) setAiState('planning');
         }
       });
     } catch (err) {
       setIsStreaming(false);
-      setIsThinking(false);
-      setIsPlanningDeep(false);
+      setAiState('idle');
       abortControllerRef.current = null;
       if (err instanceof Error && err.name === 'AbortError') {
         // User stopped the request, don't show error
@@ -1585,7 +1582,7 @@ const Workbench = () => {
                     {/* Message Content */}
                     <div className={`flex-1 min-w-0 max-w-[calc(100%-3rem)] sm:max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
                       <div
-                        className={`inline-block rounded-2xl px-4 py-3 shadow-sm ${
+                        className={`group/bubble relative inline-block rounded-2xl px-4 py-3 shadow-sm ${
                           message.role === "user"
                             ? "bg-primary text-primary-foreground rounded-tr-md"
                             : "bg-card border border-border/50 text-foreground rounded-tl-md"
@@ -1657,25 +1654,23 @@ const Workbench = () => {
                             onCancel={() => setEditingMessageId(null)}
                           />
                         )}
-                      </div>
-
-                      {/* Message Actions - User */}
-                      {message.role === "user" && message.content && !editingMessageId && (
-                        <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        
+                        {/* Edit Button - Inside Message Bubble */}
+                        {message.role === "user" && message.content && !editingMessageId && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-lg hover:bg-accent/50"
+                            className="absolute -bottom-1 -left-1 h-6 w-6 rounded-full hover:bg-accent/80 bg-background/90 border border-border/50 shadow-sm opacity-0 group-hover/bubble:opacity-100 transition-opacity"
                             onClick={() => setEditingMessageId(message.id)}
                             disabled={isStreaming}
                             title="Edit message"
                           >
-                            <Edit3 className="h-4 w-4 text-muted-foreground" />
+                            <Edit3 className="h-3 w-3 text-muted-foreground" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
-                      {/* Message Actions - Assistant */}
+                      {/* Message Actions - Assistant Only (outside bubble) */}
                       {message.role === "assistant" && message.content && (
                         <div className="flex items-center gap-0.5 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <Button
@@ -1726,7 +1721,7 @@ const Workbench = () => {
                                 title="Copy email content"
                                 onClick={() => {
                                   // Extract just the email part (after Subject: line)
-                                  let emailContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  const emailContent = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
                                   navigator.clipboard.writeText(emailContent);
                                   toast.success("Email copied to clipboard");
                                 }}
@@ -1757,7 +1752,7 @@ const Workbench = () => {
                                 className="h-8 w-8 rounded-lg hover:bg-accent/50"
                                 title="Save to Email Drafts"
                                 onClick={async () => {
-                                  let content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
+                                  const content = message.content.replace(/<!--[\s\S]*?-->/g, '').trim();
                                   const subjectMatch = content.match(/\*?\*?Subject:\*?\*?\s*(.+?)(?:\n|$)/i);
                                   await createEmailDraft.mutateAsync({
                                     subject: subjectMatch ? subjectMatch[1].trim() : "AI Generated Email",
@@ -1812,14 +1807,14 @@ const Workbench = () => {
               
               {/* Thinking Indicator (before any streaming starts) */}
               {/* Only show if thinking AND no empty assistant message is already displayed */}
-              {isThinking && !isSearchingDatabase && !isPlanningDeep && !messages.some(m => m.role === "assistant" && !m.content) && (
+              {aiState === 'thinking' && !messages.some(m => m.role === "assistant" && !m.content) && (
                 <ThinkingIndicator 
                   mode="thinking"
                 />
               )}
 
               {/* Database Searching Indicator */}
-              {isSearchingDatabase && !isPlanningDeep && (
+              {aiState === 'searching' && (
                 <ThinkingIndicator 
                   mode="searching"
                   searchTools={activeSearchTools}
@@ -1830,7 +1825,7 @@ const Workbench = () => {
               )}
               
               {/* Deep Planning Indicator (like ChatGPT deep think) */}
-              {isPlanningDeep && (
+              {aiState === 'planning' && (
                 <ThinkingIndicator 
                   mode="planning"
                   isCollapsible={true}
@@ -2046,29 +2041,31 @@ const Workbench = () => {
               aria-describedby="input-hint"
               data-tour="chat-input"
             />
-            {isStreaming ? (
-              <Button
-                size="icon"
-                variant="destructive"
-                className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
-                onClick={handleStop}
-                title="Stop generating"
-                aria-label="Stop generating response"
-              >
-                <Square className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            ) : (
-              <Button
-                size="icon"
-                data-send-button
-                className="absolute right-1.5 bottom-2 h-9 w-9 rounded-lg transition-colors"
-                onClick={handleSend}
-                disabled={!input.trim() && attachments.length === 0}
-                aria-label="Send message"
-              >
-                <Send className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            )}
+            <div className="absolute right-2 bottom-0 top-0 flex items-center">
+              {isStreaming ? (
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="h-9 w-9 rounded-lg transition-colors"
+                  onClick={handleStop}
+                  title="Stop generating"
+                  aria-label="Stop generating response"
+                >
+                  <Square className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              ) : (
+                <Button
+                  size="icon"
+                  data-send-button
+                  className="h-9 w-9 rounded-lg transition-colors"
+                  onClick={handleSend}
+                  disabled={!input.trim() && attachments.length === 0}
+                  aria-label="Send message"
+                >
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

@@ -180,6 +180,11 @@ export default {
   				'Courier New',
   				'monospace'
   			]
+  		},
+  		fontSize: {
+  			'fluid-xs': 'clamp(0.625rem, 0.5rem + 0.5vw, 0.75rem)',
+  			'fluid-sm': 'clamp(0.75rem, 0.625rem + 0.5vw, 0.875rem)',
+  			'fluid-base': 'clamp(0.875rem, 0.75rem + 0.5vw, 1rem)',
   		}
   	}
   },
