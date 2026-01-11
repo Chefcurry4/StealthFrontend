@@ -50,7 +50,7 @@ import { KeyboardShortcutsHelp, useKeyboardShortcuts } from "@/components/Keyboa
 import { ConversationSearchBar } from "@/components/ConversationSearchBar";
 import { MentionPopup } from "@/components/MentionPopup";
 import { EmailComposeInChat, EmailComposeData } from "@/components/EmailComposeInChat";
-import { WorkbenchSemesterPlanner } from "@/components/workbench/WorkbenchSemesterPlanner";
+import { WorkbenchDiary } from "@/components/workbench/WorkbenchDiary";
 import { ThinkingIndicator } from "@/components/workbench/ThinkingIndicator";
 import { AttachmentPreview } from "@/components/workbench/AttachmentPreview";
 import { EditableMessage } from "@/components/workbench/EditableMessage";
@@ -2097,8 +2097,8 @@ const Workbench = () => {
         </div>
       </div>
       </div>
-      {/* Semester Planner Panel */}
-      <WorkbenchSemesterPlanner
+      {/* Diary Panel */}
+      <WorkbenchDiary
         isOpen={isPlannerOpen}
         onToggle={togglePlanner}
         savedPlans={savedSemesterPlans}

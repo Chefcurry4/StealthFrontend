@@ -37,7 +37,6 @@ export const Header = () => {
 
   const userNavigation = [
     { name: "Workbench", href: "/workbench", icon: Briefcase },
-    { name: "Diary", href: "/diary", icon: Book },
   ];
 
   const handleSignOut = async () => {
