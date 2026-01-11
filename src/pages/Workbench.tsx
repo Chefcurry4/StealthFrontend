@@ -1999,7 +1999,7 @@ const Workbench = () => {
             
             <Textarea
               ref={inputRef}
-              placeholder="Fai una domanda"
+              placeholder="Use @ to mention saved courses/labs..."
               value={input}
               onChange={handleInputChange}
               onKeyDown={(e) => {
